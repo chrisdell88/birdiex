@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import type { TabId, DataSet } from '../types';
 
 interface HeaderProps {
@@ -14,54 +13,6 @@ const tabs: { id: TabId; label: string }[] = [
   { id: 'methodology', label: 'METHODOLOGY' },
   { id: 'results', label: 'RESULTS' },
 ];
-
-function ShareButtons() {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText('https://birdiex.co');
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleShareX = () => {
-    window.open(
-      `https://twitter.com/intent/tweet?url=${encodeURIComponent('https://birdiex.co')}&text=${encodeURIComponent('Check out BirdieX - PGA Tour betting analytics powered by the X Score Model')}`,
-      '_blank'
-    );
-  };
-
-  const handleShareText = () => {
-    window.open(`sms:?body=${encodeURIComponent('Check out BirdieX - PGA Tour betting analytics: https://birdiex.co')}`);
-  };
-
-  const handleShareEmail = () => {
-    window.open(
-      `mailto:?subject=${encodeURIComponent('BirdieX - PGA Tour Betting Analytics')}&body=${encodeURIComponent('Check out BirdieX - PGA Tour betting analytics powered by the X Score Model: https://birdiex.co')}`,
-      '_blank'
-    );
-  };
-
-  const btnClass =
-    'px-3 py-1 text-[10px] uppercase tracking-wider font-medium rounded-full border border-[#22c55e]/50 bg-transparent text-[#f5f5f5] hover:bg-[#22c55e]/10 transition-colors cursor-pointer font-[\'Inter\',system-ui,sans-serif]';
-
-  return (
-    <div className="flex items-center gap-1.5">
-      <button onClick={handleCopyLink} className={btnClass}>
-        {copied ? 'Copied!' : 'Copy Link'}
-      </button>
-      <button onClick={handleShareX} className={btnClass}>
-        X
-      </button>
-      <button onClick={handleShareText} className={btnClass}>
-        Text
-      </button>
-      <button onClick={handleShareEmail} className={btnClass}>
-        Email
-      </button>
-    </div>
-  );
-}
 
 export default function Header({ activeTab, onTabChange, dataSet, onDataSetChange }: HeaderProps) {
   return (
@@ -87,18 +38,6 @@ export default function Header({ activeTab, onTabChange, dataSet, onDataSetChang
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Share buttons - hidden on small screens */}
-            <div className="hidden lg:block">
-              <ShareButtons />
-            </div>
-
-            {/* Founder credit */}
-            <div className="hidden md:block">
-              <span className="text-[10px] text-[#a1a1aa] tracking-wider font-['JetBrains_Mono','SF_Mono',monospace]">
-                Chris Dell: Founder
-              </span>
-            </div>
-
             {/* Round/Cumulative toggle */}
             <div className="flex border border-[#22c55e]/50 rounded-full p-0.5">
               <button
@@ -138,7 +77,7 @@ export default function Header({ activeTab, onTabChange, dataSet, onDataSetChang
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`px-4 md:px-6 py-3 text-xs md:text-sm tracking-wider font-medium transition-colors border-b-2 font-['Inter',system-ui,sans-serif] cursor-pointer ${
+              className={`px-4 md:px-6 py-3 text-[13px] md:text-[14px] tracking-[0.12em] font-medium transition-colors border-b-2 font-['JetBrains_Mono','SF_Mono','Fira_Code',monospace] uppercase cursor-pointer ${
                 activeTab === tab.id
                   ? 'border-[#22c55e] text-[#22c55e]'
                   : 'border-transparent text-[#f5f5f5] hover:text-white'

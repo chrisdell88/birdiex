@@ -15,17 +15,17 @@ export default function StatBar({ label, value, min = -5, max = 5 }: StatBarProp
 
   return (
     <div className="flex items-center gap-3 py-1">
-      <span className="w-16 text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif] shrink-0 text-right">
+      <span className="w-16 text-xs text-[#d4d4d4] font-['Inter',system-ui,sans-serif] shrink-0 text-right">
         {label}
       </span>
-      <div className="flex-1 h-4 bg-[#1a1a1a] rounded-full relative overflow-hidden">
+      <div className="flex-1 h-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-full relative overflow-hidden">
         <div
-          className="absolute top-0 bottom-0 w-px bg-[#333]"
+          className="absolute top-0 bottom-0 w-px bg-[#262626]"
           style={{ left: `${zeroPos}%` }}
         />
         <div
           className={`absolute top-0.5 bottom-0.5 rounded-full ${
-            isPositive ? 'bg-green-500/70' : 'bg-red-500/70'
+            isPositive ? 'bg-[#22c55e]/70' : 'bg-red-500/70'
           }`}
           style={{
             left: `${barLeft}%`,
@@ -35,7 +35,7 @@ export default function StatBar({ label, value, min = -5, max = 5 }: StatBarProp
       </div>
       <span
         className={`w-12 text-xs font-['JetBrains_Mono','SF_Mono',monospace] text-right shrink-0 ${
-          isPositive ? 'text-green-400' : 'text-red-400'
+          isPositive ? 'text-[#22c55e]' : 'text-red-400'
         }`}
       >
         {value > 0 ? '+' : ''}{value.toFixed(2)}

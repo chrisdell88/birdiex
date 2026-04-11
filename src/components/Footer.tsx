@@ -5,26 +5,26 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="text-sm font-bold text-white font-['Inter',system-ui,sans-serif]">BirdieX</span>
-            <span className="text-[#52525b] text-sm font-['Inter',system-ui,sans-serif]">
+            <span className="text-[#d4d4d4] text-sm font-['Inter',system-ui,sans-serif]">
               -- Part of the BallerX family
             </span>
           </div>
 
-          <div className="flex items-center gap-4 text-xs text-[#52525b] font-['Inter',system-ui,sans-serif]">
-            <a href="https://mockx.co" target="_blank" rel="noopener noreferrer" className="hover:text-[#a1a1aa] transition-colors">
+          <div className="flex items-center gap-4 text-xs text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">
+            <a href="https://mockx.co" target="_blank" rel="noopener noreferrer" className="hover:text-[#f5f5f5] transition-colors">
               MockX.co
             </a>
             <span className="text-[#262626]">|</span>
-            <a href="https://bracketx.co" target="_blank" rel="noopener noreferrer" className="hover:text-[#a1a1aa] transition-colors">
+            <a href="https://bracketx.co" target="_blank" rel="noopener noreferrer" className="hover:text-[#f5f5f5] transition-colors">
               BracketX.co
             </a>
             <span className="text-[#262626]">|</span>
-            <a href="https://ballerx.co" target="_blank" rel="noopener noreferrer" className="hover:text-[#a1a1aa] transition-colors">
+            <a href="https://ballerx.co" target="_blank" rel="noopener noreferrer" className="hover:text-[#f5f5f5] transition-colors">
               BallerX.co
             </a>
           </div>
 
-          <div className="flex flex-col items-center md:items-end gap-1 text-xs text-[#52525b] font-['Inter',system-ui,sans-serif]">
+          <div className="flex flex-col items-center md:items-end gap-1 text-xs text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">
             <span>Data provided by DataGolf</span>
             <span>&copy; 2026 BirdieX. All rights reserved.</span>
           </div>

@@ -23,8 +23,13 @@ export default function PlayerDetailCard({ player }: PlayerDetailCardProps) {
 
   return (
     <tr>
-      <td colSpan={10} className="px-0 py-0">
-        <div className="bg-[#141414] border border-[#262626] rounded-lg mx-4 my-2 p-5">
+      <td colSpan={13} className="px-0 py-0">
+        <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg mx-4 my-2 p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-[10px] uppercase tracking-wider text-[#22c55e] font-medium font-['Inter',system-ui,sans-serif] bg-[#22c55e]/10 border border-[#22c55e]/30 rounded-full px-2.5 py-0.5">
+              Round 1 Data
+            </span>
+          </div>
           <div className="flex flex-col md:flex-row gap-6">
             {/* Player info */}
             <div className="md:w-48 shrink-0">
@@ -32,9 +37,9 @@ export default function PlayerDetailCard({ player }: PlayerDetailCardProps) {
                 {player.player_name}
               </h3>
               <div className="flex items-center gap-2 mt-2">
-                <span className="text-[#a1a1aa] text-sm">{player.position}</span>
-                <span className="text-[#52525b]">|</span>
-                <span className="text-[#a1a1aa] text-sm font-['JetBrains_Mono','SF_Mono',monospace]">
+                <span className="text-[#d4d4d4] text-sm">{player.position}</span>
+                <span className="text-[#262626]">|</span>
+                <span className="text-[#d4d4d4] text-sm font-['JetBrains_Mono','SF_Mono',monospace]">
                   {player.score_to_par > 0 ? `+${player.score_to_par}` : player.score_to_par === 0 ? 'E' : player.score_to_par}
                 </span>
               </div>
@@ -42,9 +47,9 @@ export default function PlayerDetailCard({ player }: PlayerDetailCardProps) {
                 <SignalBadge signal={player.signal} />
               </div>
               <div className="mt-4">
-                <span className="text-[#52525b] text-xs uppercase tracking-wider font-['Inter',system-ui,sans-serif]">X Score</span>
+                <span className="text-[#d4d4d4] text-xs uppercase tracking-wider font-['Inter',system-ui,sans-serif]">X Score</span>
                 <div className={`text-2xl font-bold font-['JetBrains_Mono','SF_Mono',monospace] mt-0.5 ${
-                  player.x_score > 0 ? 'text-green-400' : player.x_score < 0 ? 'text-red-400' : 'text-[#f5f5f5]'
+                  player.x_score > 0 ? 'text-[#22c55e]' : player.x_score < 0 ? 'text-red-400' : 'text-[#f5f5f5]'
                 }`}>
                   {player.x_score > 0 ? '+' : ''}{player.x_score.toFixed(4)}
                 </div>
@@ -53,7 +58,7 @@ export default function PlayerDetailCard({ player }: PlayerDetailCardProps) {
 
             {/* SG Stats */}
             <div className="flex-1">
-              <h4 className="text-[#52525b] text-xs uppercase tracking-wider mb-2 font-['Inter',system-ui,sans-serif]">
+              <h4 className="text-[#d4d4d4] text-xs uppercase tracking-wider mb-2 font-['Inter',system-ui,sans-serif]">
                 Strokes Gained Breakdown
               </h4>
               <div className="space-y-0.5">
@@ -65,7 +70,7 @@ export default function PlayerDetailCard({ player }: PlayerDetailCardProps) {
 
             {/* Model Layers */}
             <div className="flex-1">
-              <h4 className="text-[#52525b] text-xs uppercase tracking-wider mb-2 font-['Inter',system-ui,sans-serif]">
+              <h4 className="text-[#d4d4d4] text-xs uppercase tracking-wider mb-2 font-['Inter',system-ui,sans-serif]">
                 X Score Layers
               </h4>
               <div className="space-y-0.5">

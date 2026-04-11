@@ -1,17 +1,20 @@
-import type { TabId } from '../types';
+import type { TabId, DataSet } from '../types';
 
 interface HeaderProps {
   activeTab: TabId;
   onTabChange: (tab: TabId) => void;
+  dataSet: DataSet;
+  onDataSetChange: (ds: DataSet) => void;
 }
 
 const tabs: { id: TabId; label: string }[] = [
   { id: 'rankings', label: 'RANKINGS' },
   { id: 'matchups', label: 'MATCHUPS' },
   { id: 'methodology', label: 'METHODOLOGY' },
+  { id: 'results', label: 'RESULTS' },
 ];
 
-export default function Header({ activeTab, onTabChange }: HeaderProps) {
+export default function Header({ activeTab, onTabChange, dataSet, onDataSetChange }: HeaderProps) {
   return (
     <header className="border-b border-[#262626] bg-[#0a0a0a] sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
@@ -34,11 +37,37 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
             </div>
           </div>
 
-          {/* Tournament badge */}
-          <div className="bg-[#006747]/20 border border-[#006747]/40 rounded-full px-3 md:px-4 py-1.5">
-            <span className="text-[10px] md:text-xs text-[#00a86b] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif]">
-              The Masters 2026 <span className="text-[#006747]">|</span> Round 1
-            </span>
+          <div className="flex items-center gap-3">
+            {/* Round/Cumulative toggle */}
+            <div className="flex bg-[#111111] border border-[#262626] rounded-full p-0.5">
+              <button
+                onClick={() => onDataSetChange('round')}
+                className={`px-3 py-1 text-[10px] uppercase tracking-wider font-medium rounded-full transition-colors font-['Inter',system-ui,sans-serif] cursor-pointer ${
+                  dataSet === 'round'
+                    ? 'bg-[#006747] text-white'
+                    : 'text-[#52525b] hover:text-[#a1a1aa]'
+                }`}
+              >
+                Round
+              </button>
+              <button
+                onClick={() => onDataSetChange('cumulative')}
+                className={`px-3 py-1 text-[10px] uppercase tracking-wider font-medium rounded-full transition-colors font-['Inter',system-ui,sans-serif] cursor-pointer ${
+                  dataSet === 'cumulative'
+                    ? 'bg-[#006747] text-white'
+                    : 'text-[#52525b] hover:text-[#a1a1aa]'
+                }`}
+              >
+                Cumulative
+              </button>
+            </div>
+
+            {/* Tournament badge */}
+            <div className="bg-[#006747]/20 border border-[#006747]/40 rounded-full px-3 md:px-4 py-1.5">
+              <span className="text-[10px] md:text-xs text-[#00a86b] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif]">
+                The Masters 2026 <span className="text-[#006747]">|</span> Round 1
+              </span>
+            </div>
           </div>
         </div>
 

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import type { PlayerData, SortField, SortDirection, Signal } from '../types';
 import SignalBadge from './SignalBadge';
+import PurityIcon from './PurityIcon';
 import SummaryCards from './SummaryCards';
 import PlayerDetailCard from './PlayerDetailCard';
 
@@ -222,7 +223,10 @@ export default function RankingsTable({ data }: RankingsTableProps) {
                     </span>
                   </td>
                   <td className="px-3 py-2.5">
-                    <SignalBadge signal={player.signal} compact />
+                    <div className="flex items-center gap-1.5">
+                      <SignalBadge signal={player.signal} compact />
+                      <PurityIcon player={player} />
+                    </div>
                   </td>
                 </tr>
                 {expandedPlayer === player.player_name && (

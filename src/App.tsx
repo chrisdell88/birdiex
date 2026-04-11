@@ -1,23 +1,35 @@
 import { useState } from 'react';
-import type { TabId } from './types';
+import type { TabId, DataSet } from './types';
 import { mastersR1Data } from './data/mastersR1Data';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import RankingsTable from './components/RankingsTable';
 import MatchupsView from './components/MatchupsView';
 import MethodologyPage from './components/MethodologyPage';
+import ResultsPage from './components/ResultsPage';
 
 function App() {
   const [activeTab, setActiveTab] = useState<TabId>('rankings');
+  const [dataSet, setDataSet] = useState<DataSet>('round');
+
+  // For now, both round and cumulative use R1 data
+  // Will be updated after R2 is processed
+  const activeData = dataSet === 'round' ? mastersR1Data : mastersR1Data;
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
-      <Header activeTab={activeTab} onTabChange={setActiveTab} />
+      <Header
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        dataSet={dataSet}
+        onDataSetChange={setDataSet}
+      />
 
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
-        {activeTab === 'rankings' && <RankingsTable data={mastersR1Data} />}
-        {activeTab === 'matchups' && <MatchupsView data={mastersR1Data} />}
+        {activeTab === 'rankings' && <RankingsTable data={activeData} />}
+        {activeTab === 'matchups' && <MatchupsView data={activeData} />}
         {activeTab === 'methodology' && <MethodologyPage />}
+        {activeTab === 'results' && <ResultsPage />}
       </main>
 
       <Footer />

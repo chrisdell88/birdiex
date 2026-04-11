@@ -1,3 +1,5 @@
+export type Purity = 'PURE BUY' | 'PURE FADE' | 'CONFLICTED' | 'HOLD';
+
 export interface PlayerData {
   player_name: string;
   position: string;
@@ -14,6 +16,7 @@ export interface PlayerData {
   major_adj_l4: number;
   x_score: number;
   signal: Signal;
+  purity: Purity;
   dg_matched: boolean;
   rank: number;
 }
@@ -27,7 +30,9 @@ export type Signal =
   | 'STRONG FADE'
   | 'STRONGEST FADE';
 
-export type TabId = 'rankings' | 'matchups' | 'methodology';
+export type TabId = 'rankings' | 'matchups' | 'methodology' | 'results';
+
+export type DataSet = 'round' | 'cumulative';
 
 export type SortField =
   | 'rank'
@@ -43,9 +48,22 @@ export type SortField =
 
 export type SortDirection = 'asc' | 'desc';
 
+export type BucketType = 'BUY vs FADE' | 'BUY vs OTHER' | 'OTHER vs FADE' | 'OTHER vs OTHER';
+
+export interface MatchupOddsEntry {
+  p1_player_name: string;
+  p2_player_name: string;
+  odds: Record<string, { p1: string; p2: string }>;
+}
+
 export interface Matchup {
-  player1: PlayerData;
-  player2: PlayerData;
-  edge: number;
+  pick: PlayerData;
+  opponent: PlayerData;
+  matchupScore: number;
   tier: 'BEST BET' | 'STRONG PLAY' | 'LEAN';
+  bucket: BucketType;
+  bestOdds: string;
+  bestBook: string;
+  dgOdds: string;
+  isDoubleSignal: boolean;
 }

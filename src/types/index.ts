@@ -25,7 +25,9 @@ export type Signal =
   | 'STRONGEST BUY'
   | 'STRONG BUY'
   | 'BUY'
+  | 'LEAN BUY'
   | 'HOLD'
+  | 'LEAN FADE'
   | 'FADE'
   | 'STRONG FADE'
   | 'STRONGEST FADE';

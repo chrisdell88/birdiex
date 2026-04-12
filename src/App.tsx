@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { TabId, DataSet } from './types';
-import { mastersR1Data } from './data/mastersR1Data';
+import { roundOnlyData, cumulativeData } from './data/mastersR1Data';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import RankingsTable from './components/RankingsTable';
@@ -12,9 +12,8 @@ function App() {
   const [activeTab, setActiveTab] = useState<TabId>('rankings');
   const [dataSet, setDataSet] = useState<DataSet>('round');
 
-  // For now, both round and cumulative use R1 data
-  // Will be updated after R2 is processed
-  const activeData = dataSet === 'round' ? mastersR1Data : mastersR1Data;
+  // Toggle between R3-only X Scores and R1+R2+R3 Cumulative X Scores
+  const activeData = dataSet === 'round' ? roundOnlyData : cumulativeData;
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">

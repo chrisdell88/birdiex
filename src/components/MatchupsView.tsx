@@ -17,11 +17,11 @@ function parseOdds(odds: string): number {
 }
 
 function isBuySide(p: PlayerData): boolean {
-  return ['STRONGEST BUY', 'STRONG BUY', 'BUY'].includes(p.signal);
+  return ['STRONGEST BUY', 'STRONG BUY', 'BUY', 'LEAN BUY'].includes(p.signal);
 }
 
 function isFadeSide(p: PlayerData): boolean {
-  return ['FADE', 'STRONG FADE', 'STRONGEST FADE'].includes(p.signal);
+  return ['LEAN FADE', 'FADE', 'STRONG FADE', 'STRONGEST FADE'].includes(p.signal);
 }
 
 function getBucket(pick: PlayerData, opponent: PlayerData): BucketType {

@@ -70,3 +70,74 @@ export interface Matchup {
   dgOdds: string;
   isDoubleSignal: boolean;
 }
+
+// Results page types
+export type TierType = 'BEST BET' | 'STRONG PLAY' | 'LEAN';
+export type BetResult = 'W' | 'L' | 'P';
+export type BetType = 'H2H' | '3-Ball';
+export type ResultsDataSet = 'round-only' | 'cumulative';
+
+export type Sportsbook =
+  | 'Best Odds (Overall)'
+  | 'DraftKings'
+  | 'FanDuel'
+  | 'BetMGM'
+  | 'Caesars'
+  | 'bet365'
+  | 'BetOnline'
+  | 'Bovada'
+  | 'PointsBet'
+  | 'Unibet'
+  | 'Betcris'
+  | 'Pinnacle';
+
+export interface BetRecord {
+  id: number;
+  round: number;
+  pick: string;
+  opponent: string;
+  edge: number;
+  tier: TierType;
+  bucket: BucketType;
+  bestOdds: string;
+  book: string;
+  betType: BetType;
+  pickScore: number | null;
+  oppScore: number | null;
+  result: BetResult;
+  units: number;
+  dataSet: ResultsDataSet;
+}
+
+export interface TierBreakdown {
+  tier: TierType;
+  wins: number;
+  losses: number;
+  pushes: number;
+  units: number;
+  roi: number;
+}
+
+export interface BucketBreakdown {
+  bucket: BucketType;
+  wins: number;
+  losses: number;
+  pushes: number;
+  units: number;
+  roi: number;
+}
+
+export type ResultsSortField =
+  | 'id'
+  | 'round'
+  | 'pick'
+  | 'opponent'
+  | 'edge'
+  | 'tier'
+  | 'bucket'
+  | 'bestOdds'
+  | 'book'
+  | 'pickScore'
+  | 'oppScore'
+  | 'result'
+  | 'units';

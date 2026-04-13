@@ -1,6 +1,30 @@
-export default function MethodologyPage() {
+interface MethodologyPageProps {
+  onNavigateToResults?: () => void;
+}
+
+export default function MethodologyPage({ onNavigateToResults }: MethodologyPageProps) {
   return (
     <div className="max-w-3xl mx-auto">
+      {/* Results Banner */}
+      <div className="mb-8 bg-[#0a0a0a] border border-[#22c55e]/30 rounded-xl p-5">
+        <div className="text-center">
+          <div className="text-xs text-[#22c55e] uppercase tracking-widest font-semibold font-['Inter',system-ui,sans-serif] mb-2">
+            Masters 2026 Results
+          </div>
+          <div className="text-2xl font-bold text-[#f5f5f5] font-['JetBrains_Mono','SF_Mono',monospace] mb-1">
+            130-70-21 &nbsp;|&nbsp; +46.60 units &nbsp;|&nbsp; +17.8% ROI
+          </div>
+          {onNavigateToResults && (
+            <button
+              onClick={onNavigateToResults}
+              className="mt-3 text-sm text-[#22c55e] hover:text-[#4ade80] font-medium font-['Inter',system-ui,sans-serif] underline underline-offset-2 cursor-pointer transition-colors"
+            >
+              View Full Results &rarr;
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Section 1: The X Score */}
       <section className="mb-12">
         <h2 className="text-2xl font-bold text-[#f5f5f5] mb-2 font-['Inter',system-ui,sans-serif]">
@@ -14,39 +38,12 @@ export default function MethodologyPage() {
           than their scorecard suggests.
         </p>
 
-        {/* Formula visual */}
-        <div className="bg-[#0a0a0a] border border-[#262626] rounded-xl p-6 mb-8">
-          <div className="text-center mb-4">
-            <span className="text-xs text-[#d4d4d4] uppercase tracking-widest font-['Inter',system-ui,sans-serif]">
-              Formula
-            </span>
-          </div>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 text-center">
-            <div className="bg-[#22c55e]/10 border border-[#22c55e]/30 rounded-lg px-4 py-3 min-w-[100px]">
-              <div className="text-[10px] text-[#d4d4d4] uppercase tracking-wider font-['Inter',system-ui,sans-serif]">Layer 1</div>
-              <div className="text-sm font-semibold text-[#22c55e] font-['Inter',system-ui,sans-serif]">SG Score</div>
-            </div>
-            <span className="text-[#d4d4d4] font-['JetBrains_Mono','SF_Mono',monospace] text-lg">+</span>
-            <div className="bg-[#22c55e]/8 border border-[#22c55e]/25 rounded-lg px-4 py-3 min-w-[100px]">
-              <div className="text-[10px] text-[#d4d4d4] uppercase tracking-wider font-['Inter',system-ui,sans-serif]">Layer 2</div>
-              <div className="text-sm font-semibold text-[#22c55e] font-['Inter',system-ui,sans-serif]">History</div>
-            </div>
-            <span className="text-[#d4d4d4] font-['JetBrains_Mono','SF_Mono',monospace] text-lg">+</span>
-            <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-lg px-4 py-3 min-w-[100px]">
-              <div className="text-[10px] text-[#d4d4d4] uppercase tracking-wider font-['Inter',system-ui,sans-serif]">Layer 3</div>
-              <div className="text-sm font-semibold text-[#22c55e] font-['Inter',system-ui,sans-serif]">Fit</div>
-            </div>
-            <span className="text-[#d4d4d4] font-['JetBrains_Mono','SF_Mono',monospace] text-lg">+</span>
-            <div className="bg-[#22c55e]/3 border border-[#22c55e]/15 rounded-lg px-4 py-3 min-w-[100px]">
-              <div className="text-[10px] text-[#d4d4d4] uppercase tracking-wider font-['Inter',system-ui,sans-serif]">Layer 4</div>
-              <div className="text-sm font-semibold text-[#22c55e] font-['Inter',system-ui,sans-serif]">Major</div>
-            </div>
-            <span className="text-[#d4d4d4] font-['JetBrains_Mono','SF_Mono',monospace] text-lg">=</span>
-            <div className="bg-[#22c55e]/15 border border-[#22c55e]/40 rounded-lg px-5 py-3 min-w-[100px]">
-              <div className="text-[10px] text-[#22c55e] uppercase tracking-wider font-bold font-['Inter',system-ui,sans-serif]">Result</div>
-              <div className="text-sm font-bold text-[#22c55e] font-['Inter',system-ui,sans-serif]">X Score</div>
-            </div>
-          </div>
+        <div className="bg-[#0a0a0a] border border-[#262626] rounded-xl p-5 mb-8">
+          <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
+            The X Score combines four proprietary layers into a single rating. Layer 1 applies
+            course-specific weights to strokes gained categories, with putting subtracted as a
+            regression indicator. The exact weights and methodology are proprietary.
+          </p>
         </div>
       </section>
 
@@ -108,21 +105,13 @@ export default function MethodologyPage() {
                 SG Score -- Putting Regression
               </h3>
             </div>
-            <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed mb-3">
+            <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
               The foundation of the X Score. We apply a course-weighted putting regression across
               all four strokes gained categories -- rewarding ball striking (OTT, APP) and penalizing
-              putting dependency. Weights adjust per course based on DataGolf's fit coefficients and
-              the venue's historical predictability score.
+              putting dependency. Putting is subtracted, not added -- a golfer gaining strokes via
+              ball striking scores higher than one gaining the same strokes via putting. Weights adjust
+              per course based on the venue's historical predictability score.
             </p>
-            <div className="bg-[#111] border border-[#333] rounded-md p-3">
-              <p className="text-xs text-[#999] font-['JetBrains_Mono','SF_Mono',monospace] leading-relaxed">
-                (w_OTT x SG_OTT + w_APP x SG_APP + w_ARG x SG_ARG - w_PUTT x SG_PUTT) / sum(weights)
-              </p>
-              <p className="text-xs text-[#666] font-['Inter',system-ui,sans-serif] mt-2">
-                Putting is subtracted, not added. A golfer gaining strokes via ball striking scores higher
-                than one gaining the same strokes via putting.
-              </p>
-            </div>
           </div>
 
           <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-5">
@@ -174,10 +163,9 @@ export default function MethodologyPage() {
             <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
               Majors are different. The pressure is higher, the setups are tougher, and some players
               consistently elevate while others shrink. This layer adjusts for a player's major
-              championship track record. Koepka, for example, gains
-              an additional <span className="text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace] font-medium">+0.18</span> strokes
-              per round at majors versus regular Tour events. This layer is zeroed out at non-major
-              tournaments.
+              championship track record -- rewarding golfers who historically perform above their
+              baseline at majors and penalizing those who underperform. This layer is zeroed out
+              at non-major tournaments.
             </p>
           </div>
         </div>

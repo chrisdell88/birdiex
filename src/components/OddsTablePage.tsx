@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import type { PlayerData, MatchupOddsEntry } from '../types';
-import { r2MatchupOddsData, r3MatchupOddsData, r4MatchupOddsData } from '../data/matchupOdds';
+import { r2MatchupOddsData, r3MatchupOddsData, r4MatchupOddsData, r2XScores, r3XScores, r4XScores } from '../data/matchupOdds';
 import { threeBallOddsData, type ThreeBallOddsEntry } from '../data/threeBallData';
 
 interface OddsTablePageProps {
@@ -74,7 +74,7 @@ interface ThreeBallRow {
   bestBook: string;
 }
 
-function buildH2HRows(data: PlayerData[], oddsData: MatchupOddsEntry[]): H2HRow[] {
+function buildH2HRows(data: PlayerData[], oddsData: MatchupOddsEntry[], xScoreLookup?: Record<string, number>): H2HRow[] {
   const playerMap = new Map<string, PlayerData>();
   data.forEach((p) => playerMap.set(p.player_name, p));
 
@@ -85,11 +85,17 @@ function buildH2HRows(data: PlayerData[], oddsData: MatchupOddsEntry[]): H2HRow[
     const p2 = playerMap.get(entry.p2_player_name);
     if (!p1 || !p2) continue;
 
-    const pick = p1.x_score >= p2.x_score ? p1 : p2;
+    // Use round-specific X Scores if provided, otherwise fall back to player data
+    const p1XScore = xScoreLookup ? (xScoreLookup[entry.p1_player_name] ?? p1.x_score) : p1.x_score;
+    const p2XScore = xScoreLookup ? (xScoreLookup[entry.p2_player_name] ?? p2.x_score) : p2.x_score;
+
+    const pick = p1XScore >= p2XScore ? p1 : p2;
     const opponent = pick === p1 ? p2 : p1;
     const pickIsP1 = pick === p1;
+    const pickXScore = pickIsP1 ? p1XScore : p2XScore;
+    const oppXScore = pickIsP1 ? p2XScore : p1XScore;
 
-    const edge = +(pick.x_score - opponent.x_score).toFixed(4);
+    const edge = +(pickXScore - oppXScore).toFixed(4);
     if (edge < 0.95) continue;
 
     let tier: H2HRow['tier'] = 'LEAN';
@@ -234,16 +240,18 @@ export default function OddsTablePage({ data }: OddsTablePageProps) {
     return sortDir === 'asc' ? ' \u25B2' : ' \u25BC';
   };
 
-  // Build H2H rows
+  // Build H2H rows with round-specific X Scores
   const h2hRows = useMemo(() => {
-    let oddsData: MatchupOddsEntry[] = [];
     switch (roundFilter) {
-      case 'R2': oddsData = r2MatchupOddsData; break;
-      case 'R3': oddsData = r3MatchupOddsData; break;
-      case 'R4': oddsData = r4MatchupOddsData; break;
-      case 'All': oddsData = [...r2MatchupOddsData, ...r3MatchupOddsData, ...r4MatchupOddsData]; break;
+      case 'R2': return buildH2HRows(data, r2MatchupOddsData, r2XScores).filter(r => r.edge >= minEdge);
+      case 'R3': return buildH2HRows(data, r3MatchupOddsData, r3XScores).filter(r => r.edge >= minEdge);
+      case 'R4': return buildH2HRows(data, r4MatchupOddsData, r4XScores).filter(r => r.edge >= minEdge);
+      case 'All': return [
+        ...buildH2HRows(data, r2MatchupOddsData, r2XScores),
+        ...buildH2HRows(data, r3MatchupOddsData, r3XScores),
+        ...buildH2HRows(data, r4MatchupOddsData, r4XScores),
+      ].filter(r => r.edge >= minEdge);
     }
-    return buildH2HRows(data, oddsData).filter(r => r.edge >= minEdge);
   }, [data, roundFilter, minEdge]);
 
   // Build 3-ball rows

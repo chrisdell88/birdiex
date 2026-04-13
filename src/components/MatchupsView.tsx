@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import type { PlayerData, Matchup, BucketType } from '../types';
-import { matchupOddsData, r2MatchupOddsData, r3MatchupOddsData, r4MatchupOddsData } from '../data/matchupOdds';
+import type { PlayerData, Matchup, BucketType, MatchupOddsEntry } from '../types';
+import { r2MatchupOddsData, r3MatchupOddsData, r4MatchupOddsData } from '../data/matchupOdds';
 import { threeBallOddsData, type ThreeBallOddsEntry } from '../data/threeBallData';
 import SignalBadge from './SignalBadge';
 
@@ -34,7 +34,7 @@ function getBucket(pick: PlayerData, opponent: PlayerData): BucketType {
   return 'OTHER vs OTHER';
 }
 
-function generateMatchups(data: PlayerData[], oddsData: typeof matchupOddsData): Matchup[] {
+function generateMatchups(data: PlayerData[], oddsData: MatchupOddsEntry[]): Matchup[] {
   const playerMap = new Map<string, PlayerData>();
   data.forEach((p) => playerMap.set(p.player_name, p));
 
@@ -57,7 +57,7 @@ function generateMatchups(data: PlayerData[], oddsData: typeof matchupOddsData):
     let bestOddsValue = -Infinity;
     let dgOdds = '';
 
-    for (const [book, vals] of Object.entries(entry.odds)) {
+    for (const [book, vals] of Object.entries(entry.odds) as [string, { p1: string; p2: string }][]) {
       const pickOddsStr = pickIsP1 ? vals.p1 : vals.p2;
       if (book === 'datagolf') {
         dgOdds = pickOddsStr;

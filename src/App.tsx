@@ -29,7 +29,7 @@ function App() {
         {activeTab === 'rankings' && <RankingsTable data={activeData} />}
         {activeTab === 'matchups' && <MatchupsView data={activeData} />}
         {activeTab === 'odds' && <OddsTablePage data={activeData} />}
-        {activeTab === 'methodology' && <MethodologyPage />}
+        {activeTab === 'methodology' && <MethodologyPage onNavigateToResults={() => setActiveTab('results')} />}
         {activeTab === 'results' && <ResultsPage />}
       </main>
 

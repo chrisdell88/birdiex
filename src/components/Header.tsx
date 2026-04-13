@@ -10,6 +10,7 @@ interface HeaderProps {
 const tabs: { id: TabId; label: string }[] = [
   { id: 'rankings', label: 'RANKINGS' },
   { id: 'matchups', label: 'MATCHUPS' },
+  { id: 'odds', label: 'ODDS' },
   { id: 'methodology', label: 'METHODOLOGY' },
   { id: 'results', label: 'RESULTS' },
 ];

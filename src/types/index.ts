@@ -37,7 +37,7 @@ export type Signal =
   | 'STRONG SELL'
   | 'STRONGEST SELL';
 
-export type TabId = 'rankings' | 'matchups' | 'methodology' | 'results';
+export type TabId = 'rankings' | 'matchups' | 'odds' | 'methodology' | 'results';
 
 export type DataSet = 'round' | 'cumulative';
 

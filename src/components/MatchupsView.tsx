@@ -129,6 +129,53 @@ function formatBookName(book: string): string {
   return names[book] || book;
 }
 
+const sportsbookUrls: Record<string, string> = {
+  bet365: 'https://www.bet365.com/#/AC/B18/C20604387/D48/E1/F2/',
+  Bet365: 'https://www.bet365.com/#/AC/B18/C20604387/D48/E1/F2/',
+  betmgm: 'https://sports.betmgm.com/en/sports/golf-9',
+  BetMGM: 'https://sports.betmgm.com/en/sports/golf-9',
+  betonline: 'https://www.betonline.ag/sportsbook/golf',
+  BetOnline: 'https://www.betonline.ag/sportsbook/golf',
+  bovada: 'https://www.bovada.lv/sports/golf',
+  Bovada: 'https://www.bovada.lv/sports/golf',
+  caesars: 'https://www.caesars.com/sportsbook-and-casino/golf',
+  Caesars: 'https://www.caesars.com/sportsbook-and-casino/golf',
+  draftkings: 'https://sportsbook.draftkings.com/leagues/golf',
+  DraftKings: 'https://sportsbook.draftkings.com/leagues/golf',
+  fanduel: 'https://sportsbook.fanduel.com/golf',
+  FanDuel: 'https://sportsbook.fanduel.com/golf',
+  pinnacle: 'https://www.pinnacle.com/en/golf/',
+  Pinnacle: 'https://www.pinnacle.com/en/golf/',
+  pointsbet: 'https://pointsbet.com/sports/golf',
+  PointsBet: 'https://pointsbet.com/sports/golf',
+  unibet: 'https://www.unibet.com/betting/sports/golf',
+  Unibet: 'https://www.unibet.com/betting/sports/golf',
+  betcris: 'https://www.betcris.com/en/sports/golf',
+  Betcris: 'https://www.betcris.com/en/sports/golf',
+};
+
+function SportsbookLink({ bookName }: { bookName: string }) {
+  const url = sportsbookUrls[bookName];
+  if (!url) {
+    return <span className="text-[#d4d4d4]">({bookName})</span>;
+  }
+  return (
+    <span className="text-[#d4d4d4]">
+      (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-[#22c55e] hover:underline transition-colors"
+      >
+        {bookName}
+        <span className="ml-0.5 text-[10px]">{'\u2197'}</span>
+      </a>
+      )
+    </span>
+  );
+}
+
 const tierBorderColor: Record<Matchup['tier'], string> = {
   'BEST BET': 'border-l-[#22c55e]',
   'STRONG PLAY': 'border-l-emerald-500',
@@ -578,7 +625,7 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
                     <span className="text-[#f5f5f5] font-bold font-['JetBrains_Mono','SF_Mono',monospace]">
                       {m.bestOdds}
                     </span>
-                    <span className="text-[#d4d4d4]"> ({m.bestBook})</span>
+                    {' '}<SportsbookLink bookName={m.bestBook} />
                   </div>
                 </div>
               </div>
@@ -678,7 +725,7 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
                     <span className="text-[#f5f5f5] font-bold font-['JetBrains_Mono','SF_Mono',monospace]">
                       {tb.bestOdds}
                     </span>
-                    <span className="text-[#d4d4d4]"> ({tb.bestBook})</span>
+                    {' '}<SportsbookLink bookName={tb.bestBook} />
                   </div>
                 </div>
               </div>

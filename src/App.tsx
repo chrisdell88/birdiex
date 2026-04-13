@@ -7,6 +7,7 @@ import RankingsTable from './components/RankingsTable';
 import MatchupsView from './components/MatchupsView';
 import MethodologyPage from './components/MethodologyPage';
 import ResultsPage from './components/ResultsPage';
+import OddsTablePage from './components/OddsTablePage';
 
 function App() {
   const [activeTab, setActiveTab] = useState<TabId>('rankings');
@@ -27,6 +28,7 @@ function App() {
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
         {activeTab === 'rankings' && <RankingsTable data={activeData} />}
         {activeTab === 'matchups' && <MatchupsView data={activeData} />}
+        {activeTab === 'odds' && <OddsTablePage data={activeData} />}
         {activeTab === 'methodology' && <MethodologyPage />}
         {activeTab === 'results' && <ResultsPage />}
       </main>

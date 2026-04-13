@@ -21,7 +21,7 @@ function isBuySide(p: PlayerData): boolean {
 }
 
 function isFadeSide(p: PlayerData): boolean {
-  return ['LEAN FADE', 'FADE', 'STRONG FADE', 'STRONGEST FADE'].includes(p.signal);
+  return ['LEAN FADE', 'FADE', 'STRONG FADE', 'STRONGEST FADE', 'LEAN SELL', 'SELL', 'STRONG SELL', 'STRONGEST SELL'].includes(p.signal);
 }
 
 function getBucket(pick: PlayerData, opponent: PlayerData): BucketType {
@@ -364,14 +364,27 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
 
   return (
     <div>
+      {/* Tournament Complete Banner */}
+      <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-lg p-5 mb-6">
+        <div className="flex items-center gap-3 mb-2">
+          <span className="bg-[#22c55e]/15 text-[#22c55e] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
+            TOURNAMENT COMPLETE
+          </span>
+        </div>
+        <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">
+          The Masters 2026 is complete. The matchups below show the R4 picks that were recommended by the X Score model.
+          Check the <span className="text-[#22c55e] font-semibold">Results</span> tab for full tournament performance: 130-70-21, +46.60u, 17.8% ROI.
+        </p>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-bold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
-            Matchup Recommendations
+            R4 Matchup Recommendations (Historical)
           </h2>
           <p className="text-sm text-[#d4d4d4] mt-1 font-['Inter',system-ui,sans-serif]">
-            Real sportsbook matchups ranked by X Score edge -- Min edge: 0.95
+            Final round picks ranked by X Score edge -- Min edge: 0.95
           </p>
         </div>
         <div className="flex items-center gap-3">

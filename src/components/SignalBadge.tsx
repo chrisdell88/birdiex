@@ -6,10 +6,15 @@ const signalStyles: Record<Signal, string> = {
   'BUY': 'bg-green-500/15 text-green-400 border border-green-500/30',
   'LEAN BUY': 'bg-green-500/10 text-green-500/70 border border-green-500/20',
   'HOLD': 'bg-gray-500/15 text-gray-400 border border-gray-500/30',
+  'NEUTRAL': 'bg-gray-500/15 text-gray-400 border border-gray-500/30',
   'LEAN FADE': 'bg-red-500/10 text-red-500/70 border border-red-500/20',
   'FADE': 'bg-red-500/15 text-red-400 border border-red-500/30',
   'STRONG FADE': 'bg-red-600/70 text-red-100 font-semibold',
   'STRONGEST FADE': 'bg-red-500 text-red-950 font-semibold',
+  'LEAN SELL': 'bg-red-500/10 text-red-500/70 border border-red-500/20',
+  'SELL': 'bg-red-500/15 text-red-400 border border-red-500/30',
+  'STRONG SELL': 'bg-red-600/70 text-red-100 font-semibold',
+  'STRONGEST SELL': 'bg-red-500 text-red-950 font-semibold',
 };
 
 interface SignalBadgeProps {

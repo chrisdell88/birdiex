@@ -65,7 +65,7 @@ export default function Header({ activeTab, onTabChange, dataSet, onDataSetChang
             {/* Tournament badge */}
             <div className="bg-[#22c55e]/10 border border-[#22c55e]/30 rounded-full px-3 md:px-4 py-1.5">
               <span className="text-[10px] md:text-xs text-[#22c55e] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif]">
-                The Masters 2026 <span className="text-[#22c55e]/50">|</span> Round 3
+                The Masters 2026 <span className="text-[#22c55e]/50">|</span> FINAL
               </span>
             </div>
           </div>

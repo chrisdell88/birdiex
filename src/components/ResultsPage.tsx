@@ -4,8 +4,23 @@ import {
   overallRecord,
   overallUnits,
   overallROI,
-  tierBreakdowns,
-  bucketBreakdowns,
+  r2Summary,
+  r3RoundOnlySummary,
+  r3CumulativeSummary,
+  r4RoundOnlySummary,
+  r4CumulativeSummary,
+  totalTierBreakdowns,
+  totalBucketBreakdowns,
+  r2TierBreakdowns,
+  r2BucketBreakdowns,
+  r3ROTierBreakdowns,
+  r3ROBucketBreakdowns,
+  r3CumTierBreakdowns,
+  r3CumBucketBreakdowns,
+  r4ROTierBreakdowns,
+  r4ROBucketBreakdowns,
+  r4CumTierBreakdowns,
+  r4CumBucketBreakdowns,
   dataSetComparison,
   betLog,
 } from '../data/resultsData';
@@ -107,6 +122,57 @@ export default function ResultsPage() {
     return sortDir === 'asc' ? ' \u25B2' : ' \u25BC';
   };
 
+  // Show data set toggle only for R3/R4 (R2 only has round-only)
+  const showDataSetToggle = roundFilter === 'Round 3' || roundFilter === 'Round 4' || roundFilter === 'All Rounds';
+
+  // Compute active summary based on filters
+  const activeSummary = useMemo(() => {
+    if (roundFilter === 'All Rounds') {
+      return {
+        wins: overallRecord.wins,
+        losses: overallRecord.losses,
+        pushes: overallRecord.pushes,
+        units: overallUnits,
+        roi: overallROI,
+      };
+    }
+    if (roundFilter === 'Round 2') {
+      return {
+        wins: r2Summary.wins,
+        losses: r2Summary.losses,
+        pushes: r2Summary.pushes,
+        units: r2Summary.units,
+        roi: r2Summary.roi,
+      };
+    }
+    if (roundFilter === 'Round 3') {
+      const s = dataSetFilter === 'cumulative' ? r3CumulativeSummary : r3RoundOnlySummary;
+      return { wins: s.wins, losses: s.losses, pushes: s.pushes, units: s.units, roi: s.roi };
+    }
+    if (roundFilter === 'Round 4') {
+      const s = dataSetFilter === 'cumulative' ? r4CumulativeSummary : r4RoundOnlySummary;
+      return { wins: s.wins, losses: s.losses, pushes: s.pushes, units: s.units, roi: s.roi };
+    }
+    return { wins: overallRecord.wins, losses: overallRecord.losses, pushes: overallRecord.pushes, units: overallUnits, roi: overallROI };
+  }, [roundFilter, dataSetFilter]);
+
+  // Compute active tier/bucket breakdowns
+  const activeTierBreakdowns = useMemo(() => {
+    if (roundFilter === 'All Rounds') return totalTierBreakdowns;
+    if (roundFilter === 'Round 2') return r2TierBreakdowns;
+    if (roundFilter === 'Round 3') return dataSetFilter === 'cumulative' ? r3CumTierBreakdowns : r3ROTierBreakdowns;
+    if (roundFilter === 'Round 4') return dataSetFilter === 'cumulative' ? r4CumTierBreakdowns : r4ROTierBreakdowns;
+    return totalTierBreakdowns;
+  }, [roundFilter, dataSetFilter]);
+
+  const activeBucketBreakdowns = useMemo(() => {
+    if (roundFilter === 'All Rounds') return totalBucketBreakdowns;
+    if (roundFilter === 'Round 2') return r2BucketBreakdowns;
+    if (roundFilter === 'Round 3') return dataSetFilter === 'cumulative' ? r3CumBucketBreakdowns : r3ROBucketBreakdowns;
+    if (roundFilter === 'Round 4') return dataSetFilter === 'cumulative' ? r4CumBucketBreakdowns : r4ROBucketBreakdowns;
+    return totalBucketBreakdowns;
+  }, [roundFilter, dataSetFilter]);
+
   // Filtered + sorted data
   const filteredBets = useMemo(() => {
     let bets = [...betLog];
@@ -114,6 +180,11 @@ export default function ResultsPage() {
     if (roundFilter !== 'All Rounds') {
       const rn = parseInt(roundFilter.replace('Round ', ''));
       bets = bets.filter(b => b.round === rn);
+    }
+
+    // For R3 and R4, filter by data set
+    if (roundFilter === 'Round 3' || roundFilter === 'Round 4') {
+      bets = bets.filter(b => b.dataSet === dataSetFilter);
     }
 
     if (bookFilter !== 'Best Odds (Overall)') {
@@ -126,42 +197,75 @@ export default function ResultsPage() {
 
     bets.sort((a, b) => compareValues(a, b, sortField, sortDir));
     return bets;
-  }, [roundFilter, bookFilter, betTypeFilter, sortField, sortDir]);
+  }, [roundFilter, dataSetFilter, bookFilter, betTypeFilter, sortField, sortDir]);
 
   const mono = "font-['JetBrains_Mono','SF_Mono',monospace]";
   const label = "text-[10px] uppercase tracking-wider text-[#a1a1aa] font-medium font-['Inter',system-ui,sans-serif]";
 
   return (
     <div className="max-w-7xl mx-auto">
+      {/* Tournament Summary Banner */}
+      <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-lg p-4 mb-6">
+        <div className="flex items-center gap-3 mb-2">
+          <span className="bg-[#22c55e]/15 text-[#22c55e] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
+            TOURNAMENT COMPLETE
+          </span>
+          <span className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">The Masters 2026 -- Final Results</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
+          <div>
+            <div className={label}>Total Record</div>
+            <div className={`text-lg font-bold ${mono} text-[#f5f5f5]`}>130-70-21</div>
+          </div>
+          <div>
+            <div className={label}>Total Units</div>
+            <div className={`text-lg font-bold ${mono} text-[#22c55e]`}>+46.60u</div>
+          </div>
+          <div>
+            <div className={label}>ROI</div>
+            <div className={`text-lg font-bold ${mono} text-[#22c55e]`}>+17.8%</div>
+          </div>
+          <div>
+            <div className={label}>Total Bets</div>
+            <div className={`text-lg font-bold ${mono} text-[#f5f5f5]`}>221</div>
+          </div>
+        </div>
+      </div>
+
       {/* Section 1: Summary Dashboard */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {/* Overall Record */}
         <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-5">
-          <div className={label + ' mb-3'}>Overall Record</div>
+          <div className={label + ' mb-3'}>
+            {roundFilter === 'All Rounds' ? 'Overall Record' : `${roundFilter} Record`}
+            {(roundFilter === 'Round 3' || roundFilter === 'Round 4') && (
+              <span className="text-[#22c55e] ml-1">({dataSetFilter})</span>
+            )}
+          </div>
           <div className={`text-2xl font-bold ${mono} text-[#f5f5f5]`}>
-            {overallRecord.wins}-{overallRecord.losses}-{overallRecord.pushes}
+            {activeSummary.wins}-{activeSummary.losses}-{activeSummary.pushes}
           </div>
           <div className="text-xs text-[#a1a1aa] mt-1 font-['Inter',system-ui,sans-serif]">
-            Win rate: {((overallRecord.wins / (overallRecord.wins + overallRecord.losses)) * 100).toFixed(1)}%
+            Win rate: {((activeSummary.wins / (activeSummary.wins + activeSummary.losses)) * 100).toFixed(1)}%
           </div>
         </div>
 
         {/* Units +/- */}
-        <div className={`bg-[#0a0a0a] border ${borderColor(overallUnits)} rounded-lg p-5`}>
+        <div className={`bg-[#0a0a0a] border ${borderColor(activeSummary.units)} rounded-lg p-5`}>
           <div className={label + ' mb-3'}>Units +/-</div>
-          <div className={`text-2xl font-bold ${mono} ${unitColor(overallUnits)}`}>
-            {formatUnits(overallUnits)}
+          <div className={`text-2xl font-bold ${mono} ${unitColor(activeSummary.units)}`}>
+            {formatUnits(activeSummary.units)}
           </div>
           <div className="text-xs text-[#a1a1aa] mt-1 font-['Inter',system-ui,sans-serif]">
-            {overallRecord.wins + overallRecord.losses + overallRecord.pushes} total bets
+            {activeSummary.wins + activeSummary.losses + activeSummary.pushes} total bets
           </div>
         </div>
 
         {/* ROI % */}
-        <div className={`bg-[#0a0a0a] border ${borderColor(overallROI)} rounded-lg p-5`}>
+        <div className={`bg-[#0a0a0a] border ${borderColor(activeSummary.roi)} rounded-lg p-5`}>
           <div className={label + ' mb-3'}>ROI %</div>
-          <div className={`text-2xl font-bold ${mono} ${unitColor(overallROI)}`}>
-            {formatROI(overallROI)}
+          <div className={`text-2xl font-bold ${mono} ${unitColor(activeSummary.roi)}`}>
+            {formatROI(activeSummary.roi)}
           </div>
           <div className="text-xs text-[#a1a1aa] mt-1 font-['Inter',system-ui,sans-serif]">
             Return on investment
@@ -172,7 +276,7 @@ export default function ResultsPage() {
       {/* Section 2: Breakdown Cards */}
       {/* Row 1 - By Tier */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        {tierBreakdowns.map(t => (
+        {activeTierBreakdowns.map(t => (
           <div key={t.tier} className={`bg-[#0a0a0a] border ${borderColor(t.units)} rounded-lg p-5`}>
             <div className={label + ' mb-3'}>
               {t.tier === 'BEST BET' && <span className="text-[#22c55e]">Tier 1</span>}
@@ -192,8 +296,8 @@ export default function ResultsPage() {
       </div>
 
       {/* Row 2 - By Bucket */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        {bucketBreakdowns.map(b => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+        {activeBucketBreakdowns.map(b => (
           <div key={b.bucket} className={`bg-[#0a0a0a] border ${borderColor(b.units)} rounded-lg p-5`}>
             <div className={label + ' mb-3'}>{b.bucket}</div>
             <div className={`text-lg font-bold ${mono} text-[#f5f5f5]`}>
@@ -219,29 +323,31 @@ export default function ResultsPage() {
             {rounds.map(r => <option key={r} value={r}>{r}</option>)}
           </select>
 
-          {/* Data Set toggle */}
-          <div className="flex border border-[#262626] rounded-full p-0.5">
-            <button
-              onClick={() => setDataSetFilter('round-only')}
-              className={`px-3 py-1.5 text-[10px] uppercase tracking-wider font-medium rounded-full transition-colors font-['Inter',system-ui,sans-serif] cursor-pointer ${
-                dataSetFilter === 'round-only'
-                  ? 'bg-[#22c55e] text-[#0a0a0a]'
-                  : 'text-[#d4d4d4] hover:text-white'
-              }`}
-            >
-              Round-Only
-            </button>
-            <button
-              onClick={() => setDataSetFilter('cumulative')}
-              className={`px-3 py-1.5 text-[10px] uppercase tracking-wider font-medium rounded-full transition-colors font-['Inter',system-ui,sans-serif] cursor-pointer ${
-                dataSetFilter === 'cumulative'
-                  ? 'bg-[#22c55e] text-[#0a0a0a]'
-                  : 'text-[#d4d4d4] hover:text-white'
-              }`}
-            >
-              Cumulative
-            </button>
-          </div>
+          {/* Data Set toggle - only show for R3/R4/All */}
+          {showDataSetToggle && (
+            <div className="flex border border-[#262626] rounded-full p-0.5">
+              <button
+                onClick={() => setDataSetFilter('round-only')}
+                className={`px-3 py-1.5 text-[10px] uppercase tracking-wider font-medium rounded-full transition-colors font-['Inter',system-ui,sans-serif] cursor-pointer ${
+                  dataSetFilter === 'round-only'
+                    ? 'bg-[#22c55e] text-[#0a0a0a]'
+                    : 'text-[#d4d4d4] hover:text-white'
+                }`}
+              >
+                Round-Only
+              </button>
+              <button
+                onClick={() => setDataSetFilter('cumulative')}
+                className={`px-3 py-1.5 text-[10px] uppercase tracking-wider font-medium rounded-full transition-colors font-['Inter',system-ui,sans-serif] cursor-pointer ${
+                  dataSetFilter === 'cumulative'
+                    ? 'bg-[#22c55e] text-[#0a0a0a]'
+                    : 'text-[#d4d4d4] hover:text-white'
+                }`}
+              >
+                Cumulative
+              </button>
+            </div>
+          )}
 
           {/* Sportsbook dropdown */}
           <select
@@ -354,7 +460,7 @@ export default function ResultsPage() {
 
       {/* Section 5: Data Set Comparison */}
       <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-5 mb-8">
-        <div className={label + ' mb-4'}>Data Set Comparison</div>
+        <div className={label + ' mb-4'}>Data Set Comparison (Full Tournament)</div>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>

@@ -1,4 +1,4 @@
-export type Purity = 'PURE BUY' | 'PURE FADE' | 'CONFLICTED' | 'HOLD';
+export type Purity = 'PURE BUY' | 'PURE FADE' | 'PURE' | 'CONFLICTED' | 'HOLD' | 'NEUTRAL';
 
 export interface PlayerData {
   player_name: string;
@@ -27,10 +27,15 @@ export type Signal =
   | 'BUY'
   | 'LEAN BUY'
   | 'HOLD'
+  | 'NEUTRAL'
   | 'LEAN FADE'
   | 'FADE'
   | 'STRONG FADE'
-  | 'STRONGEST FADE';
+  | 'STRONGEST FADE'
+  | 'LEAN SELL'
+  | 'SELL'
+  | 'STRONG SELL'
+  | 'STRONGEST SELL';
 
 export type TabId = 'rankings' | 'matchups' | 'methodology' | 'results';
 

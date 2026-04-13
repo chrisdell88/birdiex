@@ -24,10 +24,15 @@ const signalOrder: Record<Signal, number> = {
   'BUY': 3,
   'LEAN BUY': 4,
   'HOLD': 5,
+  'NEUTRAL': 5,
   'LEAN FADE': 6,
+  'LEAN SELL': 6,
   'FADE': 7,
+  'SELL': 7,
   'STRONG FADE': 8,
+  'STRONG SELL': 8,
   'STRONGEST FADE': 9,
+  'STRONGEST SELL': 9,
 };
 
 function parsePosition(pos: string): number {

@@ -12,7 +12,7 @@ function App() {
   const [activeTab, setActiveTab] = useState<TabId>('rankings');
   const [dataSet, setDataSet] = useState<DataSet>('round');
 
-  // Toggle between R3-only X Scores and R1+R2+R3 Cumulative X Scores
+  // Toggle between R4-only X Scores and R1+R2+R3+R4 Cumulative X Scores
   const activeData = dataSet === 'round' ? roundOnlyData : cumulativeData;
 
   return (

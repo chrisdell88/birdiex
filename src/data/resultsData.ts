@@ -1,29 +1,43 @@
 import type { BetRecord, TierBreakdown, BucketBreakdown } from '../types';
 
-// ===== OVERALL SUMMARY (R2 + R3 round-only combined) =====
-export const overallRecord = { wins: 57, losses: 37, pushes: 7 };
-export const overallUnits = 9.52;
-export const overallROI = 7.85;
+// ===== OVERALL SUMMARY (All Rounds Combined: R2 + R3 + R4) =====
+export const overallRecord = { wins: 130, losses: 70, pushes: 21 };
+export const overallUnits = 46.60;
+export const overallROI = 17.8;
 
 // ===== R2 SUMMARY =====
 export const r2Summary = {
   record: '36-23-4',
   wins: 36, losses: 23, pushes: 4,
-  units: 5.15, roi: 6.45,
+  units: 5.15, roi: 6.5,
 };
 
 // ===== R3 ROUND-ONLY SUMMARY =====
 export const r3RoundOnlySummary = {
   record: '21-14-3',
   wins: 21, losses: 14, pushes: 3,
-  units: 4.37, roi: 10.55,
+  units: 4.37, roi: 10.6,
 };
 
 // ===== R3 CUMULATIVE SUMMARY =====
 export const r3CumulativeSummary = {
   record: '20-14-6',
   wins: 20, losses: 14, pushes: 6,
-  units: 2.96, roi: 7.37,
+  units: 2.96, roi: 7.4,
+};
+
+// ===== R4 ROUND-ONLY SUMMARY =====
+export const r4RoundOnlySummary = {
+  record: '13-10-3',
+  wins: 13, losses: 10, pushes: 3,
+  units: 3.21, roi: 9.7,
+};
+
+// ===== R4 CUMULATIVE SUMMARY =====
+export const r4CumulativeSummary = {
+  record: '40-9-5',
+  wins: 40, losses: 9, pushes: 5,
+  units: 30.91, roi: 45.6,
 };
 
 // Tier breakdowns -- R2
@@ -35,8 +49,17 @@ export const r3ROTierBreakdowns: TierBreakdown[] = [{"tier":"BEST BET","wins":4,
 // Tier breakdowns -- R3 cumulative
 export const r3CumTierBreakdowns: TierBreakdown[] = [{"tier":"BEST BET","wins":5,"losses":5,"pushes":3,"units":-1.28,"roi":-10.41},{"tier":"STRONG PLAY","wins":7,"losses":3,"pushes":1,"units":3.71,"roi":34.04},{"tier":"LEAN","wins":8,"losses":6,"pushes":2,"units":0.53,"roi":3.12}];
 
+// Tier breakdowns -- R4 round-only
+export const r4ROTierBreakdowns: TierBreakdown[] = [{"tier":"BEST BET","wins":2,"losses":2,"pushes":1,"units":-0.10,"roi":-1.75},{"tier":"STRONG PLAY","wins":4,"losses":4,"pushes":2,"units":0.12,"roi":0.93},{"tier":"LEAN","wins":7,"losses":4,"pushes":0,"units":3.19,"roi":22.49}];
+
+// Tier breakdowns -- R4 cumulative
+export const r4CumTierBreakdowns: TierBreakdown[] = [{"tier":"BEST BET","wins":25,"losses":5,"pushes":3,"units":20.05,"roi":46.93},{"tier":"STRONG PLAY","wins":6,"losses":1,"pushes":1,"units":5.20,"roi":56.35},{"tier":"LEAN","wins":9,"losses":3,"pushes":1,"units":5.67,"roi":35.81}];
+
+// Tier breakdowns -- Tournament total (all bets combined)
+export const totalTierBreakdowns: TierBreakdown[] = [{"tier":"BEST BET","wins":45,"losses":19,"pushes":8,"units":21.80,"roi":24.57},{"tier":"STRONG PLAY","wins":35,"losses":15,"pushes":8,"units":17.92,"roi":27.25},{"tier":"LEAN","wins":50,"losses":36,"pushes":5,"units":6.88,"roi":6.38}];
+
 // Combined tier breakdowns (for backward compat)
-export const tierBreakdowns: TierBreakdown[] = r2TierBreakdowns;
+export const tierBreakdowns: TierBreakdown[] = totalTierBreakdowns;
 
 // Bucket breakdowns -- R2
 export const r2BucketBreakdowns: BucketBreakdown[] = [{"bucket":"BUY vs FADE","wins":8,"losses":9,"pushes":1,"units":-5.24,"roi":-22.7},{"bucket":"OTHER vs FADE","wins":10,"losses":3,"pushes":1,"units":6.52,"roi":37.34},{"bucket":"BUY vs OTHER","wins":18,"losses":11,"pushes":2,"units":3.87,"roi":9.84}];
@@ -44,99 +67,86 @@ export const r2BucketBreakdowns: BucketBreakdown[] = [{"bucket":"BUY vs FADE","w
 // Bucket breakdowns -- R3 round-only
 export const r3ROBucketBreakdowns: BucketBreakdown[] = [{"bucket":"BUY vs FADE","wins":6,"losses":1,"pushes":0,"units":4.95,"roi":59.78},{"bucket":"BUY vs OTHER","wins":13,"losses":12,"pushes":3,"units":-1.38,"roi":-4.75},{"bucket":"OTHER vs FADE","wins":2,"losses":1,"pushes":0,"units":0.8,"roi":19.51}];
 
-// Bucket breakdowns -- R3 cumulative  
+// Bucket breakdowns -- R3 cumulative
 export const r3CumBucketBreakdowns: BucketBreakdown[] = [{"bucket":"BUY vs FADE","wins":6,"losses":2,"pushes":0,"units":3.95,"roi":43.08},{"bucket":"BUY vs OTHER","wins":11,"losses":8,"pushes":6,"units":0.82,"roi":3.69},{"bucket":"OTHER vs FADE","wins":3,"losses":4,"pushes":0,"units":-1.81,"roi":-20.62}];
 
+// Bucket breakdowns -- R4 round-only
+export const r4ROBucketBreakdowns: BucketBreakdown[] = [{"bucket":"BUY vs FADE","wins":3,"losses":3,"pushes":1,"units":-0.11,"roi":-1.38},{"bucket":"BUY vs OTHER","wins":8,"losses":4,"pushes":1,"units":3.66,"roi":20.70},{"bucket":"OTHER vs FADE","wins":2,"losses":3,"pushes":1,"units":-0.34,"roi":-4.59}];
+
+// Bucket breakdowns -- R4 cumulative
+export const r4CumBucketBreakdowns: BucketBreakdown[] = [{"bucket":"BUY vs FADE","wins":12,"losses":1,"pushes":1,"units":11.05,"roi":61.89},{"bucket":"BUY vs OTHER","wins":24,"losses":8,"pushes":3,"units":15.86,"roi":35.68},{"bucket":"OTHER vs FADE","wins":4,"losses":0,"pushes":1,"units":4.00,"roi":73.46}];
+
+// Bucket breakdowns -- Tournament total
+export const totalBucketBreakdowns: BucketBreakdown[] = [{"bucket":"BUY vs FADE","wins":35,"losses":16,"pushes":3,"units":14.60,"roi":22.02},{"bucket":"BUY vs OTHER","wins":74,"losses":43,"pushes":15,"units":22.84,"roi":14.95},{"bucket":"OTHER vs FADE","wins":21,"losses":11,"pushes":3,"units":9.17,"roi":21.19}];
+
 // Combined bucket breakdowns (for backward compat)
-export const bucketBreakdowns: BucketBreakdown[] = r2BucketBreakdowns;
+export const bucketBreakdowns: BucketBreakdown[] = totalBucketBreakdowns;
 
 // Data set comparison
 export const dataSetComparison = {
-  roundOnly: { wins: 57, losses: 37, pushes: 7, units: 9.52, roi: 7.85 },
-  cumulative: { wins: 20, losses: 14, pushes: 6, units: 2.96, roi: 7.37 },
+  roundOnly: { wins: 70, losses: 47, pushes: 10, units: 12.73, roi: 8.24 },
+  cumulative: { wins: 60, losses: 23, pushes: 11, units: 33.87, roi: 31.38 },
 };
 
 // Per-book breakdowns -- R2
 export const r2BookBreakdowns = {
-  "betcris": {
-    "record": "10-9-2",
-    "units": -3.33,
-    "roi": "-12.4%"
-  },
-  "draftkings": {
-    "record": "3-1-1",
-    "units": 2.02,
-    "roi": "46.76%"
-  },
-  "betonline": {
-    "record": "9-6-0",
-    "units": 1.04,
-    "roi": "5.09%"
-  },
-  "unibet": {
-    "record": "17-13-2",
-    "units": -1.66,
-    "roi": "-3.88%"
-  },
-  "pinnacle": {
-    "record": "3-3-1",
-    "units": -0.12,
-    "roi": "-1.59%"
-  },
-  "bet365": {
-    "record": "1-2-0",
-    "units": -1.25,
-    "roi": "-39.06%"
-  },
-  "bovada": {
-    "record": "1-2-0",
-    "units": -1.25,
-    "roi": "-39.06%"
-  },
-  "betmgm": {
-    "record": "3-1-0",
-    "units": 2.05,
-    "roi": "46.38%"
-  }
+  "betcris": { "record": "10-9-2", "units": -3.33, "roi": "-12.4%" },
+  "draftkings": { "record": "3-1-1", "units": 2.02, "roi": "46.76%" },
+  "betonline": { "record": "9-6-0", "units": 1.04, "roi": "5.09%" },
+  "unibet": { "record": "17-13-2", "units": -1.66, "roi": "-3.88%" },
+  "pinnacle": { "record": "3-3-1", "units": -0.12, "roi": "-1.59%" },
+  "bet365": { "record": "1-2-0", "units": -1.25, "roi": "-39.06%" },
+  "bovada": { "record": "1-2-0", "units": -1.25, "roi": "-39.06%" },
+  "betmgm": { "record": "3-1-0", "units": 2.05, "roi": "46.38%" },
 };
 
 // Per-book breakdowns -- R3 round-only
 export const r3ROBookBreakdowns = {
-  "bet365": {
-    "record": "13-8-1",
-    "units": 3.59,
-    "roi": "14.46%"
-  },
-  "pointsbet": {
-    "record": "6-4-0",
-    "units": 1.31,
-    "roi": "9.86%"
-  },
-  "betonline": {
-    "record": "5-4-1",
-    "units": 0.28,
-    "roi": "2.67%"
-  },
-  "draftkings": {
-    "record": "3-1-0",
-    "units": 1.9,
-    "roi": "41.21%"
-  },
-  "betcris": {
-    "record": "2-3-1",
-    "units": -2.26,
-    "roi": "-32.52%"
-  },
-  "bovada": {
-    "record": "1-0-0",
-    "units": 1,
-    "roi": "135.14%"
-  }
+  "bet365": { "record": "13-8-1", "units": 3.59, "roi": "14.46%" },
+  "pointsbet": { "record": "6-4-0", "units": 1.31, "roi": "9.86%" },
+  "betonline": { "record": "5-4-1", "units": 0.28, "roi": "2.67%" },
+  "draftkings": { "record": "3-1-0", "units": 1.9, "roi": "41.21%" },
+  "betcris": { "record": "2-3-1", "units": -2.26, "roi": "-32.52%" },
+  "bovada": { "record": "1-0-0", "units": 1, "roi": "135.14%" },
+};
+
+// Per-book breakdowns -- R4 round-only
+export const r4ROBookBreakdowns = {
+  "bet365": { "record": "9-8-1", "units": 1.15, "roi": "4.76%" },
+  "bovada": { "record": "4-4-0", "units": -0.48, "roi": "-4.94%" },
+  "fanduel": { "record": "3-0-1", "units": 3.00, "roi": "55.97%" },
+  "betonline": { "record": "3-1-0", "units": 2.05, "roi": "45.38%" },
+  "pointsbet": { "record": "3-4-0", "units": -0.33, "roi": "-3.39%" },
+  "betcris": { "record": "2-1-1", "units": 0.85, "roi": "16.57%" },
+};
+
+// Per-book breakdowns -- R4 cumulative
+export const r4CumBookBreakdowns = {
+  "bet365": { "record": "25-6-1", "units": 18.92, "roi": "45.6%" },
+  "bovada": { "record": "10-3-1", "units": 6.65, "roi": "37.46%" },
+  "betcris": { "record": "8-1-2", "units": 6.85, "roi": "47.19%" },
+  "betonline": { "record": "12-1-1", "units": 11.05, "roi": "67.65%" },
+  "fanduel": { "record": "6-1-2", "units": 4.89, "roi": "44.22%" },
+  "pointsbet": { "record": "13-3-0", "units": 10.23, "roi": "48.45%" },
+};
+
+// Per-book breakdowns -- Tournament total
+export const totalBookBreakdowns = {
+  "bet365": { "record": "58-31-5", "units": 23.97, "roi": "21.16%" },
+  "betonline": { "record": "32-16-4", "units": 12.63, "roi": "20.9%" },
+  "betcris": { "record": "27-16-7", "units": 4.16, "roi": "6.64%" },
+  "pointsbet": { "record": "30-14-0", "units": 15.60, "roi": "27.17%" },
+  "bovada": { "record": "16-9-1", "units": 5.92, "roi": "18.8%" },
+  "fanduel": { "record": "9-1-3", "units": 7.89, "roi": "48.06%" },
+  "draftkings": { "record": "10-4-2", "units": 5.64, "roi": "35.6%" },
+  "unibet": { "record": "17-13-2", "units": -1.66, "roi": "-3.88%" },
+  "pinnacle": { "record": "3-3-1", "units": -0.12, "roi": "-1.59%" },
+  "betmgm": { "record": "3-1-0", "units": 2.05, "roi": "46.38%" },
 };
 
 // ===== FULL BET LOG =====
 export const betLog: BetRecord[] = [
-  { id: 1, round: 2, pick: 'Fang, Ethan', opponent: 'Riley, Davis', edge: 3.06, tier: 'BEST BET', bucket: 'BUY vs FADE', bestOdds: '-140', book: 'Betcris', betType: 'H2H', pickScore: 6, oppScore: 8, result: 'W', units: 1, dataSet: 'round-only' },
+{ id: 1, round: 2, pick: 'Fang, Ethan', opponent: 'Riley, Davis', edge: 3.06, tier: 'BEST BET', bucket: 'BUY vs FADE', bestOdds: '-140', book: 'Betcris', betType: 'H2H', pickScore: 6, oppScore: 8, result: 'W', units: 1, dataSet: 'round-only' },
   { id: 2, round: 2, pick: 'Lowry, Shane', opponent: 'Bhatia, Akshay', edge: 2.96, tier: 'BEST BET', bucket: 'BUY vs FADE', bestOdds: '-110', book: 'DraftKings', betType: 'H2H', pickScore: -3, oppScore: 5, result: 'W', units: 1, dataSet: 'round-only' },
   { id: 3, round: 2, pick: 'Kitayama, Kurt', opponent: 'Hojgaard, Rasmus', edge: 2.85, tier: 'BEST BET', bucket: 'BUY vs FADE', bestOdds: '-145', book: 'BetOnline', betType: 'H2H', pickScore: 7, oppScore: -2, result: 'L', units: -1.45, dataSet: 'round-only' },
   { id: 4, round: 2, pick: 'Clark, Wyndham', opponent: 'Kim, Michael', edge: 2.74, tier: 'BEST BET', bucket: 'BUY vs FADE', bestOdds: '-137', book: 'Betcris', betType: 'H2H', pickScore: -4, oppScore: 5, result: 'W', units: 1, dataSet: 'round-only' },
@@ -277,4 +287,84 @@ export const betLog: BetRecord[] = [
   { id: 139, round: 3, pick: 'Schwartzel, Charl', opponent: 'Campbell, Brian', edge: 1.07, tier: 'LEAN', bucket: 'OTHER vs FADE', bestOdds: '-120', book: 'bet365', betType: 'H2H', pickScore: 5, oppScore: -3, result: 'L', units: -1.2, dataSet: 'cumulative' },
   { id: 140, round: 3, pick: 'Morikawa, Collin', opponent: 'Campbell, Brian', edge: 0.98, tier: 'LEAN', bucket: 'OTHER vs FADE', bestOdds: '-180', book: 'bet365', betType: 'H2H', pickScore: -4, oppScore: -3, result: 'W', units: 1, dataSet: 'cumulative' },
   { id: 141, round: 3, pick: 'McIlroy, Rory', opponent: 'Burns, Sam', edge: 0.96, tier: 'LEAN', bucket: 'BUY vs OTHER', bestOdds: '-140', book: 'PointsBet', betType: 'H2H', pickScore: 1, oppScore: -4, result: 'L', units: -1.4, dataSet: 'cumulative' },
+  { id: 141, round: 4, pick: 'Thomas, Justin', opponent: 'McNealy, Maverick', edge: 1.47, tier: 'STRONG PLAY', bucket: 'BUY vs FADE', bestOdds: '-105', book: 'bet365', betType: 'H2H', pickScore: 1, oppScore: -5, result: 'L', units: -1.05, dataSet: 'round-only' },
+  { id: 142, round: 4, pick: 'Im, Sungjae', opponent: 'Stevens, Sam', edge: 2.39, tier: 'BEST BET', bucket: 'BUY vs OTHER', bestOdds: '-115', book: 'bet365', betType: 'H2H', pickScore: 5, oppScore: -2, result: 'L', units: -1.15, dataSet: 'round-only' },
+  { id: 143, round: 4, pick: 'Matsuyama, Hideki', opponent: 'Gotterup, Chris', edge: 1.93, tier: 'STRONG PLAY', bucket: 'BUY vs OTHER', bestOdds: '-135', book: 'bet365', betType: 'H2H', pickScore: -3, oppScore: 1, result: 'W', units: 1.0, dataSet: 'round-only' },
+  { id: 144, round: 4, pick: 'Bridgeman, Jacob', opponent: 'Homa, Max', edge: 1.2, tier: 'LEAN', bucket: 'BUY vs OTHER', bestOdds: '-140', book: 'bet365', betType: 'H2H', pickScore: 4, oppScore: -5, result: 'L', units: -1.4, dataSet: 'round-only' },
+  { id: 145, round: 4, pick: 'Reitan, Kristoffer', opponent: 'Straka, Sepp', edge: 1.06, tier: 'LEAN', bucket: 'OTHER vs FADE', bestOdds: '+120', book: 'bet365', betType: 'H2H', pickScore: 5, oppScore: 4, result: 'L', units: -0.83, dataSet: 'round-only' },
+  { id: 146, round: 4, pick: 'Schauffele, Xander', opponent: 'Fleetwood, Tommy', edge: 1.14, tier: 'LEAN', bucket: 'BUY vs OTHER', bestOdds: '-125', book: 'bet365', betType: 'H2H', pickScore: -4, oppScore: 4, result: 'W', units: 1.0, dataSet: 'round-only' },
+  { id: 147, round: 4, pick: 'Scheffler, Scottie', opponent: 'McIlroy, Rory', edge: 1.2, tier: 'LEAN', bucket: 'BUY vs OTHER', bestOdds: '-140', book: 'bet365', betType: 'H2H', pickScore: -4, oppScore: -1, result: 'W', units: 1.0, dataSet: 'round-only' },
+  { id: 148, round: 4, pick: 'Day, Jason', opponent: 'Lowry, Shane', edge: 0.98, tier: 'LEAN', bucket: 'BUY vs OTHER', bestOdds: '-105', book: 'bet365', betType: 'H2H', pickScore: 3, oppScore: 8, result: 'W', units: 1.0, dataSet: 'round-only' },
+  { id: 149, round: 4, pick: 'Johnson, Dustin', opponent: 'Bradley, Keegan', edge: 1.93, tier: 'STRONG PLAY', bucket: 'OTHER vs FADE', bestOdds: '+130', book: 'bet365', betType: 'H2H', pickScore: -3, oppScore: -6, result: 'L', units: -0.77, dataSet: 'round-only' },
+  { id: 150, round: 4, pick: 'Thomas, Justin', opponent: 'Hovland, Viktor', edge: 1.83, tier: 'STRONG PLAY', bucket: 'BUY vs FADE', bestOdds: '+110', book: 'bet365', betType: 'H2H', pickScore: 1, oppScore: -5, result: 'L', units: -0.91, dataSet: 'round-only' },
+  { id: 151, round: 4, pick: 'Noren, Alex', opponent: 'McNealy, Maverick', edge: 1.09, tier: 'LEAN', bucket: 'OTHER vs FADE', bestOdds: '+135', book: 'PointsBet', betType: 'H2H', pickScore: -2, oppScore: -5, result: 'L', units: -0.74, dataSet: 'round-only' },
+  { id: 152, round: 4, pick: 'Bridgeman, Jacob', opponent: 'Straka, Sepp', edge: 1.64, tier: 'STRONG PLAY', bucket: 'BUY vs FADE', bestOdds: '+110', book: 'bet365', betType: 'H2H', pickScore: 4, oppScore: 4, result: 'P', units: 0.0, dataSet: 'round-only' },
+  { id: 153, round: 4, pick: 'Brennan, Michael', opponent: 'Homa, Max', edge: 1.24, tier: 'LEAN', bucket: 'BUY vs OTHER', bestOdds: '+120', book: 'PointsBet', betType: 'H2H', pickScore: 1, oppScore: -5, result: 'L', units: -0.83, dataSet: 'round-only' },
+  { id: 154, round: 4, pick: 'Fitzpatrick, Matt', opponent: 'Taylor, Nick', edge: 2.03, tier: 'BEST BET', bucket: 'BUY vs FADE', bestOdds: '-160', book: 'PointsBet', betType: 'H2H', pickScore: -1, oppScore: 5, result: 'W', units: 1.0, dataSet: 'round-only' },
+  { id: 155, round: 4, pick: 'Aberg, Ludvig', opponent: 'Campbell, Brian', edge: 1.45, tier: 'STRONG PLAY', bucket: 'OTHER vs FADE', bestOdds: '-280', book: 'PointsBet', betType: 'H2H', pickScore: 0, oppScore: 1, result: 'W', units: 1.0, dataSet: 'round-only' },
+  { id: 156, round: 4, pick: 'Koepka, Brooks', opponent: 'Clark, Wyndham', edge: 0.99, tier: 'LEAN', bucket: 'BUY vs OTHER', bestOdds: '-115', book: 'bet365', betType: 'H2H', pickScore: -1, oppScore: 1, result: 'W', units: 1.0, dataSet: 'round-only' },
+  { id: 157, round: 4, pick: 'Schauffele, Xander', opponent: 'Gerard, Ryan', edge: 1.57, tier: 'STRONG PLAY', bucket: 'BUY vs OTHER', bestOdds: '-163', book: 'bet365', betType: 'H2H', pickScore: -4, oppScore: 5, result: 'W', units: 1.0, dataSet: 'round-only' },
+  { id: 158, round: 4, pick: 'Scheffler, Scottie', opponent: 'Li, Haotong', edge: 1.12, tier: 'LEAN', bucket: 'BUY vs OTHER', bestOdds: '-280', book: 'bet365', betType: 'H2H', pickScore: -4, oppScore: 8, result: 'W', units: 1.0, dataSet: 'round-only' },
+  { id: 159, round: 4, pick: 'Thomas, Justin', opponent: 'Conners, Corey', edge: 1.66, tier: 'STRONG PLAY', bucket: 'BUY vs FADE', bestOdds: '-125', book: 'BetOnline', betType: 'H2H', pickScore: 1, oppScore: 3, result: 'W', units: 1.0, dataSet: 'round-only' },
+  { id: 160, round: 4, pick: 'Im, Sungjae', opponent: 'English, Harris', edge: 1.97, tier: 'BEST BET', bucket: 'BUY vs OTHER', bestOdds: '+105', book: 'BetOnline', betType: 'H2H', pickScore: 5, oppScore: 0, result: 'L', units: -0.95, dataSet: 'round-only' },
+  { id: 161, round: 4, pick: 'Brennan, Michael', opponent: 'Taylor, Nick', edge: 2.03, tier: 'BEST BET', bucket: 'BUY vs FADE', bestOdds: '-105', book: 'BetOnline', betType: 'H2H', pickScore: 1, oppScore: 5, result: 'W', units: 1.0, dataSet: 'round-only' },
+  { id: 162, round: 4, pick: 'Hatton, Tyrrell', opponent: 'Bradley, Keegan', edge: 2.06, tier: 'BEST BET', bucket: 'OTHER vs FADE', bestOdds: '-110', book: 'FanDuel', betType: 'H2H', pickScore: -6, oppScore: -6, result: 'P', units: 0.0, dataSet: 'round-only' },
+  { id: 163, round: 4, pick: 'Scott, Adam', opponent: 'McNealy, Maverick', edge: 1.86, tier: 'STRONG PLAY', bucket: 'BUY vs FADE', bestOdds: '-115', book: 'Betcris', betType: 'H2H', pickScore: -2, oppScore: -5, result: 'L', units: -1.15, dataSet: 'round-only' },
+  { id: 164, round: 4, pick: 'Im, Sungjae', opponent: 'Reitan, Kristoffer', edge: 1.92, tier: 'STRONG PLAY', bucket: 'BUY vs OTHER', bestOdds: '-124', book: 'Betcris', betType: 'H2H', pickScore: 5, oppScore: 5, result: 'P', units: 0.0, dataSet: 'round-only' },
+  { id: 165, round: 4, pick: 'Fitzpatrick, Matt', opponent: 'Gotterup, Chris', edge: 1.0, tier: 'LEAN', bucket: 'BUY vs OTHER', bestOdds: '-150', book: 'Betcris', betType: 'H2H', pickScore: -1, oppScore: 1, result: 'W', units: 1.0, dataSet: 'round-only' },
+  { id: 166, round: 4, pick: 'Hatton, Tyrrell', opponent: 'Taylor, Nick', edge: 1.31, tier: 'LEAN', bucket: 'OTHER vs FADE', bestOdds: '-124', book: 'Betcris', betType: 'H2H', pickScore: -6, oppScore: 5, result: 'W', units: 1.0, dataSet: 'round-only' },
+  { id: 167, round: 4, pick: 'Rai, Aaron', opponent: 'Garcia, Sergio', edge: 2.47, tier: 'BEST BET', bucket: 'BUY vs OTHER', bestOdds: '-115', book: 'bet365', betType: 'H2H', pickScore: -2, oppScore: 3, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 168, round: 4, pick: 'Rahm, Jon', opponent: 'Kim, Si Woo', edge: 1.39, tier: 'LEAN', bucket: 'BUY vs OTHER', bestOdds: '-150', book: 'bet365', betType: 'H2H', pickScore: -4, oppScore: 0, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 169, round: 4, pick: 'Hovland, Viktor', opponent: 'Conners, Corey', edge: 2.51, tier: 'BEST BET', bucket: 'BUY vs FADE', bestOdds: '-140', book: 'bet365', betType: 'H2H', pickScore: -5, oppScore: 3, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 170, round: 4, pick: 'Spieth, Jordan', opponent: 'Noren, Alex', edge: 2.13, tier: 'BEST BET', bucket: 'BUY vs OTHER', bestOdds: '-150', book: 'bet365', betType: 'H2H', pickScore: -4, oppScore: -2, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 171, round: 4, pick: 'Harman, Brian', opponent: 'Penge, Marco', edge: 1.75, tier: 'STRONG PLAY', bucket: 'OTHER vs FADE', bestOdds: '+110', book: 'FanDuel', betType: 'H2H', pickScore: 1, oppScore: 6, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 172, round: 4, pick: 'Scott, Adam', opponent: 'English, Harris', edge: 3.0, tier: 'BEST BET', bucket: 'BUY vs FADE', bestOdds: '-115', book: 'bet365', betType: 'H2H', pickScore: -2, oppScore: 0, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 173, round: 4, pick: 'Bridgeman, Jacob', opponent: 'Homa, Max', edge: 1.38, tier: 'LEAN', bucket: 'BUY vs OTHER', bestOdds: '-140', book: 'bet365', betType: 'H2H', pickScore: 4, oppScore: -5, result: 'L', units: -1.4, dataSet: 'cumulative' },
+  { id: 174, round: 4, pick: 'Straka, Sepp', opponent: 'Reitan, Kristoffer', edge: 1.58, tier: 'STRONG PLAY', bucket: 'OTHER vs FADE', bestOdds: '-140', book: 'bet365', betType: 'H2H', pickScore: 4, oppScore: 5, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 175, round: 4, pick: 'Taylor, Nick', opponent: 'Gerard, Ryan', edge: 1.13, tier: 'LEAN', bucket: 'OTHER vs FADE', bestOdds: '+105', book: 'bet365', betType: 'H2H', pickScore: 5, oppScore: 5, result: 'P', units: 0.0, dataSet: 'cumulative' },
+  { id: 176, round: 4, pick: 'Schauffele, Xander', opponent: 'Fleetwood, Tommy', edge: 3.37, tier: 'BEST BET', bucket: 'BUY vs OTHER', bestOdds: '-125', book: 'bet365', betType: 'H2H', pickScore: -4, oppScore: 4, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 177, round: 4, pick: 'Clark, Wyndham', opponent: 'Knapp, Jake', edge: 1.84, tier: 'STRONG PLAY', bucket: 'BUY vs OTHER', bestOdds: '+125', book: 'bet365', betType: 'H2H', pickScore: 1, oppScore: -2, result: 'L', units: -0.8, dataSet: 'cumulative' },
+  { id: 178, round: 4, pick: 'Koepka, Brooks', opponent: 'Griffin, Ben', edge: 2.58, tier: 'BEST BET', bucket: 'BUY vs OTHER', bestOdds: '-125', book: 'bet365', betType: 'H2H', pickScore: -1, oppScore: 5, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 179, round: 4, pick: 'Reed, Patrick', opponent: 'Morikawa, Collin', edge: 2.01, tier: 'BEST BET', bucket: 'BUY vs OTHER', bestOdds: '+110', book: 'bet365', betType: 'H2H', pickScore: 1, oppScore: -4, result: 'L', units: -0.91, dataSet: 'cumulative' },
+  { id: 180, round: 4, pick: 'Scheffler, Scottie', opponent: 'McIlroy, Rory', edge: 1.55, tier: 'STRONG PLAY', bucket: 'BUY vs OTHER', bestOdds: '-140', book: 'bet365', betType: 'H2H', pickScore: -4, oppScore: -1, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 181, round: 4, pick: 'Lowry, Shane', opponent: 'Day, Jason', edge: 1.25, tier: 'LEAN', bucket: 'BUY vs OTHER', bestOdds: '-110', book: 'Bovada', betType: 'H2H', pickScore: 8, oppScore: 3, result: 'L', units: -1.1, dataSet: 'cumulative' },
+  { id: 182, round: 4, pick: 'Rai, Aaron', opponent: 'Schwartzel, Charl', edge: 5.54, tier: 'BEST BET', bucket: 'BUY vs FADE', bestOdds: '-120', book: 'PointsBet', betType: 'H2H', pickScore: -2, oppScore: 3, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 183, round: 4, pick: 'Woodland, Gary', opponent: 'Kitayama, Kurt', edge: 1.88, tier: 'STRONG PLAY', bucket: 'OTHER vs FADE', bestOdds: '+120', book: 'bet365', betType: 'H2H', pickScore: -6, oppScore: 0, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 184, round: 4, pick: 'Rahm, Jon', opponent: 'Garcia, Sergio', edge: 1.51, tier: 'STRONG PLAY', bucket: 'BUY vs OTHER', bestOdds: '-190', book: 'bet365', betType: 'H2H', pickScore: -4, oppScore: 3, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 185, round: 4, pick: 'Hovland, Viktor', opponent: 'Thomas, Justin', edge: 1.08, tier: 'LEAN', bucket: 'BUY vs OTHER', bestOdds: '+100', book: 'bet365', betType: 'H2H', pickScore: -5, oppScore: 1, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 186, round: 4, pick: 'Scott, Adam', opponent: 'Penge, Marco', edge: 3.75, tier: 'BEST BET', bucket: 'BUY vs FADE', bestOdds: '-110', book: 'bet365', betType: 'H2H', pickScore: -2, oppScore: 6, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 187, round: 4, pick: 'Stevens, Sam', opponent: 'English, Harris', edge: 1.96, tier: 'BEST BET', bucket: 'BUY vs FADE', bestOdds: '+120', book: 'bet365', betType: 'H2H', pickScore: -2, oppScore: 0, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 188, round: 4, pick: 'Spieth, Jordan', opponent: 'Harman, Brian', edge: 3.08, tier: 'BEST BET', bucket: 'BUY vs OTHER', bestOdds: '-130', book: 'bet365', betType: 'H2H', pickScore: -4, oppScore: 1, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 189, round: 4, pick: 'Gotterup, Chris', opponent: 'Reitan, Kristoffer', edge: 2.79, tier: 'BEST BET', bucket: 'BUY vs FADE', bestOdds: '-125', book: 'bet365', betType: 'H2H', pickScore: 1, oppScore: 5, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 190, round: 4, pick: 'Brennan, Michael', opponent: 'Homa, Max', edge: 3.01, tier: 'BEST BET', bucket: 'BUY vs OTHER', bestOdds: '+120', book: 'PointsBet', betType: 'H2H', pickScore: 1, oppScore: -5, result: 'L', units: -0.83, dataSet: 'cumulative' },
+  { id: 191, round: 4, pick: 'Fitzpatrick, Matt', opponent: 'Taylor, Nick', edge: 2.47, tier: 'BEST BET', bucket: 'BUY vs OTHER', bestOdds: '-160', book: 'PointsBet', betType: 'H2H', pickScore: -1, oppScore: 5, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 192, round: 4, pick: 'Aberg, Ludvig', opponent: 'Campbell, Brian', edge: 4.85, tier: 'BEST BET', bucket: 'BUY vs FADE', bestOdds: '-280', book: 'PointsBet', betType: 'H2H', pickScore: 0, oppScore: 1, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 193, round: 4, pick: 'Hatton, Tyrrell', opponent: 'Fleetwood, Tommy', edge: 2.95, tier: 'BEST BET', bucket: 'BUY vs OTHER', bestOdds: '+162', book: 'bet365', betType: 'H2H', pickScore: -6, oppScore: 4, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 194, round: 4, pick: 'Schauffele, Xander', opponent: 'Gerard, Ryan', edge: 4.56, tier: 'BEST BET', bucket: 'BUY vs FADE', bestOdds: '-163', book: 'bet365', betType: 'H2H', pickScore: -4, oppScore: 5, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 195, round: 4, pick: 'Knapp, Jake', opponent: 'Griffin, Ben', edge: 1.13, tier: 'LEAN', bucket: 'BUY vs OTHER', bestOdds: '-115', book: 'bet365', betType: 'H2H', pickScore: -2, oppScore: 5, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 196, round: 4, pick: 'Cantlay, Patrick', opponent: 'Henley, Russell', edge: 1.3, tier: 'LEAN', bucket: 'BUY vs OTHER', bestOdds: '+120', book: 'PointsBet', betType: 'H2H', pickScore: 1, oppScore: -4, result: 'L', units: -0.83, dataSet: 'cumulative' },
+  { id: 197, round: 4, pick: 'Scheffler, Scottie', opponent: 'Li, Haotong', edge: 3.23, tier: 'BEST BET', bucket: 'BUY vs OTHER', bestOdds: '-280', book: 'bet365', betType: 'H2H', pickScore: -4, oppScore: 8, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 198, round: 4, pick: 'Rose, Justin', opponent: 'Day, Jason', edge: 2.58, tier: 'BEST BET', bucket: 'BUY vs OTHER', bestOdds: '-110', book: 'bet365', betType: 'H2H', pickScore: -2, oppScore: 3, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 199, round: 4, pick: 'Rai, Aaron', opponent: 'Hojgaard, Rasmus', edge: 3.3, tier: 'BEST BET', bucket: 'BUY vs FADE', bestOdds: '+113', book: 'BetOnline', betType: 'H2H', pickScore: -2, oppScore: 5, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 200, round: 4, pick: 'Bradley, Keegan', opponent: 'McCarty, Matt', edge: 1.32, tier: 'LEAN', bucket: 'OTHER vs FADE', bestOdds: '-135', book: 'BetOnline', betType: 'H2H', pickScore: -6, oppScore: -3, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 201, round: 4, pick: 'Thomas, Justin', opponent: 'Conners, Corey', edge: 1.43, tier: 'LEAN', bucket: 'BUY vs FADE', bestOdds: '-125', book: 'BetOnline', betType: 'H2H', pickScore: 1, oppScore: 3, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 202, round: 4, pick: 'Hovland, Viktor', opponent: 'McNealy, Maverick', edge: 1.89, tier: 'STRONG PLAY', bucket: 'BUY vs OTHER', bestOdds: '-110', book: 'BetOnline', betType: 'H2H', pickScore: -5, oppScore: -5, result: 'P', units: 0.0, dataSet: 'cumulative' },
+  { id: 203, round: 4, pick: 'Noren, Alex', opponent: 'Penge, Marco', edge: 2.7, tier: 'BEST BET', bucket: 'BUY vs FADE', bestOdds: '-111', book: 'Betcris', betType: 'H2H', pickScore: -2, oppScore: 6, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 204, round: 4, pick: 'Stevens, Sam', opponent: 'Harman, Brian', edge: 0.96, tier: 'LEAN', bucket: 'BUY vs OTHER', bestOdds: '-127', book: 'BetOnline', betType: 'H2H', pickScore: -2, oppScore: 1, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 205, round: 4, pick: 'Im, Sungjae', opponent: 'English, Harris', edge: 2.48, tier: 'BEST BET', bucket: 'BUY vs FADE', bestOdds: '+105', book: 'BetOnline', betType: 'H2H', pickScore: 5, oppScore: 0, result: 'L', units: -0.95, dataSet: 'cumulative' },
+  { id: 206, round: 4, pick: 'Spieth, Jordan', opponent: 'Matsuyama, Hideki', edge: 1.71, tier: 'STRONG PLAY', bucket: 'BUY vs OTHER', bestOdds: '+113', book: 'Betcris', betType: 'H2H', pickScore: -4, oppScore: -3, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 207, round: 4, pick: 'Gotterup, Chris', opponent: 'Straka, Sepp', edge: 1.21, tier: 'LEAN', bucket: 'BUY vs OTHER', bestOdds: '-127', book: 'BetOnline', betType: 'H2H', pickScore: 1, oppScore: 4, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 208, round: 4, pick: 'Brennan, Michael', opponent: 'Taylor, Nick', edge: 2.86, tier: 'BEST BET', bucket: 'BUY vs OTHER', bestOdds: '-105', book: 'BetOnline', betType: 'H2H', pickScore: 1, oppScore: 5, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 209, round: 4, pick: 'Clark, Wyndham', opponent: 'Gerard, Ryan', edge: 4.02, tier: 'BEST BET', bucket: 'BUY vs FADE', bestOdds: '-105', book: 'BetOnline', betType: 'H2H', pickScore: 1, oppScore: 5, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 210, round: 4, pick: 'Cantlay, Patrick', opponent: 'Day, Jason', edge: 2.1, tier: 'BEST BET', bucket: 'BUY vs OTHER', bestOdds: '-125', book: 'BetOnline', betType: 'H2H', pickScore: 1, oppScore: 3, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 211, round: 4, pick: 'Cantlay, Patrick', opponent: 'Morikawa, Collin', edge: 3.41, tier: 'BEST BET', bucket: 'BUY vs OTHER', bestOdds: '-111', book: 'FanDuel', betType: 'H2H', pickScore: 1, oppScore: -4, result: 'L', units: -1.11, dataSet: 'cumulative' },
+  { id: 212, round: 4, pick: 'Spieth, Jordan', opponent: 'Scott, Adam', edge: 1.08, tier: 'LEAN', bucket: 'BUY vs OTHER', bestOdds: '-125', book: 'FanDuel', betType: 'H2H', pickScore: -4, oppScore: -2, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 213, round: 4, pick: 'Rose, Justin', opponent: 'Lowry, Shane', edge: 1.32, tier: 'LEAN', bucket: 'BUY vs OTHER', bestOdds: '-150', book: 'FanDuel', betType: 'H2H', pickScore: -2, oppScore: 8, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 214, round: 4, pick: 'Hatton, Tyrrell', opponent: 'Bradley, Keegan', edge: 2.77, tier: 'BEST BET', bucket: 'BUY vs OTHER', bestOdds: '-110', book: 'FanDuel', betType: 'H2H', pickScore: -6, oppScore: -6, result: 'P', units: 0.0, dataSet: 'cumulative' },
+  { id: 215, round: 4, pick: 'Scott, Adam', opponent: 'McNealy, Maverick', edge: 1.98, tier: 'BEST BET', bucket: 'BUY vs OTHER', bestOdds: '-115', book: 'Betcris', betType: 'H2H', pickScore: -2, oppScore: -5, result: 'L', units: -1.15, dataSet: 'cumulative' },
+  { id: 216, round: 4, pick: 'Im, Sungjae', opponent: 'Reitan, Kristoffer', edge: 2.29, tier: 'BEST BET', bucket: 'BUY vs FADE', bestOdds: '-124', book: 'Betcris', betType: 'H2H', pickScore: 5, oppScore: 5, result: 'P', units: 0.0, dataSet: 'cumulative' },
+  { id: 217, round: 4, pick: 'Hatton, Tyrrell', opponent: 'Taylor, Nick', edge: 3.02, tier: 'BEST BET', bucket: 'BUY vs OTHER', bestOdds: '-124', book: 'Betcris', betType: 'H2H', pickScore: -6, oppScore: 5, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 218, round: 4, pick: 'Aberg, Ludvig', opponent: 'Fleetwood, Tommy', edge: 2.37, tier: 'BEST BET', bucket: 'BUY vs OTHER', bestOdds: '-107', book: 'Betcris', betType: 'H2H', pickScore: 0, oppScore: 4, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 219, round: 4, pick: 'Cantlay, Patrick', opponent: 'Li, Haotong', edge: 2.4, tier: 'BEST BET', bucket: 'BUY vs OTHER', bestOdds: '-173', book: 'Betcris', betType: 'H2H', pickScore: 1, oppScore: 8, result: 'W', units: 1.0, dataSet: 'cumulative' },
+  { id: 220, round: 4, pick: 'Scheffler, Scottie', opponent: 'Henley, Russell', edge: 2.13, tier: 'BEST BET', bucket: 'BUY vs OTHER', bestOdds: '-210', book: 'Betcris', betType: 'H2H', pickScore: -4, oppScore: -4, result: 'P', units: 0.0, dataSet: 'cumulative' },
 ];

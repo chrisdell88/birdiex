@@ -32,7 +32,7 @@ export default function Header({ activeTab, onTabChange, dataSet, onDataSetChang
             </div>
             <div className="hidden sm:block">
               <span className="text-[10px] uppercase tracking-[0.2em] text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
-                X Score Model
+                Putting Regression Model
               </span>
             </div>
           </div>
@@ -63,9 +63,9 @@ export default function Header({ activeTab, onTabChange, dataSet, onDataSetChang
             </div>
 
             {/* Tournament badge */}
-            <div className="bg-[#22c55e]/10 border border-[#22c55e]/30 rounded-full px-3 md:px-4 py-1.5">
-              <span className="text-[10px] md:text-xs text-[#22c55e] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif]">
-                The Masters 2026 <span className="text-[#22c55e]/50">|</span> FINAL
+            <div className="border border-[#22c55e]/50 rounded-full px-3 md:px-4 py-1.5 bg-[#0a0a0a]">
+              <span className="text-[10px] md:text-xs text-[#f5f5f5] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif]">
+                The Masters 2026 <span className="text-[#f5f5f5]/50">|</span> FINAL
               </span>
             </div>
           </div>

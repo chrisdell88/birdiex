@@ -58,7 +58,7 @@ export type SortField =
 
 export type SortDirection = 'asc' | 'desc';
 
-export type BucketType = 'BUY vs FADE' | 'BUY vs OTHER' | 'OTHER vs FADE' | 'OTHER vs OTHER';
+export type BucketType = 'BUY vs FADE' | 'BUY vs OTHER' | 'FADE vs OTHER' | 'OTHER vs OTHER';
 
 export interface MatchupOddsEntry {
   p1_player_name: string;

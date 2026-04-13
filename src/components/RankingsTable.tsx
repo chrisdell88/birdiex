@@ -136,9 +136,9 @@ export default function RankingsTable({ data }: RankingsTableProps) {
         result = result.filter((p) =>
           ['STRONGEST BUY', 'STRONG BUY', 'BUY'].includes(p.signal)
         );
-      } else if (signalFilter === 'FADES') {
+      } else if (signalFilter === 'SELLS') {
         result = result.filter((p) =>
-          ['FADE', 'STRONG FADE', 'STRONGEST FADE'].includes(p.signal)
+          ['FADE', 'STRONG FADE', 'STRONGEST FADE', 'SELL', 'STRONG SELL', 'STRONGEST SELL', 'LEAN SELL', 'LEAN FADE'].includes(p.signal)
         );
       }
     }
@@ -218,7 +218,7 @@ export default function RankingsTable({ data }: RankingsTableProps) {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
           <span className="text-[11px] text-[#d4d4d4] uppercase tracking-wider font-['Inter',system-ui,sans-serif]">
-            Last Updated: Masters R1 - April 10, 2026
+            Last Updated: Masters R4 (Final) - April 13, 2026
           </span>
           <button
             onClick={() => setShowStatsKey(true)}
@@ -242,7 +242,7 @@ export default function RankingsTable({ data }: RankingsTableProps) {
           >
             <option value="ALL">All Signals</option>
             <option value="BUYS">Buys</option>
-            <option value="FADES">Fades</option>
+            <option value="SELLS">Sells</option>
           </select>
         </div>
       </div>

@@ -20,7 +20,7 @@ function getConflictReason(player: PlayerData): string {
 export default function PurityIcon({ player }: PurityIconProps) {
   const [showTooltip, setShowTooltip] = useState(false);
 
-  if (player.purity === 'HOLD') return null;
+  if (player.purity === 'HOLD' || player.purity === 'NEUTRAL') return null;
 
   if (player.purity === 'CONFLICTED') {
     const reason = getConflictReason(player);

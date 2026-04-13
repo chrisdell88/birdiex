@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import type { PlayerData, Matchup, BucketType } from '../types';
-import { matchupOddsData } from '../data/matchupOdds';
+import { matchupOddsData, r2MatchupOddsData, r3MatchupOddsData, r4MatchupOddsData } from '../data/matchupOdds';
 import { threeBallOddsData, type ThreeBallOddsEntry } from '../data/threeBallData';
 import SignalBadge from './SignalBadge';
 
@@ -8,7 +8,8 @@ interface MatchupsViewProps {
   data: PlayerData[];
 }
 
-type MatchupSort = 'edge-high' | 'edge-low' | 'tier';
+type MatchupSort = 'edge-high' | 'edge-low';
+type MatchupRound = 'R2' | 'R3' | 'R4' | 'All';
 
 function parseOdds(odds: string): number {
   const n = parseInt(odds, 10);
@@ -29,17 +30,17 @@ function getBucket(pick: PlayerData, opponent: PlayerData): BucketType {
   const oppFade = isFadeSide(opponent);
   if (pickBuy && oppFade) return 'BUY vs FADE';
   if (pickBuy) return 'BUY vs OTHER';
-  if (oppFade) return 'OTHER vs FADE';
+  if (oppFade) return 'FADE vs OTHER';
   return 'OTHER vs OTHER';
 }
 
-function generateMatchups(data: PlayerData[]): Matchup[] {
+function generateMatchups(data: PlayerData[], oddsData: typeof matchupOddsData): Matchup[] {
   const playerMap = new Map<string, PlayerData>();
   data.forEach((p) => playerMap.set(p.player_name, p));
 
   const matchups: Matchup[] = [];
 
-  for (const entry of matchupOddsData) {
+  for (const entry of oddsData) {
     const p1 = playerMap.get(entry.p1_player_name);
     const p2 = playerMap.get(entry.p2_player_name);
     if (!p1 || !p2) continue;
@@ -127,12 +128,6 @@ function formatBookName(book: string): string {
   };
   return names[book] || book;
 }
-
-const tierOrder: Record<Matchup['tier'], number> = {
-  'BEST BET': 1,
-  'STRONG PLAY': 2,
-  'LEAN': 3,
-};
 
 const tierBorderColor: Record<Matchup['tier'], string> = {
   'BEST BET': 'border-l-[#22c55e]',
@@ -339,9 +334,78 @@ function ClickablePlayerName({
 
 // --- Main Component ---
 
+function MatchupDefinitionsModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70" onClick={onClose}>
+      <div
+        className="bg-[#0a0a0a] border border-[#262626] rounded-xl p-6 max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
+            Matchup Definitions
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-[#d4d4d4] hover:text-white text-xl cursor-pointer"
+          >
+            x
+          </button>
+        </div>
+        <div className="space-y-3 text-sm font-['Inter',system-ui,sans-serif]">
+          <div className="border-b border-[#1a1a1a] pb-3">
+            <span className="text-[#22c55e] font-semibold">X Score</span>
+            <p className="text-[#d4d4d4] mt-1">The BirdieX proprietary putting regression rating</p>
+          </div>
+          <div className="border-b border-[#1a1a1a] pb-3">
+            <span className="text-[#22c55e] font-semibold">Edge</span>
+            <p className="text-[#d4d4d4] mt-1">X Score difference between the pick and opponent</p>
+          </div>
+          <div className="border-b border-[#1a1a1a] pb-3">
+            <span className="text-[#22c55e] font-semibold">Pure Buy</span>
+            <p className="text-[#d4d4d4] mt-1">OTT and APP both support the buy signal (neither below -0.45)</p>
+          </div>
+          <div className="border-b border-[#1a1a1a] pb-3">
+            <span className="text-[#22c55e] font-semibold">Pure Sell</span>
+            <p className="text-[#d4d4d4] mt-1">OTT and APP both support the sell signal (neither above +0.45)</p>
+          </div>
+          <div className="border-b border-[#1a1a1a] pb-3">
+            <span className="text-[#22c55e] font-semibold">Conflicted</span>
+            <p className="text-[#d4d4d4] mt-1">One of OTT or APP contradicts the signal direction</p>
+          </div>
+          <div className="border-b border-[#1a1a1a] pb-3">
+            <span className="text-[#22c55e] font-semibold">Best Odds</span>
+            <p className="text-[#d4d4d4] mt-1">The most favorable odds available across all sportsbooks</p>
+          </div>
+          <div>
+            <span className="text-[#22c55e] font-semibold">Tier Thresholds</span>
+            <p className="text-[#d4d4d4] mt-1">
+              <span className="text-[#22c55e] font-medium">BEST BET:</span> Edge &gt;= 1.95 &nbsp;|&nbsp;
+              <span className="text-emerald-400 font-medium">STRONG PLAY:</span> Edge 1.45-1.94 &nbsp;|&nbsp;
+              <span className="text-[#a1a1aa] font-medium">LEAN:</span> Edge 0.95-1.44
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function MatchupsView({ data }: MatchupsViewProps) {
   const [sortBy, setSortBy] = useState<MatchupSort>('edge-high');
-  const rawMatchups = useMemo(() => generateMatchups(data), [data]);
+  const [roundFilter, setRoundFilter] = useState<MatchupRound>('R4');
+  const [showDefinitions, setShowDefinitions] = useState(false);
+
+  const activeOddsData = useMemo(() => {
+    switch (roundFilter) {
+      case 'R2': return r2MatchupOddsData;
+      case 'R3': return r3MatchupOddsData;
+      case 'R4': return r4MatchupOddsData;
+      case 'All': return [...r2MatchupOddsData, ...r3MatchupOddsData, ...r4MatchupOddsData];
+    }
+  }, [roundFilter]);
+
+  const rawMatchups = useMemo(() => generateMatchups(data, activeOddsData), [data, activeOddsData]);
   const threeBallPicks = useMemo(() => generateThreeBallPicks(data), [data]);
 
   const matchups = useMemo(() => {
@@ -352,9 +416,6 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
         break;
       case 'edge-low':
         sorted.sort((a, b) => a.matchupScore - b.matchupScore);
-        break;
-      case 'tier':
-        sorted.sort((a, b) => tierOrder[a.tier] - tierOrder[b.tier] || b.matchupScore - a.matchupScore);
         break;
     }
     return sorted;
@@ -377,25 +438,49 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
         </p>
       </div>
 
+      {showDefinitions && <MatchupDefinitionsModal onClose={() => setShowDefinitions(false)} />}
+
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-xl font-bold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
-            R4 Matchup Recommendations (Historical)
-          </h2>
-          <p className="text-sm text-[#d4d4d4] mt-1 font-['Inter',system-ui,sans-serif]">
-            Final round picks ranked by X Score edge -- Min edge: 0.95
-          </p>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-2">
+          <div>
+            <h2 className="text-xl font-bold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
+              {roundFilter === 'All' ? 'All Rounds' : roundFilter} Matchup Recommendations (Historical)
+            </h2>
+            <p className="text-sm text-[#d4d4d4] mt-1 font-['Inter',system-ui,sans-serif]">
+              Picks ranked by X Score edge -- Min edge: 0.95
+            </p>
+          </div>
+          <button
+            onClick={() => setShowDefinitions(true)}
+            className="w-5 h-5 rounded-full border border-[#22c55e]/50 text-[#22c55e] text-[10px] font-bold flex items-center justify-center cursor-pointer hover:bg-[#22c55e]/10 transition-colors shrink-0"
+          >
+            ?
+          </button>
         </div>
         <div className="flex items-center gap-3">
+          <div className="flex border border-[#22c55e]/50 rounded-full p-0.5">
+            {(['R2', 'R3', 'R4', 'All'] as const).map((r) => (
+              <button
+                key={r}
+                onClick={() => setRoundFilter(r)}
+                className={`px-3 py-1 text-[10px] uppercase tracking-wider font-medium rounded-full transition-colors font-['Inter',system-ui,sans-serif] cursor-pointer ${
+                  roundFilter === r
+                    ? 'bg-[#22c55e] text-[#0a0a0a]'
+                    : 'text-[#f5f5f5] hover:text-white'
+                }`}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as MatchupSort)}
             className="bg-[#0a0a0a] border border-[#22c55e]/50 rounded-lg px-3 py-1.5 text-xs text-[#f5f5f5] focus:outline-none focus:border-[#22c55e] font-['Inter',system-ui,sans-serif] cursor-pointer"
           >
-            <option value="edge-high">Edge (High-Low)</option>
-            <option value="edge-low">Edge (Low-High)</option>
-            <option value="tier">Tier</option>
+            <option value="edge-high">Edge: High &rarr; Low</option>
+            <option value="edge-low">Edge: Low &rarr; High</option>
           </select>
         </div>
       </div>

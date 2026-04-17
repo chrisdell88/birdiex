@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react';
-import type { PlayerData, MatchupOddsEntry } from '../types';
+import type { PlayerData, MatchupOddsEntry, TournamentId } from '../types';
+import { TOURNAMENTS } from '../types';
 import { r2MatchupOddsData, r3MatchupOddsData, r4MatchupOddsData, r2XScores, r3XScores, r4XScores } from '../data/matchupOdds';
 import { threeBallOddsData, type ThreeBallOddsEntry } from '../data/threeBallData';
 
 interface OddsTablePageProps {
   data: PlayerData[];
+  tournament?: TournamentId;
 }
 
 type OddsRoundFilter = 'R2' | 'R3' | 'R4' | 'All';
@@ -219,7 +221,28 @@ const tierBadge: Record<string, string> = {
   'LEAN': 'bg-gray-500/15 text-gray-400',
 };
 
-export default function OddsTablePage({ data }: OddsTablePageProps) {
+export default function OddsTablePage({ data, tournament = 'masters' }: OddsTablePageProps) {
+  if (tournament === 'heritage') {
+    return (
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-[#0a0a0a] border border-[#22c55e]/30 rounded-xl p-6 text-center">
+          <div className="text-xs text-[#22c55e] uppercase tracking-widest font-semibold font-['Inter',system-ui,sans-serif] mb-3">
+            {TOURNAMENTS[tournament].name} — Odds Coming Soon
+          </div>
+          <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed max-w-md mx-auto">
+            Sportsbook odds for {TOURNAMENTS[tournament].course} have not been loaded yet. The odds comparison table will populate when R2 matchup odds are posted by the books.
+          </p>
+          <p className="text-xs text-[#999] mt-4 font-['Inter',system-ui,sans-serif]">
+            Check the <span className="text-[#22c55e]">Rankings</span> tab for R1 X Scores or the <span className="text-[#22c55e]">Matchups</span> tab for top picks.
+          </p>
+        </div>
+      </div>
+    );
+  }
+  return <MastersOddsBody data={data} />;
+}
+
+function MastersOddsBody({ data }: { data: PlayerData[] }) {
   const [roundFilter, setRoundFilter] = useState<OddsRoundFilter>('R4');
   const [typeFilter, setTypeFilter] = useState<OddsTypeFilter>('H2H');
   const [minEdge, setMinEdge] = useState<number>(0.95);

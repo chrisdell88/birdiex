@@ -1,20 +1,29 @@
+import type { TournamentId } from '../types';
+import { TOURNAMENTS } from '../types';
+
 interface MethodologyPageProps {
   onNavigateToResults?: () => void;
+  tournament?: TournamentId;
 }
 
-export default function MethodologyPage({ onNavigateToResults }: MethodologyPageProps) {
+export default function MethodologyPage({ onNavigateToResults, tournament = 'masters' }: MethodologyPageProps) {
+  const tConfig = TOURNAMENTS[tournament];
+  const isHeritage = tournament === 'heritage';
+
   return (
     <div className="max-w-3xl mx-auto">
       {/* Results Banner */}
       <div className="mb-8 bg-[#0a0a0a] border border-[#22c55e]/30 rounded-xl p-5">
         <div className="text-center">
           <div className="text-xs text-[#22c55e] uppercase tracking-widest font-semibold font-['Inter',system-ui,sans-serif] mb-2">
-            Masters 2026 Results
+            {isHeritage ? `${tConfig.name} — In Progress` : 'Masters 2026 Results'}
           </div>
           <div className="text-2xl font-bold text-[#f5f5f5] font-['JetBrains_Mono','SF_Mono',monospace] mb-1">
-            130-70-21 &nbsp;|&nbsp; +46.60 units &nbsp;|&nbsp; +17.8% ROI
+            {isHeritage
+              ? `R1 Complete @ ${tConfig.course}`
+              : '130-70-21 | +46.60 units | +17.8% ROI'}
           </div>
-          {onNavigateToResults && (
+          {!isHeritage && onNavigateToResults && (
             <button
               onClick={onNavigateToResults}
               className="mt-3 text-sm text-[#22c55e] hover:text-[#4ade80] font-medium font-['Inter',system-ui,sans-serif] underline underline-offset-2 cursor-pointer transition-colors"
@@ -24,6 +33,27 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
           )}
         </div>
       </div>
+
+      {/* Heritage course-fit note */}
+      {isHeritage && (
+        <div className="mb-8 bg-[#0a0a0a] border border-[#262626] rounded-xl p-5">
+          <h3 className="text-sm font-bold text-[#22c55e] uppercase tracking-wider mb-3 font-['Inter',system-ui,sans-serif]">
+            Harbour Town Course Fit Adjustment
+          </h3>
+          <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed mb-3">
+            Harbour Town is short (~7,200 yards), tight, tree-lined, with small greens. The X Score model weights the SG categories differently than at Augusta:
+          </p>
+          <ul className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] space-y-1.5 ml-4 list-disc">
+            <li>SG:APP weighted heaviest (precision irons into small targets)</li>
+            <li>SG:ARG weighted heavy (scrambling essential)</li>
+            <li>SG:OTT down-weighted (distance penalized; accuracy rewarded)</li>
+            <li>SG:PUTT subtracted (standard regression factor)</li>
+            <li>Course-fit bonus: +accuracy above 57% Tour avg, -distance above 282y ideal</li>
+            <li>Short-game bonus: positive SG:ARG adds a small extra boost</li>
+            <li>L4 Major adjustment = 0 (Heritage is not a major)</li>
+          </ul>
+        </div>
+      )}
 
       {/* Section 1: The X Score */}
       <section className="mb-12">

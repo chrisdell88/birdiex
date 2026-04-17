@@ -1,11 +1,13 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import type { PlayerData, Matchup, BucketType, MatchupOddsEntry } from '../types';
+import type { PlayerData, Matchup, BucketType, MatchupOddsEntry, TournamentId } from '../types';
+import { TOURNAMENTS } from '../types';
 import { r2MatchupOddsData, r3MatchupOddsData, r4MatchupOddsData } from '../data/matchupOdds';
 import { threeBallOddsData, type ThreeBallOddsEntry } from '../data/threeBallData';
 import SignalBadge from './SignalBadge';
 
 interface MatchupsViewProps {
   data: PlayerData[];
+  tournament?: TournamentId;
 }
 
 type MatchupSort = 'edge-high' | 'edge-low';
@@ -438,7 +440,69 @@ function MatchupDefinitionsModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-export default function MatchupsView({ data }: MatchupsViewProps) {
+export default function MatchupsView({ data, tournament = 'masters' }: MatchupsViewProps) {
+  if (tournament === 'heritage') {
+    return <HeritageMatchupsView data={data} />;
+  }
+  return <MastersMatchupsBody data={data} />;
+}
+
+function HeritageMatchupsView({ data }: { data: PlayerData[] }) {
+  const topPicks = [...data].sort((a, b) => b.x_score - a.x_score).slice(0, 10);
+  const topFades = [...data].sort((a, b) => a.x_score - b.x_score).slice(0, 10);
+  return (
+      <div>
+        <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-lg p-5 mb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="bg-[#22c55e]/15 text-[#22c55e] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
+              {TOURNAMENTS.heritage.status}
+            </span>
+          </div>
+          <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">
+            {TOURNAMENTS.heritage.name} matchup odds have not been loaded yet. Top X Score picks and fades from R1 at {TOURNAMENTS.heritage.course} are shown below. Once R2 matchup odds are posted, full matchup recommendations will appear here.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-[#0a0a0a] border border-[#22c55e]/30 rounded-xl p-5">
+            <h3 className="text-sm font-bold text-[#22c55e] uppercase tracking-wider mb-4 font-['Inter',system-ui,sans-serif]">Top BUY Candidates</h3>
+            <div className="space-y-2">
+              {topPicks.map((p) => (
+                <div key={p.player_name} className="flex items-center justify-between text-sm py-1.5 border-b border-[#262626] last:border-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#999] font-['JetBrains_Mono','SF_Mono',monospace] text-xs w-6">#{p.rank}</span>
+                    <span className="text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">{p.player_name}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <SignalBadge signal={p.signal} />
+                    <span className="text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace] font-semibold w-14 text-right">{p.x_score >= 0 ? `+${p.x_score.toFixed(2)}` : p.x_score.toFixed(2)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="bg-[#0a0a0a] border border-red-500/30 rounded-xl p-5">
+            <h3 className="text-sm font-bold text-red-400 uppercase tracking-wider mb-4 font-['Inter',system-ui,sans-serif]">Top FADE Candidates</h3>
+            <div className="space-y-2">
+              {topFades.map((p) => (
+                <div key={p.player_name} className="flex items-center justify-between text-sm py-1.5 border-b border-[#262626] last:border-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#999] font-['JetBrains_Mono','SF_Mono',monospace] text-xs w-6">#{p.rank}</span>
+                    <span className="text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">{p.player_name}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <SignalBadge signal={p.signal} />
+                    <span className="text-red-400 font-['JetBrains_Mono','SF_Mono',monospace] font-semibold w-14 text-right">{p.x_score >= 0 ? `+${p.x_score.toFixed(2)}` : p.x_score.toFixed(2)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+}
+
+function MastersMatchupsBody({ data }: { data: PlayerData[] }) {
   const [sortBy, setSortBy] = useState<MatchupSort>('edge-high');
   const [roundFilter, setRoundFilter] = useState<MatchupRound>('R4');
   const [showDefinitions, setShowDefinitions] = useState(false);

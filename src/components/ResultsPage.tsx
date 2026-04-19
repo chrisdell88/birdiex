@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import type { BetRecord, TierType, BetType, ResultsSortField, SortDirection, Sportsbook } from '../types';
+import type { BetRecord, TierType, BetType, ResultsSortField, SortDirection, Sportsbook, TournamentId } from '../types';
+import { TOURNAMENTS } from '../types';
 import {
   overallRecord,
   overallUnits,
@@ -125,7 +126,32 @@ const sportsbooks: Sportsbook[] = [
 const rounds = ['All Rounds', 'Round 2', 'Round 3', 'Round 4'];
 
 // --- Main Component ---
-export default function ResultsPage() {
+interface ResultsPageProps {
+  tournament?: TournamentId;
+}
+
+export default function ResultsPage({ tournament = 'masters' }: ResultsPageProps = {}) {
+  if (tournament === 'heritage') {
+    return (
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-[#0a0a0a] border border-[#22c55e]/30 rounded-xl p-6 text-center">
+          <div className="text-xs text-[#22c55e] uppercase tracking-widest font-semibold font-['Inter',system-ui,sans-serif] mb-3">
+            {TOURNAMENTS[tournament].name} — Bet Log Starting
+          </div>
+          <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed max-w-md mx-auto">
+            No bets have been logged yet for {TOURNAMENTS[tournament].name}. The results ledger will populate as picks are placed and rounds complete at {TOURNAMENTS[tournament].course}.
+          </p>
+          <p className="text-xs text-[#999] mt-4 font-['Inter',system-ui,sans-serif]">
+            Switch to <span className="text-[#22c55e]">Masters</span> in the tournament toggle above to review the Masters 2026 bet log (130-70-21, +46.60u, 17.8% ROI).
+          </p>
+        </div>
+      </div>
+    );
+  }
+  return <MastersResultsBody />;
+}
+
+function MastersResultsBody() {
   const [roundFilter, setRoundFilter] = useState('All Rounds');
   const [dataSetFilter, setDataSetFilter] = useState<'round-only' | 'cumulative'>('round-only');
   const [bookFilter, setBookFilter] = useState<Sportsbook>('Best Odds (Overall)');

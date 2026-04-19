@@ -1,11 +1,14 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import type { PlayerData, Matchup, BucketType, MatchupOddsEntry } from '../types';
+import type { PlayerData, Matchup, BucketType, MatchupOddsEntry, TournamentId } from '../types';
+import { TOURNAMENTS } from '../types';
 import { r2MatchupOddsData, r3MatchupOddsData, r4MatchupOddsData } from '../data/matchupOdds';
+import { heritageR2MatchupOdds } from '../data/heritageMatchupOdds';
 import { threeBallOddsData, type ThreeBallOddsEntry } from '../data/threeBallData';
 import SignalBadge from './SignalBadge';
 
 interface MatchupsViewProps {
   data: PlayerData[];
+  tournament?: TournamentId;
 }
 
 type MatchupSort = 'edge-high' | 'edge-low';
@@ -438,19 +441,26 @@ function MatchupDefinitionsModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-export default function MatchupsView({ data }: MatchupsViewProps) {
+export default function MatchupsView({ data, tournament = 'masters' }: MatchupsViewProps) {
+  return <MatchupsBody data={data} tournament={tournament} />;
+}
+
+function MatchupsBody({ data, tournament }: { data: PlayerData[]; tournament: TournamentId }) {
+  const isHeritage = tournament === 'heritage';
+  const availableRounds: MatchupRound[] = isHeritage ? ['R2'] : ['R2', 'R3', 'R4', 'All'];
   const [sortBy, setSortBy] = useState<MatchupSort>('edge-high');
-  const [roundFilter, setRoundFilter] = useState<MatchupRound>('R4');
+  const [roundFilter, setRoundFilter] = useState<MatchupRound>(isHeritage ? 'R2' : 'R4');
   const [showDefinitions, setShowDefinitions] = useState(false);
 
   const activeOddsData = useMemo(() => {
+    if (isHeritage) return heritageR2MatchupOdds;
     switch (roundFilter) {
       case 'R2': return r2MatchupOddsData;
       case 'R3': return r3MatchupOddsData;
       case 'R4': return r4MatchupOddsData;
       case 'All': return [...r2MatchupOddsData, ...r3MatchupOddsData, ...r4MatchupOddsData];
     }
-  }, [roundFilter]);
+  }, [roundFilter, isHeritage]);
 
   const rawMatchups = useMemo(() => generateMatchups(data, activeOddsData), [data, activeOddsData]);
   const threeBallPicks = useMemo(() => generateThreeBallPicks(data), [data]);
@@ -472,16 +482,17 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
 
   return (
     <div>
-      {/* Tournament Complete Banner */}
+      {/* Tournament banner */}
       <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-lg p-5 mb-6">
         <div className="flex items-center gap-3 mb-2">
           <span className="bg-[#22c55e]/15 text-[#22c55e] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
-            TOURNAMENT COMPLETE
+            {TOURNAMENTS[tournament].status}
           </span>
         </div>
         <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">
-          The Masters 2026 is complete. The matchups below show the R4 picks that were recommended by the X Score model.
-          Check the <span className="text-[#22c55e] font-semibold">Results</span> tab for full tournament performance: 130-70-21, +46.60u, 17.8% ROI.
+          {isHeritage
+            ? `${TOURNAMENTS.heritage.name} R2 matchup picks at ${TOURNAMENTS.heritage.course}. X Score edge is computed from R1 strokes-gained with Harbour Town course-fit weighting. Best odds shown across all books that posted a line.`
+            : 'The Masters 2026 is complete. The matchups below show the R4 picks that were recommended by the X Score model. Check the Results tab for full tournament performance: 130-70-21, +46.60u, 17.8% ROI.'}
         </p>
       </div>
 
@@ -507,7 +518,7 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
         </div>
         <div className="flex items-center gap-3">
           <div className="flex border border-[#22c55e]/50 rounded-full p-0.5">
-            {(['R2', 'R3', 'R4', 'All'] as const).map((r) => (
+            {availableRounds.map((r) => (
               <button
                 key={r}
                 onClick={() => setRoundFilter(r)}
@@ -532,10 +543,10 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
         </div>
       </div>
 
-      {/* 2-column layout */}
+      {/* 2-column layout (Heritage: full width, no 3-balls yet) */}
       <div className="flex flex-col md:flex-row gap-6">
-        {/* Left: H2H Matchups (60%) */}
-        <div className="w-full md:w-[60%]">
+        {/* Left: H2H Matchups */}
+        <div className={`w-full ${isHeritage ? '' : 'md:w-[60%]'}`}>
           <div className="flex items-center gap-2 mb-4">
             <h3 className="text-sm font-semibold text-[#f5f5f5] uppercase tracking-wider font-['JetBrains_Mono','SF_Mono',monospace]">
               H2H Matchups
@@ -633,8 +644,8 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
           </div>
         </div>
 
-        {/* Right: 3-Ball Picks (40%) */}
-        <div className="w-full md:w-[40%]">
+        {/* Right: 3-Ball Picks (Masters only) */}
+        {!isHeritage && <div className="w-full md:w-[40%]">
           <div className="flex items-center gap-2 mb-4">
             <h3 className="text-sm font-semibold text-[#f5f5f5] uppercase tracking-wider font-['JetBrains_Mono','SF_Mono',monospace]">
               3-Ball Picks
@@ -731,7 +742,7 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
               </div>
             ))}
           </div>
-        </div>
+        </div>}
       </div>
     </div>
   );

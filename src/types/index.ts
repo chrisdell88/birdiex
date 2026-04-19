@@ -41,6 +41,36 @@ export type TabId = 'rankings' | 'matchups' | 'odds' | 'methodology' | 'results'
 
 export type DataSet = 'round' | 'cumulative';
 
+export type TournamentId = 'masters' | 'heritage';
+
+export interface TournamentConfig {
+  id: TournamentId;
+  name: string;
+  shortName: string;
+  course: string;
+  status: string;
+  isMajor: boolean;
+}
+
+export const TOURNAMENTS: Record<TournamentId, TournamentConfig> = {
+  masters: {
+    id: 'masters',
+    name: 'The Masters 2026',
+    shortName: 'Masters',
+    course: 'Augusta National',
+    status: 'FINAL',
+    isMajor: true,
+  },
+  heritage: {
+    id: 'heritage',
+    name: 'RBC Heritage 2026',
+    shortName: 'RBC Heritage',
+    course: 'Harbour Town',
+    status: 'R1 COMPLETE',
+    isMajor: false,
+  },
+};
+
 export type SortField =
   | 'rank'
   | 'player_name'

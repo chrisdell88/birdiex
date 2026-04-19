@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react';
-import type { PlayerData, MatchupOddsEntry } from '../types';
+import type { PlayerData, MatchupOddsEntry, TournamentId } from '../types';
 import { r2MatchupOddsData, r3MatchupOddsData, r4MatchupOddsData, r2XScores, r3XScores, r4XScores } from '../data/matchupOdds';
+import { heritageR2MatchupOdds } from '../data/heritageMatchupOdds';
 import { threeBallOddsData, type ThreeBallOddsEntry } from '../data/threeBallData';
 
 interface OddsTablePageProps {
   data: PlayerData[];
+  tournament?: TournamentId;
 }
 
 type OddsRoundFilter = 'R2' | 'R3' | 'R4' | 'All';
@@ -219,8 +221,13 @@ const tierBadge: Record<string, string> = {
   'LEAN': 'bg-gray-500/15 text-gray-400',
 };
 
-export default function OddsTablePage({ data }: OddsTablePageProps) {
-  const [roundFilter, setRoundFilter] = useState<OddsRoundFilter>('R4');
+export default function OddsTablePage({ data, tournament = 'masters' }: OddsTablePageProps) {
+  return <OddsBody data={data} tournament={tournament} />;
+}
+
+function OddsBody({ data, tournament }: { data: PlayerData[]; tournament: TournamentId }) {
+  const isHeritage = tournament === 'heritage';
+  const [roundFilter, setRoundFilter] = useState<OddsRoundFilter>(isHeritage ? 'R2' : 'R4');
   const [typeFilter, setTypeFilter] = useState<OddsTypeFilter>('H2H');
   const [minEdge, setMinEdge] = useState<number>(0.95);
   const [sortField, setSortField] = useState<OddsSortField>('edge');
@@ -242,6 +249,9 @@ export default function OddsTablePage({ data }: OddsTablePageProps) {
 
   // Build H2H rows with round-specific X Scores
   const h2hRows = useMemo(() => {
+    if (isHeritage) {
+      return buildH2HRows(data, heritageR2MatchupOdds).filter(r => r.edge >= minEdge);
+    }
     switch (roundFilter) {
       case 'R2': return buildH2HRows(data, r2MatchupOddsData, r2XScores).filter(r => r.edge >= minEdge);
       case 'R3': return buildH2HRows(data, r3MatchupOddsData, r3XScores).filter(r => r.edge >= minEdge);
@@ -252,7 +262,7 @@ export default function OddsTablePage({ data }: OddsTablePageProps) {
         ...buildH2HRows(data, r4MatchupOddsData, r4XScores),
       ].filter(r => r.edge >= minEdge);
     }
-  }, [data, roundFilter, minEdge]);
+  }, [data, roundFilter, minEdge, isHeritage]);
 
   // Build 3-ball rows
   const threeBallRows = useMemo(() => {
@@ -317,7 +327,7 @@ export default function OddsTablePage({ data }: OddsTablePageProps) {
         <div className="flex flex-wrap items-center gap-3">
           {/* Round filter */}
           <div className="flex border border-[#22c55e]/50 rounded-full p-0.5">
-            {(['R2', 'R3', 'R4', 'All'] as const).map((r) => (
+            {(isHeritage ? (['R2'] as const) : (['R2', 'R3', 'R4', 'All'] as const)).map((r) => (
               <button
                 key={r}
                 onClick={() => setRoundFilter(r)}
@@ -332,7 +342,8 @@ export default function OddsTablePage({ data }: OddsTablePageProps) {
             ))}
           </div>
 
-          {/* Type filter */}
+          {/* Type filter (Masters only - Heritage is H2H only) */}
+          {!isHeritage && (
           <div className="flex border border-[#262626] rounded-full p-0.5">
             {(['H2H', '3-Ball', 'All'] as const).map((t) => (
               <button
@@ -348,6 +359,7 @@ export default function OddsTablePage({ data }: OddsTablePageProps) {
               </button>
             ))}
           </div>
+          )}
 
           {/* Minimum edge */}
           <select

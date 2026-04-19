@@ -1,10 +1,13 @@
-import type { TabId, DataSet } from '../types';
+import type { TabId, DataSet, TournamentId } from '../types';
+import { TOURNAMENTS } from '../types';
 
 interface HeaderProps {
   activeTab: TabId;
   onTabChange: (tab: TabId) => void;
   dataSet: DataSet;
   onDataSetChange: (ds: DataSet) => void;
+  tournament: TournamentId;
+  onTournamentChange: (t: TournamentId) => void;
 }
 
 const tabs: { id: TabId; label: string }[] = [
@@ -15,12 +18,21 @@ const tabs: { id: TabId; label: string }[] = [
   { id: 'results', label: 'RESULTS' },
 ];
 
-export default function Header({ activeTab, onTabChange, dataSet, onDataSetChange }: HeaderProps) {
+export default function Header({
+  activeTab,
+  onTabChange,
+  dataSet,
+  onDataSetChange,
+  tournament,
+  onTournamentChange,
+}: HeaderProps) {
+  const tConfig = TOURNAMENTS[tournament];
+
   return (
     <header className="border-b border-[#262626] bg-[#0a0a0a] sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         {/* Top row */}
-        <div className="flex items-center justify-between py-4">
+        <div className="flex items-center justify-between py-4 flex-wrap gap-3">
           <div className="flex items-center gap-4">
             {/* Logo */}
             <div className="flex items-baseline">
@@ -38,7 +50,31 @@ export default function Header({ activeTab, onTabChange, dataSet, onDataSetChang
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Tournament toggle */}
+            <div className="flex border border-[#22c55e]/50 rounded-full p-0.5">
+              <button
+                onClick={() => onTournamentChange('heritage')}
+                className={`px-3 py-1 text-[10px] uppercase tracking-wider font-medium rounded-full transition-colors font-['Inter',system-ui,sans-serif] cursor-pointer ${
+                  tournament === 'heritage'
+                    ? 'bg-[#22c55e] text-[#0a0a0a]'
+                    : 'text-[#f5f5f5] hover:text-white'
+                }`}
+              >
+                Heritage
+              </button>
+              <button
+                onClick={() => onTournamentChange('masters')}
+                className={`px-3 py-1 text-[10px] uppercase tracking-wider font-medium rounded-full transition-colors font-['Inter',system-ui,sans-serif] cursor-pointer ${
+                  tournament === 'masters'
+                    ? 'bg-[#22c55e] text-[#0a0a0a]'
+                    : 'text-[#f5f5f5] hover:text-white'
+                }`}
+              >
+                Masters
+              </button>
+            </div>
+
             {/* Round/Cumulative toggle */}
             <div className="flex border border-[#22c55e]/50 rounded-full p-0.5">
               <button
@@ -66,19 +102,19 @@ export default function Header({ activeTab, onTabChange, dataSet, onDataSetChang
             {/* Tournament badge */}
             <div className="border border-[#22c55e]/50 rounded-full px-3 md:px-4 py-1.5 bg-[#0a0a0a]">
               <span className="text-[10px] md:text-xs text-[#f5f5f5] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif]">
-                The Masters 2026 <span className="text-[#f5f5f5]/50">|</span> FINAL
+                {tConfig.name} <span className="text-[#f5f5f5]/50">|</span> {tConfig.status}
               </span>
             </div>
           </div>
         </div>
 
         {/* Navigation tabs */}
-        <nav className="flex gap-0 -mb-px">
+        <nav className="flex gap-0 -mb-px overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`px-4 md:px-6 py-3 text-[13px] md:text-[14px] tracking-[0.12em] font-medium transition-colors border-b-2 font-['JetBrains_Mono','SF_Mono','Fira_Code',monospace] uppercase cursor-pointer ${
+              className={`px-4 md:px-6 py-3 text-[13px] md:text-[14px] tracking-[0.12em] font-medium transition-colors border-b-2 font-['JetBrains_Mono','SF_Mono','Fira_Code',monospace] uppercase cursor-pointer whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'border-[#22c55e] text-[#22c55e]'
                   : 'border-transparent text-[#f5f5f5] hover:text-white'

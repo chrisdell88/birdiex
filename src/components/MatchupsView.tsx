@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import type { PlayerData, Matchup, BucketType, MatchupOddsEntry, TournamentId } from '../types';
 import { TOURNAMENTS } from '../types';
 import { r2MatchupOddsData, r3MatchupOddsData, r4MatchupOddsData } from '../data/matchupOdds';
+import { heritageR2MatchupOdds } from '../data/heritageMatchupOdds';
 import { threeBallOddsData, type ThreeBallOddsEntry } from '../data/threeBallData';
 import SignalBadge from './SignalBadge';
 
@@ -441,80 +442,25 @@ function MatchupDefinitionsModal({ onClose }: { onClose: () => void }) {
 }
 
 export default function MatchupsView({ data, tournament = 'masters' }: MatchupsViewProps) {
-  if (tournament === 'heritage') {
-    return <HeritageMatchupsView data={data} />;
-  }
-  return <MastersMatchupsBody data={data} />;
+  return <MatchupsBody data={data} tournament={tournament} />;
 }
 
-function HeritageMatchupsView({ data }: { data: PlayerData[] }) {
-  const topPicks = [...data].sort((a, b) => b.x_score - a.x_score).slice(0, 10);
-  const topFades = [...data].sort((a, b) => a.x_score - b.x_score).slice(0, 10);
-  return (
-      <div>
-        <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-lg p-5 mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <span className="bg-[#22c55e]/15 text-[#22c55e] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
-              {TOURNAMENTS.heritage.status}
-            </span>
-          </div>
-          <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">
-            {TOURNAMENTS.heritage.name} matchup odds have not been loaded yet. Top X Score picks and fades from R1 at {TOURNAMENTS.heritage.course} are shown below. Once R2 matchup odds are posted, full matchup recommendations will appear here.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-[#0a0a0a] border border-[#22c55e]/30 rounded-xl p-5">
-            <h3 className="text-sm font-bold text-[#22c55e] uppercase tracking-wider mb-4 font-['Inter',system-ui,sans-serif]">Top BUY Candidates</h3>
-            <div className="space-y-2">
-              {topPicks.map((p) => (
-                <div key={p.player_name} className="flex items-center justify-between text-sm py-1.5 border-b border-[#262626] last:border-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[#999] font-['JetBrains_Mono','SF_Mono',monospace] text-xs w-6">#{p.rank}</span>
-                    <span className="text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">{p.player_name}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <SignalBadge signal={p.signal} />
-                    <span className="text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace] font-semibold w-14 text-right">{p.x_score >= 0 ? `+${p.x_score.toFixed(2)}` : p.x_score.toFixed(2)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="bg-[#0a0a0a] border border-red-500/30 rounded-xl p-5">
-            <h3 className="text-sm font-bold text-red-400 uppercase tracking-wider mb-4 font-['Inter',system-ui,sans-serif]">Top FADE Candidates</h3>
-            <div className="space-y-2">
-              {topFades.map((p) => (
-                <div key={p.player_name} className="flex items-center justify-between text-sm py-1.5 border-b border-[#262626] last:border-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[#999] font-['JetBrains_Mono','SF_Mono',monospace] text-xs w-6">#{p.rank}</span>
-                    <span className="text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">{p.player_name}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <SignalBadge signal={p.signal} />
-                    <span className="text-red-400 font-['JetBrains_Mono','SF_Mono',monospace] font-semibold w-14 text-right">{p.x_score >= 0 ? `+${p.x_score.toFixed(2)}` : p.x_score.toFixed(2)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-}
-
-function MastersMatchupsBody({ data }: { data: PlayerData[] }) {
+function MatchupsBody({ data, tournament }: { data: PlayerData[]; tournament: TournamentId }) {
+  const isHeritage = tournament === 'heritage';
+  const availableRounds: MatchupRound[] = isHeritage ? ['R2'] : ['R2', 'R3', 'R4', 'All'];
   const [sortBy, setSortBy] = useState<MatchupSort>('edge-high');
-  const [roundFilter, setRoundFilter] = useState<MatchupRound>('R4');
+  const [roundFilter, setRoundFilter] = useState<MatchupRound>(isHeritage ? 'R2' : 'R4');
   const [showDefinitions, setShowDefinitions] = useState(false);
 
   const activeOddsData = useMemo(() => {
+    if (isHeritage) return heritageR2MatchupOdds;
     switch (roundFilter) {
       case 'R2': return r2MatchupOddsData;
       case 'R3': return r3MatchupOddsData;
       case 'R4': return r4MatchupOddsData;
       case 'All': return [...r2MatchupOddsData, ...r3MatchupOddsData, ...r4MatchupOddsData];
     }
-  }, [roundFilter]);
+  }, [roundFilter, isHeritage]);
 
   const rawMatchups = useMemo(() => generateMatchups(data, activeOddsData), [data, activeOddsData]);
   const threeBallPicks = useMemo(() => generateThreeBallPicks(data), [data]);
@@ -536,16 +482,17 @@ function MastersMatchupsBody({ data }: { data: PlayerData[] }) {
 
   return (
     <div>
-      {/* Tournament Complete Banner */}
+      {/* Tournament banner */}
       <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-lg p-5 mb-6">
         <div className="flex items-center gap-3 mb-2">
           <span className="bg-[#22c55e]/15 text-[#22c55e] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
-            TOURNAMENT COMPLETE
+            {TOURNAMENTS[tournament].status}
           </span>
         </div>
         <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">
-          The Masters 2026 is complete. The matchups below show the R4 picks that were recommended by the X Score model.
-          Check the <span className="text-[#22c55e] font-semibold">Results</span> tab for full tournament performance: 130-70-21, +46.60u, 17.8% ROI.
+          {isHeritage
+            ? `${TOURNAMENTS.heritage.name} R2 matchup picks at ${TOURNAMENTS.heritage.course}. X Score edge is computed from R1 strokes-gained with Harbour Town course-fit weighting. Best odds shown across all books that posted a line.`
+            : 'The Masters 2026 is complete. The matchups below show the R4 picks that were recommended by the X Score model. Check the Results tab for full tournament performance: 130-70-21, +46.60u, 17.8% ROI.'}
         </p>
       </div>
 
@@ -571,7 +518,7 @@ function MastersMatchupsBody({ data }: { data: PlayerData[] }) {
         </div>
         <div className="flex items-center gap-3">
           <div className="flex border border-[#22c55e]/50 rounded-full p-0.5">
-            {(['R2', 'R3', 'R4', 'All'] as const).map((r) => (
+            {availableRounds.map((r) => (
               <button
                 key={r}
                 onClick={() => setRoundFilter(r)}
@@ -596,10 +543,10 @@ function MastersMatchupsBody({ data }: { data: PlayerData[] }) {
         </div>
       </div>
 
-      {/* 2-column layout */}
+      {/* 2-column layout (Heritage: full width, no 3-balls yet) */}
       <div className="flex flex-col md:flex-row gap-6">
-        {/* Left: H2H Matchups (60%) */}
-        <div className="w-full md:w-[60%]">
+        {/* Left: H2H Matchups */}
+        <div className={`w-full ${isHeritage ? '' : 'md:w-[60%]'}`}>
           <div className="flex items-center gap-2 mb-4">
             <h3 className="text-sm font-semibold text-[#f5f5f5] uppercase tracking-wider font-['JetBrains_Mono','SF_Mono',monospace]">
               H2H Matchups
@@ -697,8 +644,8 @@ function MastersMatchupsBody({ data }: { data: PlayerData[] }) {
           </div>
         </div>
 
-        {/* Right: 3-Ball Picks (40%) */}
-        <div className="w-full md:w-[40%]">
+        {/* Right: 3-Ball Picks (Masters only) */}
+        {!isHeritage && <div className="w-full md:w-[40%]">
           <div className="flex items-center gap-2 mb-4">
             <h3 className="text-sm font-semibold text-[#f5f5f5] uppercase tracking-wider font-['JetBrains_Mono','SF_Mono',monospace]">
               3-Ball Picks
@@ -795,7 +742,7 @@ function MastersMatchupsBody({ data }: { data: PlayerData[] }) {
               </div>
             ))}
           </div>
-        </div>
+        </div>}
       </div>
     </div>
   );

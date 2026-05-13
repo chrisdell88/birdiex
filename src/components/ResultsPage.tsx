@@ -230,11 +230,29 @@ export default function ResultsPage() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Tournament Summary Banner */}
+      {/* Live event tracking banner — appears above Masters archive */}
+      <div className="border border-[#22c55e]/30 bg-[#22c55e]/[0.03] rounded-lg p-4 mb-6 flex items-start gap-3">
+        <div className="flex-shrink-0 mt-0.5">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#22c55e] opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#22c55e]"></span>
+          </span>
+        </div>
+        <div className="flex-1">
+          <div className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
+            PGA Championship 2026 — results tracking begins Friday May 16
+          </div>
+          <div className="text-xs text-[#a1a1aa] mt-1 font-['Inter',system-ui,sans-serif]">
+            R1 tees off Thursday May 14 at Aronimink. First graded bets post after R2 wraps. The Masters 2026 archive is shown below.
+          </div>
+        </div>
+      </div>
+
+      {/* Masters Archive Summary Banner */}
       <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-lg p-4 mb-6">
         <div className="flex items-center gap-3 mb-2">
           <span className="bg-[#22c55e]/15 text-[#22c55e] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
-            TOURNAMENT COMPLETE
+            ARCHIVE — TOURNAMENT COMPLETE
           </span>
           <span className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">The Masters 2026 -- Final Results</span>
         </div>

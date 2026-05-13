@@ -1,4 +1,5 @@
 import type { TabId, DataSet } from '../types';
+import { CURRENT_TOURNAMENT, phaseLabel } from '../tournament';
 
 interface HeaderProps {
   activeTab: TabId;
@@ -66,7 +67,7 @@ export default function Header({ activeTab, onTabChange, dataSet, onDataSetChang
             {/* Tournament badge */}
             <div className="border border-[#22c55e]/50 rounded-full px-3 md:px-4 py-1.5 bg-[#0a0a0a]">
               <span className="text-[10px] md:text-xs text-[#f5f5f5] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif]">
-                The Masters 2026 <span className="text-[#f5f5f5]/50">|</span> FINAL
+                {CURRENT_TOURNAMENT.display_name} <span className="text-[#f5f5f5]/50">|</span> {phaseLabel(CURRENT_TOURNAMENT.phase)}
               </span>
             </div>
           </div>

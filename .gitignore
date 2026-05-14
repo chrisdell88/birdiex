@@ -12,6 +12,17 @@ dist
 dist-ssr
 *.local
 
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+
+# Pipeline output (raw API dumps)
+data/raw/
+
+# Claude Code local config (worktrees, launch.json, etc.)
+.claude/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

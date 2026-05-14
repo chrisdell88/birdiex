@@ -1,0 +1,88 @@
+name: DataGolf pull (auto-update event data)
+
+# Runs the DataGolf pipeline, regenerates the active event's TS data file, and
+# commits + pushes any changes. Vercel auto-deploys on push to main.
+#
+# Triggers:
+#   - workflow_dispatch — manual run via GitHub UI, with slug/phase/course inputs
+#   - schedule         — disabled by default. Uncomment the cron block when an
+#                        event is active to auto-pull every 30 min during play.
+#
+# Secrets required:
+#   DATAGOLF_API_KEY — DataGolf API key (Repo Settings → Secrets → Actions)
+
+on:
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: Event slug (e.g. pga-championship-2026)
+        required: true
+        default: pga-championship-2026
+      phase:
+        description: Tournament phase (pre, r1, r2, r3, r4, final)
+        required: true
+        default: pre
+        type: choice
+        options: [pre, r1, r2, r3, r4, final]
+      course:
+        description: Course slug (must exist in scripts/lib/courses.ts)
+        required: true
+        default: aronimink
+      out_file:
+        description: Output filename in src/data/ (no extension)
+        required: true
+        default: pgaChampPreData
+
+  # Schedule: enable when a tournament is live. Polls every 30 min.
+  # schedule:
+  #   - cron: '*/30 * * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  pull-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Pull DataGolf data
+        env:
+          DATAGOLF_API_KEY: ${{ secrets.DATAGOLF_API_KEY }}
+        run: |
+          npm run pull:event -- \
+            --slug "${{ inputs.slug }}" \
+            --phase "${{ inputs.phase }}"
+
+      - name: Rebuild TS data file
+        env:
+          DATAGOLF_API_KEY: ${{ secrets.DATAGOLF_API_KEY }}
+        run: |
+          npm run build:event -- \
+            --slug "${{ inputs.slug }}" \
+            --phase "${{ inputs.phase }}" \
+            --course "${{ inputs.course }}" \
+            --out "${{ inputs.out_file }}"
+
+      - name: Verify TypeScript build still passes
+        run: npm run build
+
+      - name: Commit changes if any
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet src/data/; then
+            echo "No changes to src/data — skipping commit."
+          else
+            git add src/data/
+            git commit -m "data: refresh ${{ inputs.slug }} (${{ inputs.phase }})"
+            git push
+          fi

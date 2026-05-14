@@ -76,9 +76,10 @@ PGA Tour golf betting analytics app. Proprietary "X Score" putting regression mo
 ---
 
 ## DataGolf API
-- **Key:** `dcf60e200f0edd43350f71382df4` (in env, don't commit)
+- **Key:** Stored in `.env` as `DATAGOLF_API_KEY` (gitignored). See `.env.example`.
 - **Rate limit:** 45 req/min
 - **Base URL:** `https://feeds.datagolf.com`
+- **Security note:** Current key was committed publicly in MEMORY.md from commit `db7c41f` (Apr 18 2026) until sanitized on 2026-05-13. Key remains in git history. DataGolf doesn't expose rotation via UI — email support for true rotation.
 
 ### Critical endpoints
 - `/preds/live-tournament-stats?stats=sg_putt,sg_arg,sg_app,sg_ott,sg_bs,sg_t2g,distance,accuracy&round={1,2,3,4,event_cumulative}&display=value`

@@ -1,6 +1,6 @@
 # BirdieX — Project Memory
 
-**Last updated:** 2026-05-13
+**Last updated:** 2026-04-18
 **Repo:** https://github.com/chrisdell88/birdiex
 **Live:** https://birdiex.co
 **Project path:** ~/Projects/birdiex
@@ -76,10 +76,10 @@ PGA Tour golf betting analytics app. Proprietary "X Score" putting regression mo
 ---
 
 ## DataGolf API
-- **Key:** Stored in `.env` as `DATAGOLF_API_KEY` (never commit). See `.env.example`.
+- **Key:** Stored in `.env` as `DATAGOLF_API_KEY` (gitignored). See `.env.example`.
 - **Rate limit:** 45 req/min
 - **Base URL:** `https://feeds.datagolf.com`
-- **Security note:** Current key was committed to public repo in MEMORY.md from commit `db7c41f` (Apr 18 2026) until sanitized on 2026-05-13. Key remains in git history. To truly rotate, email DataGolf support — they don't expose rotation via UI.
+- **Security note:** Current key was committed publicly in MEMORY.md from commit `db7c41f` (Apr 18 2026) until sanitized on 2026-05-13. Key remains in git history. DataGolf doesn't expose rotation via UI — email support for true rotation.
 
 ### Critical endpoints
 - `/preds/live-tournament-stats?stats=sg_putt,sg_arg,sg_app,sg_ott,sg_bs,sg_t2g,distance,accuracy&round={1,2,3,4,event_cumulative}&display=value`
@@ -225,51 +225,25 @@ Located in `/Users/chrisdell/Downloads/golfx-source/`:
 
 ---
 
-## Current Status (2026-05-13)
-
-**Active event:** PGA Championship 2026 (Aronimink Golf Club, May 14–17). Driven by `src/tournament.ts` (`CURRENT_TOURNAMENT.phase`). Phase is `'pre'` until R1 wraps.
-
-**Pipeline built:** `scripts/pull-event.ts` + `scripts/build-event.ts`. Reads DataGolf endpoints via `scripts/lib/datagolf.ts`, applies X Score model via `scripts/lib/xscore.ts`, writes typed `src/data/<event>R<N>Data.ts`. Run via `npm run pull:event -- --slug <event> --phase <phase>` then `npm run build:event -- --slug ... --phase ... --course ... --out ...`.
-
-**Per-round workflow:**
-```
-# R1 wraps Thursday evening
-npm run pull:event  -- --slug pga-championship-2026 --phase r1
-npm run build:event -- --slug pga-championship-2026 --phase r1 --course aronimink --out pgaChampR1Data
-# Update src/App.tsx import + src/tournament.ts phase to 'r1', commit, push.
-```
-
 ## Open Items / Next Work
 
-### Immediate (PGA Championship weekend)
-- [ ] **One-time setup:** Run `gh auth refresh -h github.com -s workflow` then push `.github/workflows/datagolf-pull.yml` (held out of PR #2 due to OAuth scope)
-- [ ] After R1 wraps (Thu PM May 14): pull R1 data, generate `pgaChampR1Data.ts`, push for R2 picks
-- [ ] R3/R4 same flow
-- [ ] **CRITICAL:** Pull 3-ball matchup odds every round — DataGolf doesn't retain them historically
-
-### Aronimink data quality
-- [ ] Pull actual course-fit coefficients + predictability from DataGolf web course-fit tool (not API). Currently placeholders (equal weights ~1.0). Update `scripts/lib/courses.ts` → `COURSES.aronimink`.
-
-### Multi-event refactor (post-PGA, next week)
-- [ ] Event selector in archive UX: home = live event, "Past Events" tab with dropdown
-- [ ] Migrate event data to Supabase, refactor app to read from DB instead of `src/data/*.ts`
-- [ ] Add `DATAGOLF_API_KEY` to GitHub Actions secrets (Repo Settings → Secrets) before enabling cron
-- [ ] Email DataGolf support to truly rotate the leaked API key (current key is in git history of MEMORY.md forever)
-- [ ] Pre-tournament R1 betting model (use baseline skill + course fit as proxy) — parked
+### Next Tournament Prep
+- [ ] Set up automated DataGolf API pulls for each round (include 3-balls!)
+- [ ] Build pre-tournament R1 betting model (use baseline skill + course fit as proxy)
+- [ ] Add alerts/notifications (Discord, email, SMS)
+- [ ] Separate 3-ball tracking section on Results page
+- [ ] Consider Supabase integration for persistent bet history across tournaments
 
 ### Future Features (Parked)
 - Clickable direct-to-bet links (not possible with current sportsbook URLs)
-- Historical backtesting against prior tournament data (DataGolf tier upgrade required)
+- Historical backtesting against prior Masters/tournament data (DataGolf tier upgrade required)
 - Line movement monitoring
 - Bankroll-adjusted bet recommendations
-- Alerts/notifications (Discord, email, SMS)
-- Separate 3-ball tracking section on Results page
 
 ### Known Issues
-- Aronimink course-fit weights are placeholders (equal weights). Low predictability venue so impact is small, but should be replaced.
-- React key warnings in RankingsTable console — pre-existing tech debt, not caused by this pipeline
-- No database yet — all data still in `src/data/*.ts` until Supabase migration
-- DataGolf doesn't expose API key rotation in UI; support email required for true rotation
+- Deep linking to specific bets on sportsbook sites isn't possible — only golf section links
+- Must manually pull API data each round (needs automation)
+- No database yet — all data embedded in src/data/ files
 
 ---
 

@@ -4,7 +4,6 @@ import SignalBadge from './SignalBadge';
 import PurityIcon from './PurityIcon';
 import SummaryCards from './SummaryCards';
 import PlayerDetailCard from './PlayerDetailCard';
-import { CURRENT_TOURNAMENT, phaseLabel } from '../tournament';
 
 interface RankingsTableProps {
   data: PlayerData[];
@@ -105,9 +104,6 @@ export default function RankingsTable({ data }: RankingsTableProps) {
   const [signalFilter, setSignalFilter] = useState<string>('ALL');
   const [expandedPlayer, setExpandedPlayer] = useState<string | null>(null);
   const [showStatsKey, setShowStatsKey] = useState(false);
-
-  const lastUpdatedLabel = `${CURRENT_TOURNAMENT.display_name} — ${phaseLabel(CURRENT_TOURNAMENT.phase)}`;
-  const isPreTournament = CURRENT_TOURNAMENT.phase === 'pre';
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -216,22 +212,13 @@ export default function RankingsTable({ data }: RankingsTableProps) {
     <div>
       <SummaryCards data={data} activeFilter={signalFilter} onFilterChange={handleCardFilter} />
 
-      {isPreTournament && (
-        <div className="border border-[#22c55e]/30 bg-[#22c55e]/[0.03] rounded-lg p-3 mb-4 flex items-start gap-3">
-          <span className="text-[#22c55e] text-xs font-bold uppercase tracking-wider mt-0.5 font-['JetBrains_Mono','SF_Mono',monospace]">PRE-TOURNAMENT</span>
-          <span className="text-xs text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
-            Rankings driven by Layer 2 (course history) + Layer 3 (fit) + Layer 4 (major adj). Live SG and full X Score signals activate after R1 wraps.
-          </span>
-        </div>
-      )}
-
       {showStatsKey && <StatsKeyModal onClose={() => setShowStatsKey(false)} />}
 
       {/* Last updated + filters */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
           <span className="text-[11px] text-[#d4d4d4] uppercase tracking-wider font-['Inter',system-ui,sans-serif]">
-            {lastUpdatedLabel}
+            Last Updated: Masters R4 (Final) - April 13, 2026
           </span>
           <button
             onClick={() => setShowStatsKey(true)}

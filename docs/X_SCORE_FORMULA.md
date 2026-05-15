@@ -35,11 +35,31 @@ Example (Augusta National):
 
 ### Step 1b -- Scale by Course Predictability
 
-**Source:** DataGolf course history tool (average course history adjustment per venue)
+**Definition (verified 2026-05-14):**
 
 ```
-Augusta predictability = 0.144 (highest on tour, #1 of 64 courses)
-Normalized = 0.144 / 0.15 = 0.96 (where 0.15 ~ maximum possible)
+predictability = mean( |total_course_history_adjustment| ) over the event field
+```
+
+Take every player in the field, take the absolute value of their
+`total_course_history_adjustment` (a field returned directly by the DataGolf
+API endpoint `/preds/player-decompositions`), and average them.
+
+This was reverse-engineered and verified: computed over the 91-player Masters
+field it yields **0.1440**, matching the 0.1439 recorded for Augusta. The
+signed mean (+0.108) and standard deviation (0.175) do NOT match — only the
+mean of absolute values does.
+
+**This means predictability is fully computable from the pipeline.** It does
+NOT require the DataGolf web tool. (Only the course-fit coefficients still
+require the web tool — see Step 1a.)
+
+```
+Augusta predictability   = 0.1439  (highest on tour, #1 of 64 courses)
+Aronimink predictability = 0.0413  (PGA Championship 2026 venue — low)
+Normalized = predictability / 0.15  (capped at 1.0; 0.15 ~ maximum possible)
+Augusta normalized   = 0.96
+Aronimink normalized = 0.28
 ```
 
 Blended weight formula:

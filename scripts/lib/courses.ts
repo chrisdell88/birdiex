@@ -1,12 +1,16 @@
 /**
  * Course-specific data for the X Score model.
  *
- * Per `BirdieX_X_Score_Formula.md`:
- *   predictability comes from DataGolf "course history tool" (avg history adj per venue)
- *   coefficients come from DataGolf "course fit tool" per venue
+ * predictability:
+ *   = mean of |total_course_history_adjustment| across the event field.
+ *   Verified: reproduces Augusta's 0.1439 (computed 0.1440 over the 91-player
+ *   Masters field). The `total_course_history_adjustment` field comes straight
+ *   from the DataGolf API (`/preds/player-decompositions`) — so predictability
+ *   is fully computable from the pipeline, no manual web scraping needed.
  *
- * These values are NOT exposed via the public DataGolf API — they must be
- * pulled manually from DataGolf's web tools and recorded here.
+ * coefficients:
+ *   come from DataGolf's "course fit tool" per venue. These are NOT in the
+ *   public API and are pulled manually from DataGolf's web tool.
  *
  * When a venue is missing, the pipeline falls back to `DEFAULT_LOW_PREDICTABILITY_COURSE`,
  * which yields nearly-equal weights (~raw putting regression).
@@ -61,9 +65,11 @@ export const COURSES: Record<string, CourseProfile> = {
   // we expect low predictability and near-equal weights.
   'aronimink': {
     name: 'Aronimink Golf Club',
-    predictability: 0.04, // placeholder — verify against DataGolf course history tool
+    // Derived: mean |total_course_history_adjustment| over the 156-player
+    // PGA Championship field (data/raw/pga-championship-2026/pre).
+    predictability: 0.0413,
     coefficients: { ott: 1.0, app: 1.0, arg: 1.0, putt: 1.0 }, // placeholder — verify against course fit tool
-    source_date: '2026-05-13-placeholder',
+    source_date: '2026-05-14-predictability-derived-coefficients-pending',
     is_major: true,
   },
 };

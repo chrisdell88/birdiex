@@ -21,6 +21,15 @@ Decisions made: H2H only (no 3-balls); Results = Masters stays + PGA "coming soo
 - Build + lint pass; verified in browser (rankings, matchups, odds, results, console clean).
 
 ## Remaining work
-1. **Pipeline fix for Round 2+.** `pull-event.ts`/`build-event.ts` pull `event_avg` for the cumulative track; the model needs accumulating **totals**. Switch to DataGolf's cumulative figure before R2 completes (verify the API supports `event_cumulative`; if not, fall back to summing). Not needed for round-2 picks (R1 data only), needed before R3 picks.
-2. **Per-round updates.** After R2 completes: pull r2, build, regenerate matchups for R3. Same for R3→R4.
-3. **Full multi-event Results page** (past-tournament look-back + all-time running totals, sortable round/cumulative) — the separate project `CLAUDE.md` flags. Interim "coming soon" is live now.
+1. ~~Pipeline cumulative fix~~ — **DONE 2026-05-15.** Pipeline now pulls
+   `event_cumulative` (API-confirmed) for the cumulative track.
+2. **Per-round updates.** After R2 completes: run the 3-command sequence in
+   `NEW_TOURNAMENT_RUNBOOK.md` (pull r2 → build-event → build-matchups), then
+   wire the new data into the frontend, verify, ship. Same for R3→R4.
+3. **R3 frontend two-track wiring.** From R3 the round-only and cumulative
+   tracks diverge — the frontend needs to surface both (the round/cumulative
+   toggle already exists; confirm it reads the right data per round). Needs
+   real R2-complete data + a quick design pass with Chris.
+4. **Full multi-event Results page** (past-tournament look-back + all-time
+   running totals, sortable round/cumulative) — the separate project
+   `CLAUDE.md` flags. Interim "coming soon" is live now.

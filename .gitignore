@@ -34,3 +34,4 @@ data/raw/
 *.sln
 *.sw?
 .vercel
+.gstack/

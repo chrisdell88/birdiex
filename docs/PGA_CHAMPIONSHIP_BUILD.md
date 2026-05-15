@@ -13,20 +13,14 @@
 - X Score formula locked & verified (`docs/X_SCORE_FORMULA.md`).
 - Decision locked: the model uses **cumulative totals** for the multi-round track (backtested vs event-averages on the Masters — totals won).
 
-## What's NOT done — remaining work
-1. **Matchup-pick script.** No script turns DataGolf matchup odds into H2H picks. Raw odds are pulled (`matchups-round_matchups.json`, 169 R2 matchups). Need a script: match players to X Scores, pick higher, edge = |X diff|, tier (≥1.95 BEST BET / ≥1.45 STRONG PLAY / ≥0.95 LEAN / else NO PLAY), best odds across books.
-2. **Frontend swap.** `App.tsx` + components are wired to Masters data with Masters-specific export names. Needs to point at the PGA Championship data.
-3. **Pipeline fix for Round 2+.** `pull-event.ts`/`build-event.ts` pull `event_avg` for the cumulative track; the model needs accumulating **totals**. Must switch to DataGolf's cumulative figure before R2 completes (verify the API supports `event_cumulative`; if not, fall back to summing).
-4. **Results page.** Per `CLAUDE.md`, full multi-event (past-tournament look-back + all-time totals) is a separate project. Interim: Masters results stay visible; PGA Championship shows a "results coming soon" state until R2 grades.
+## Round-2 ship — DONE (2026-05-15)
+Decisions made: H2H only (no 3-balls); Results = Masters stays + PGA "coming soon"; banner = "PGA CHAMPIONSHIP — R1 FINAL · ROUND 2 PICKS".
+- `scripts/build-matchups.ts` — converts DataGolf matchup odds → `MatchupOddsEntry[]`.
+- `src/data/pgaChampMatchups.ts` — 169 R2 H2H matchups.
+- Frontend swapped: App/Header/MatchupsView/OddsTablePage/ResultsPage/RankingsTable now show the PGA Championship. Masters results stay on the Results page.
+- Build + lint pass; verified in browser (rankings, matchups, odds, results, console clean).
 
-## Open decisions needed from Chris
-- **3-balls:** include 3-ball picks in the live app, or H2H only for now?
-- **Results page:** interim approach (Masters stays + PGA "coming soon") now, full multi-event results page as its own project later — confirm?
-- **Copy:** exact wording for the header banner (currently "LAST UPDATED: MASTERS R4 FINAL") and the "results coming soon" text. (Per project rule, Claude does not write user-facing copy without Chris's approval.)
-
-## Execution order once decisions are in
-1. Switch pipeline to cumulative totals.
-2. Build + run the matchup-pick script for R2.
-3. Frontend swap to PGA Championship data + approved copy.
-4. `npm run build` + `npm run lint` + dev check desktop/mobile.
-5. Commit, push, verify on birdiex.co.
+## Remaining work
+1. **Pipeline fix for Round 2+.** `pull-event.ts`/`build-event.ts` pull `event_avg` for the cumulative track; the model needs accumulating **totals**. Switch to DataGolf's cumulative figure before R2 completes (verify the API supports `event_cumulative`; if not, fall back to summing). Not needed for round-2 picks (R1 data only), needed before R3 picks.
+2. **Per-round updates.** After R2 completes: pull r2, build, regenerate matchups for R3. Same for R3→R4.
+3. **Full multi-event Results page** (past-tournament look-back + all-time running totals, sortable round/cumulative) — the separate project `CLAUDE.md` flags. Interim "coming soon" is live now.

@@ -230,6 +230,19 @@ export default function ResultsPage() {
 
   return (
     <div className="max-w-7xl mx-auto">
+      {/* PGA Championship Coming Soon */}
+      <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-4 mb-6">
+        <div className="flex items-center gap-3 mb-1">
+          <span className="bg-[#a1a1aa]/15 text-[#a1a1aa] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
+            IN PROGRESS
+          </span>
+          <span className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">PGA Championship 2026</span>
+        </div>
+        <p className="text-sm text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
+          PGA Championship — Round 2 results coming soon
+        </p>
+      </div>
+
       {/* Tournament Summary Banner */}
       <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-lg p-4 mb-6">
         <div className="flex items-center gap-3 mb-2">

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Fragment } from 'react';
 import type { PlayerData, SortField, SortDirection, Signal } from '../types';
 import SignalBadge from './SignalBadge';
 import PurityIcon from './PurityIcon';
@@ -218,7 +218,7 @@ export default function RankingsTable({ data }: RankingsTableProps) {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
           <span className="text-[11px] text-[#d4d4d4] uppercase tracking-wider font-['Inter',system-ui,sans-serif]">
-            Last Updated: Masters R4 (Final) - April 13, 2026
+            Last Updated: PGA Championship — R1 (Final)
           </span>
           <button
             onClick={() => setShowStatsKey(true)}
@@ -267,9 +267,8 @@ export default function RankingsTable({ data }: RankingsTableProps) {
           </thead>
           <tbody>
             {filtered.map((player) => (
-              <>
+              <Fragment key={player.player_name}>
                 <tr
-                  key={player.player_name}
                   onClick={() =>
                     setExpandedPlayer(
                       expandedPlayer === player.player_name ? null : player.player_name
@@ -335,9 +334,9 @@ export default function RankingsTable({ data }: RankingsTableProps) {
                   </td>
                 </tr>
                 {expandedPlayer === player.player_name && (
-                  <PlayerDetailCard key={`detail-${player.player_name}`} player={player} />
+                  <PlayerDetailCard player={player} />
                 )}
-              </>
+              </Fragment>
             ))}
           </tbody>
         </table>

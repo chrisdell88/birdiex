@@ -1,7 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import type { PlayerData, Matchup, BucketType, MatchupOddsEntry } from '../types';
-import { r2MatchupOddsData, r3MatchupOddsData, r4MatchupOddsData } from '../data/matchupOdds';
-import { threeBallOddsData, type ThreeBallOddsEntry } from '../data/threeBallData';
+import { r2MatchupOddsData } from '../data/pgaChampMatchups';
 import SignalBadge from './SignalBadge';
 
 interface MatchupsViewProps {
@@ -9,7 +8,6 @@ interface MatchupsViewProps {
 }
 
 type MatchupSort = 'edge-high' | 'edge-low';
-type MatchupRound = 'R2' | 'R3' | 'R4' | 'All';
 
 function parseOdds(odds: string): number {
   const n = parseInt(odds, 10);
@@ -188,98 +186,6 @@ const tierBadgeColor: Record<Matchup['tier'], string> = {
   'LEAN': 'bg-gray-500/15 text-gray-400',
 };
 
-// --- 3-Ball Pick Types and Logic ---
-
-interface ThreeBallPick {
-  tier: 'BEST BET' | 'STRONG PLAY' | 'LEAN';
-  pick: PlayerData;
-  fades: [PlayerData, PlayerData];
-  edge: number;
-  bestOdds: string;
-  bestBook: string;
-  entry: ThreeBallOddsEntry;
-  pickKey: 'p1' | 'p2' | 'p3';
-}
-
-function generateThreeBallPicks(data: PlayerData[]): ThreeBallPick[] {
-  const playerMap = new Map<string, PlayerData>();
-  data.forEach((p) => playerMap.set(p.player_name, p));
-
-  const picks: ThreeBallPick[] = [];
-
-  for (const entry of threeBallOddsData) {
-    const players = [
-      { key: 'p1' as const, name: entry.p1_player_name },
-      { key: 'p2' as const, name: entry.p2_player_name },
-      { key: 'p3' as const, name: entry.p3_player_name },
-    ];
-
-    const resolved = players.map(p => ({ ...p, data: playerMap.get(p.name) }));
-    if (resolved.some(r => !r.data)) continue;
-
-    // Find combos where exactly 2 are fades (x_score <= -0.50) and 1 is the pick
-    const fadeThreshold = -0.50;
-    const fadeIndices: number[] = [];
-    const nonFadeIndices: number[] = [];
-
-    resolved.forEach((r, i) => {
-      if (r.data!.x_score <= fadeThreshold) {
-        fadeIndices.push(i);
-      } else {
-        nonFadeIndices.push(i);
-      }
-    });
-
-    // Must have exactly 2 fades and 1 non-fade
-    if (fadeIndices.length !== 2 || nonFadeIndices.length !== 1) continue;
-
-    const pickIdx = nonFadeIndices[0];
-    const pickPlayer = resolved[pickIdx].data!;
-    const fade1 = resolved[fadeIndices[0]].data!;
-    const fade2 = resolved[fadeIndices[1]].data!;
-
-    const fadeAvg = (fade1.x_score + fade2.x_score) / 2;
-    const edge = +(pickPlayer.x_score - fadeAvg).toFixed(2);
-
-    if (edge < 0.95) continue;
-
-    // Find best odds for the pick
-    const pickKey = resolved[pickIdx].key;
-    let bestOdds = '';
-    let bestBook = '';
-    let bestOddsValue = -Infinity;
-
-    for (const [book, vals] of Object.entries(entry.odds)) {
-      if (book === 'datagolf') continue;
-      const oddsStr = vals[pickKey];
-      const oddsVal = parseOdds(oddsStr);
-      if (oddsVal > bestOddsValue) {
-        bestOddsValue = oddsVal;
-        bestOdds = oddsStr;
-        bestBook = book;
-      }
-    }
-
-    let tier: ThreeBallPick['tier'] = 'LEAN';
-    if (edge >= 1.95) tier = 'BEST BET';
-    else if (edge >= 1.45) tier = 'STRONG PLAY';
-
-    picks.push({
-      tier,
-      pick: pickPlayer,
-      fades: [fade1, fade2],
-      edge,
-      bestOdds,
-      bestBook: formatBookName(bestBook),
-      entry,
-      pickKey,
-    });
-  }
-
-  picks.sort((a, b) => b.edge - a.edge);
-  return picks;
-}
-
 // --- Player Stat Popup ---
 
 function PlayerStatPopup({ player, onClose }: { player: PlayerData; onClose: () => void }) {
@@ -440,20 +346,9 @@ function MatchupDefinitionsModal({ onClose }: { onClose: () => void }) {
 
 export default function MatchupsView({ data }: MatchupsViewProps) {
   const [sortBy, setSortBy] = useState<MatchupSort>('edge-high');
-  const [roundFilter, setRoundFilter] = useState<MatchupRound>('R4');
   const [showDefinitions, setShowDefinitions] = useState(false);
 
-  const activeOddsData = useMemo(() => {
-    switch (roundFilter) {
-      case 'R2': return r2MatchupOddsData;
-      case 'R3': return r3MatchupOddsData;
-      case 'R4': return r4MatchupOddsData;
-      case 'All': return [...r2MatchupOddsData, ...r3MatchupOddsData, ...r4MatchupOddsData];
-    }
-  }, [roundFilter]);
-
-  const rawMatchups = useMemo(() => generateMatchups(data, activeOddsData), [data, activeOddsData]);
-  const threeBallPicks = useMemo(() => generateThreeBallPicks(data), [data]);
+  const rawMatchups = useMemo(() => generateMatchups(data, r2MatchupOddsData), [data]);
 
   const matchups = useMemo(() => {
     const sorted = [...rawMatchups];
@@ -472,17 +367,16 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
 
   return (
     <div>
-      {/* Tournament Complete Banner */}
+      {/* Round 2 Picks Banner */}
       <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-lg p-5 mb-6">
         <div className="flex items-center gap-3 mb-2">
           <span className="bg-[#22c55e]/15 text-[#22c55e] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
-            TOURNAMENT COMPLETE
+            ROUND 2 PICKS
+          </span>
+          <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
+            PGA Championship · Aronimink
           </span>
         </div>
-        <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">
-          The Masters 2026 is complete. The matchups below show the R4 picks that were recommended by the X Score model.
-          Check the <span className="text-[#22c55e] font-semibold">Results</span> tab for full tournament performance: 130-70-21, +46.60u, 17.8% ROI.
-        </p>
       </div>
 
       {showDefinitions && <MatchupDefinitionsModal onClose={() => setShowDefinitions(false)} />}
@@ -492,7 +386,7 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
         <div className="flex items-center gap-2">
           <div>
             <h2 className="text-xl font-bold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
-              {roundFilter === 'All' ? 'All Rounds' : roundFilter} Matchup Recommendations (Historical)
+              R2 Matchup Recommendations
             </h2>
             <p className="text-sm text-[#d4d4d4] mt-1 font-['Inter',system-ui,sans-serif]">
               Picks ranked by X Score edge -- Min edge: 0.95
@@ -506,21 +400,6 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
           </button>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex border border-[#22c55e]/50 rounded-full p-0.5">
-            {(['R2', 'R3', 'R4', 'All'] as const).map((r) => (
-              <button
-                key={r}
-                onClick={() => setRoundFilter(r)}
-                className={`px-3 py-1 text-[10px] uppercase tracking-wider font-medium rounded-full transition-colors font-['Inter',system-ui,sans-serif] cursor-pointer ${
-                  roundFilter === r
-                    ? 'bg-[#22c55e] text-[#0a0a0a]'
-                    : 'text-[#f5f5f5] hover:text-white'
-                }`}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as MatchupSort)}
@@ -532,20 +411,18 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
         </div>
       </div>
 
-      {/* 2-column layout */}
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* Left: H2H Matchups (60%) */}
-        <div className="w-full md:w-[60%]">
-          <div className="flex items-center gap-2 mb-4">
-            <h3 className="text-sm font-semibold text-[#f5f5f5] uppercase tracking-wider font-['JetBrains_Mono','SF_Mono',monospace]">
-              H2H Matchups
-            </h3>
-            <span className="text-[10px] font-bold font-['JetBrains_Mono','SF_Mono',monospace] bg-[#22c55e]/15 text-[#22c55e] rounded-full px-2 py-0.5">
-              {matchups.length}
-            </span>
-          </div>
-          <div className="flex flex-col gap-3">
-            {matchups.map((m, idx) => (
+      {/* H2H Matchups — full width */}
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          <h3 className="text-sm font-semibold text-[#f5f5f5] uppercase tracking-wider font-['JetBrains_Mono','SF_Mono',monospace]">
+            H2H Matchups
+          </h3>
+          <span className="text-[10px] font-bold font-['JetBrains_Mono','SF_Mono',monospace] bg-[#22c55e]/15 text-[#22c55e] rounded-full px-2 py-0.5">
+            {matchups.length}
+          </span>
+        </div>
+        <div className="flex flex-col gap-3">
+          {matchups.map((m, idx) => (
               <div
                 key={idx}
                 className={`bg-[#0a0a0a] border border-[#262626] border-l-4 ${tierBorderColor[m.tier]} rounded-lg p-4 hover:bg-[#111111] transition-colors`}
@@ -632,107 +509,6 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
             ))}
           </div>
         </div>
-
-        {/* Right: 3-Ball Picks (40%) */}
-        <div className="w-full md:w-[40%]">
-          <div className="flex items-center gap-2 mb-4">
-            <h3 className="text-sm font-semibold text-[#f5f5f5] uppercase tracking-wider font-['JetBrains_Mono','SF_Mono',monospace]">
-              3-Ball Picks
-            </h3>
-            <span className="text-[10px] font-bold font-['JetBrains_Mono','SF_Mono',monospace] bg-[#22c55e]/15 text-[#22c55e] rounded-full px-2 py-0.5">
-              {threeBallPicks.length}
-            </span>
-          </div>
-          <div className="flex flex-col gap-3">
-            {threeBallPicks.length === 0 && (
-              <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-4 text-center text-sm text-[#a1a1aa]">
-                No qualifying 3-ball picks found (need 2 fades with edge &gt;= 0.95)
-              </div>
-            )}
-            {threeBallPicks.map((tb, idx) => (
-              <div
-                key={idx}
-                className={`bg-[#0a0a0a] border border-[#262626] border-l-4 ${tierBorderColor[tb.tier]} rounded-lg p-4 hover:bg-[#111111] transition-colors`}
-              >
-                {/* Header */}
-                <div className="flex items-center justify-between mb-2">
-                  <span
-                    className={`text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-semibold font-['Inter',system-ui,sans-serif] ${tierBadgeColor[tb.tier]} ${
-                      tb.tier === 'BEST BET' ? 'animate-pulse' : ''
-                    }`}
-                  >
-                    {tb.tier}
-                  </span>
-                  <span className="text-xs text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">
-                    Edge:{' '}
-                    <span className="text-[#22c55e] font-bold font-['JetBrains_Mono','SF_Mono',monospace]">
-                      {tb.edge.toFixed(2)}
-                    </span>
-                  </span>
-                </div>
-
-                <div className="border-t border-[#1a1a1a] mb-3" />
-
-                {/* Pick */}
-                <div className="mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] uppercase tracking-wider text-[#22c55e] font-semibold font-['Inter',system-ui,sans-serif]">
-                      PICK:
-                    </span>
-                    <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
-                      <ClickablePlayerName player={tb.pick}>
-                        {tb.pick.player_name}
-                      </ClickablePlayerName>
-                    </span>
-                    {isBuySide(tb.pick) && (
-                      <span className="text-[10px] text-[#22c55e] font-medium font-['Inter',system-ui,sans-serif]">
-                        BUY
-                        <svg width="8" height="8" viewBox="0 0 16 16" className="inline ml-0.5 -mt-0.5">
-                          <path fill="currentColor" d="M6.5 12.5l-4-4 1.4-1.4 2.6 2.6 5.6-5.6 1.4 1.4-7 7z" />
-                        </svg>
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-xs font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e] ml-10">
-                    X: {fmtXScore(tb.pick.x_score)}
-                  </span>
-                </div>
-
-                {/* Fades */}
-                {tb.fades.map((fade, fi) => (
-                  <div key={fi} className="mb-1 ml-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">vs</span>
-                      <span className="text-xs text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">
-                        <ClickablePlayerName player={fade} className="text-[#d4d4d4]">
-                          {fade.player_name}
-                        </ClickablePlayerName>
-                      </span>
-                      <span className="text-[10px] text-red-400 font-medium font-['Inter',system-ui,sans-serif]">
-                        FADE
-                      </span>
-                    </div>
-                    <span className="text-xs font-['JetBrains_Mono','SF_Mono',monospace] text-red-400 ml-8">
-                      X: {fmtXScore(fade.x_score)}
-                    </span>
-                  </div>
-                ))}
-
-                {/* Best odds */}
-                <div className="border-t border-[#1a1a1a] mt-3 pt-2">
-                  <div className="text-xs font-['Inter',system-ui,sans-serif]">
-                    <span className="text-[#d4d4d4]">Best Odds: </span>
-                    <span className="text-[#f5f5f5] font-bold font-['JetBrains_Mono','SF_Mono',monospace]">
-                      {tb.bestOdds}
-                    </span>
-                    {' '}<SportsbookLink bookName={tb.bestBook} />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

@@ -138,8 +138,8 @@ async function main() {
   console.log(`Round-only: ${roundPlayers.length} players. Cumulative: ${cumPlayers.length} players.\n`);
 
   // Build rows for both datasets
-  const roundOnlyRows = buildRows(roundPlayers, decompByDgId, decompByName, courseProfile, 'round');
-  const cumulativeRows = buildRows(cumPlayers, decompByDgId, decompByName, courseProfile, 'cumulative');
+  const roundOnlyRows = buildRows(roundPlayers, decompByDgId, decompByName, courseProfile);
+  const cumulativeRows = buildRows(cumPlayers, decompByDgId, decompByName, courseProfile);
 
   // For pre-tournament: no live data — emit a single set sorted by L2+L3+L4 baseline
   const isPre = phase === 'pre' || (roundPlayers.length === 0 && cumPlayers.length === 0);
@@ -213,8 +213,7 @@ function buildRows(
   livePlayers: LiveStatsPlayer[],
   decompByDgId: Map<number, DecompPlayer>,
   decompByName: Map<string, DecompPlayer>,
-  course: typeof DEFAULT_LOW_PREDICTABILITY_COURSE,
-  _label: 'round' | 'cumulative'
+  course: typeof DEFAULT_LOW_PREDICTABILITY_COURSE
 ) {
   const rows = livePlayers.map((p) => {
     const dec = decompByDgId.get(p.dg_id) ?? decompByName.get(normalizeName(p.player_name));

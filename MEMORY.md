@@ -48,6 +48,12 @@ PGA Tour golf betting analytics app. Proprietary "X Score" putting regression mo
 
 ## The X Score Model (4 Layers)
 
+**CANONICAL FORMULA:** `docs/X_SCORE_FORMULA.md` is the single source of truth —
+LOCKED & VERIFIED 2026-05-15 (reproduces all 145 stored Masters X Scores, 145/145).
+Implemented in `scripts/lib/xscore.ts` + `scripts/lib/courses.ts`. Course-coefficient
+method (incl. OTT = max of the two driving axes): `docs/COURSE_COEFFICIENTS_RESEARCH.md`.
+Never change the formula without Chris's explicit approval.
+
 **IMPORTANT:** The methodology page does NOT expose the actual weights/formula. Keep it proprietary.
 
 1. **SG Score (Layer 1):** Course-fit-weighted putting regression on live round data

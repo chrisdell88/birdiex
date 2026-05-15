@@ -1,5 +1,12 @@
 # BirdieX -- The X Score Formula (Complete Reference)
 
+> **STATUS: LOCKED & VERIFIED (2026-05-15).** This is the single source of
+> truth for the X Score. The formula below was tested against all **145**
+> stored Masters 2026 X Score rows and reproduces **145/145** exactly. It is
+> implemented in `scripts/lib/xscore.ts` + `scripts/lib/courses.ts`. Do not
+> change the formula without Chris's explicit approval. If a future chat is
+> ever unsure how the X Score works, this document is the answer.
+
 ---
 
 ## 1. Overview
@@ -22,9 +29,30 @@ All values are in strokes-gained per round units.
 
 ### Step 1a -- Get Course Fit Coefficients
 
-**Source:** DataGolf course fit tool coefficients per venue
+**Source:** DataGolf Course Fit tool (`datagolf.com/course-fit-tool`), radar plot,
+**Relative Importance toggle OFF** (the default view — required, see note below).
 
-Example (Augusta National):
+The radar gives **5** numbers per course. Our model needs **4**. The mapping:
+
+| Model coefficient | Comes from the radar axis |
+|-------------------|---------------------------|
+| APP  | Approach (direct read) |
+| ARG  | Around Green (direct read) |
+| PUTT | Putting (direct read) |
+| OTT  | **max(Driving Distance, Driving Accuracy)** |
+
+**Why OTT = max of the two driving axes:** the radar splits driving into Distance
+and Accuracy; the model needs one OTT weight. Distance and Accuracy move in
+opposite directions course-to-course, so averaging them washes out the course
+signal. `max` keeps whichever driving skill actually predicts scoring at that
+course (distance at Augusta, accuracy at a course like Harbour Town). Full
+reasoning: `docs/COURSE_COEFFICIENTS_RESEARCH.md`.
+
+**Relative Importance toggle must be OFF.** The ON view rescales each axis
+independently and makes cross-category comparison impossible — and the model
+compares categories against each other. Always read the default (OFF) view.
+
+Augusta National example (the Masters 2026 coefficients):
 
 | Category | Coefficient |
 |----------|-------------|

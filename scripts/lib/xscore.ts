@@ -1,9 +1,16 @@
 /**
- * X Score model implementation.
+ * X Score model implementation. LOCKED & VERIFIED 2026-05-15.
  *
  * X Score = Layer 1 (SG Score, live) + Layer 2 (course hist) + Layer 3 (fit + sg cat) + Layer 4 (major adj)
  *
- * See BirdieX_X_Score_Formula.md for the full reference.
+ * Layer 1 = (w_OTT·SG_OTT + w_APP·SG_APP + w_ARG·SG_ARG − w_PUTT·SG_PUTT) / Σw
+ *   where w_X = norm·course_coef_X + (1−norm)·1.0   (predictability blend)
+ *   and   norm = min(1, course_predictability / 0.15)
+ *   SG_PUTT is SUBTRACTED — the putting-regression core.
+ *
+ * This formula reproduces all 145 stored Masters 2026 X Score rows (145/145).
+ * Canonical reference: docs/X_SCORE_FORMULA.md. Do not change without
+ * Chris's explicit approval.
  */
 import type { CourseProfile } from './courses.js';
 import { computeBlendedWeights } from './courses.js';

@@ -9,8 +9,12 @@
  *   is fully computable from the pipeline, no manual web scraping needed.
  *
  * coefficients:
- *   come from DataGolf's "course fit tool" per venue. These are NOT in the
- *   public API and are pulled manually from DataGolf's web tool.
+ *   come from DataGolf's "course fit tool" radar plot per venue (Relative
+ *   Importance toggle OFF). The radar gives 5 axes; the model needs 4:
+ *     APP / ARG / PUTT  = direct reads of the Approach / Around-Green / Putting axes
+ *     OTT               = max(Driving Distance, Driving Accuracy)
+ *   These are NOT in the public API — pulled from the DataGolf web tool.
+ *   Full reasoning: docs/COURSE_COEFFICIENTS_RESEARCH.md.
  *
  * When a venue is missing, the pipeline falls back to `DEFAULT_LOW_PREDICTABILITY_COURSE`,
  * which yields nearly-equal weights (~raw putting regression).
@@ -65,11 +69,15 @@ export const COURSES: Record<string, CourseProfile> = {
   // we expect low predictability and near-equal weights.
   'aronimink': {
     name: 'Aronimink Golf Club',
-    // Derived: mean |total_course_history_adjustment| over the 156-player
-    // PGA Championship field (data/raw/pga-championship-2026/pre).
+    // predictability: mean |total_course_history_adjustment| over the
+    // 156-player PGA Championship field (data/raw/pga-championship-2026/pre).
     predictability: 0.0413,
-    coefficients: { ott: 1.0, app: 1.0, arg: 1.0, putt: 1.0 }, // placeholder — verify against course fit tool
-    source_date: '2026-05-14-predictability-derived-coefficients-pending',
+    // coefficients: DataGolf Course Fit radar, Relative Importance OFF, pulled
+    // 2026-05-15. Radar axes: DrivingDistance 0.780, DrivingAccuracy 0.428,
+    // Approach 0.723, AroundGreen 0.413, Putting 0.524.
+    // ott = max(0.780, 0.428) = 0.780.
+    coefficients: { ott: 0.780, app: 0.723, arg: 0.413, putt: 0.524 },
+    source_date: '2026-05-15',
     is_major: true,
   },
 };

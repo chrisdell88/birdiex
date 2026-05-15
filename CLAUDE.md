@@ -61,7 +61,7 @@ The DataGolf API key was leaked publicly via `MEMORY.md` from Apr 18 → May 13 
 
 ## 📊 Model Rules
 
-The X Score model details, weights, signal thresholds, purity rules, and tier definitions live in `MEMORY.md`. Don't expose the formula on the methodology page — it's proprietary.
+**`docs/X_SCORE_FORMULA.md` is the canonical, locked formula reference** (verified 145/145 against the Masters). `docs/COURSE_COEFFICIENTS_RESEARCH.md` covers how course-fit coefficients are derived (OTT = max of the two driving axes). Signal thresholds, purity rules, and tier definitions are in `MEMORY.md`. Never change the formula without Chris's explicit approval. Don't expose the formula on the methodology page — it's proprietary.
 
 ---
 

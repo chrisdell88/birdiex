@@ -1,15 +1,32 @@
 # BirdieX — Project Memory
 
-**Last updated:** 2026-04-18
+**Last updated:** 2026-05-14
 **Repo:** https://github.com/chrisdell88/birdiex
 **Live:** https://birdiex.co
 **Project path:** ~/Projects/birdiex
 
+## 🚨 READ THIS FIRST (any new Claude session)
+
+The full source-of-truth for BirdieX is **inside this repo** under `docs/`. You do not need any files outside the repo.
+
+| File | What's in it |
+|------|--------------|
+| `docs/X_SCORE_FORMULA.md` | Complete X Score methodology — the 4 layers, course weights, worked examples |
+| `docs/MASTERS_2026_RESULTS.md` | Full first-tournament results report |
+| `docs/NEW_TOURNAMENT_RUNBOOK.md` | Step-by-step for adding a new tournament |
+| `docs/UPDATE_FROM_PHONE.md` | How Chris updates the app from his phone via Claude mobile |
+| `CLAUDE.md` | Rules + conventions (secrets, architecture, conventions) |
+| `MEMORY.md` (this file) | Project context, model summary, results, design, preferences |
+
+**Chris is non-technical.** Speak plain English. Specific Finder paths and copy-paste-able commands beat jargon every time. Execute — don't ask him to do technical steps you can do yourself.
+
 ## Session start protocol
 1. `cd ~/Projects/birdiex`
 2. `git pull` (auto via hook)
-3. Read this file
-4. Check `git log --oneline -10` for recent context
+3. Read `MEMORY.md` (this file) + `CLAUDE.md`
+4. If you'll touch the model: read `docs/X_SCORE_FORMULA.md`
+5. If you'll add/update a tournament: read `docs/NEW_TOURNAMENT_RUNBOOK.md`
+6. Check `git log --oneline -10` for recent context
 
 ---
 
@@ -200,14 +217,18 @@ PGA Tour golf betting analytics app. Proprietary "X Score" putting regression mo
 
 ---
 
-## Data Source Files (source-of-truth outside repo)
-Located in `/Users/chrisdell/Downloads/golfx-source/`:
-- `masters_final_tracking.json` — master file with all R2-R4 bets graded
-- `masters_final_report.md` — human-readable tournament report
-- `xscores_r{1,2,3,4}_*.json` — X Scores per round
-- `r{2,3,4}_matchup_odds.json` — raw sportsbook odds
-- `decompositions_*.json` — DataGolf player adjustments
-- `BirdieX_X_Score_Formula.md` — internal reference doc (keep private)
+## Data Source Files
+
+**Primary (in-repo, backed up to GitHub — always use these):**
+- `docs/X_SCORE_FORMULA.md` — full model reference
+- `docs/MASTERS_2026_RESULTS.md` — full Masters results report
+- `src/data/mastersR1Data.ts` — typed Masters data (R4 round-only + cumulative)
+- `src/data/matchupOdds.ts` — per-round H2H odds
+- `src/data/threeBallData.ts` — R2 3-balls
+- `src/data/resultsData.ts` — 221 verified bets, fully graded
+
+**Archive (in `~/Downloads/golfx-source/`, NOT backed up — reference only):**
+Raw DataGolf JSON pulls from the Masters 2026 run: `masters_final_tracking.json`, `xscores_r{1,2,3,4}_*.json`, `r{2,3,4}_matchup_odds.json`, `decompositions_*.json`. Keep as backup. If anything from this folder becomes important to a future session, copy it into `docs/` so it's preserved.
 
 ---
 

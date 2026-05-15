@@ -63,8 +63,9 @@ export default function Header({ activeTab, onTabChange, dataSet, onDataSetChang
               </button>
             </div>
 
-            {/* Tournament badge */}
-            <div className="border border-[#22c55e]/50 rounded-full px-3 md:px-4 py-1.5 bg-[#0a0a0a]">
+            {/* Tournament badge — hidden on mobile (no room; the round context
+                is shown on every page's own content). */}
+            <div className="hidden sm:block border border-[#22c55e]/50 rounded-full px-3 md:px-4 py-1.5 bg-[#0a0a0a]">
               <span className="text-[10px] md:text-xs text-[#f5f5f5] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif]">
                 PGA Championship <span className="text-[#f5f5f5]/50">|</span> R1 FINAL · ROUND 2 PICKS
               </span>
@@ -72,8 +73,8 @@ export default function Header({ activeTab, onTabChange, dataSet, onDataSetChang
           </div>
         </div>
 
-        {/* Navigation tabs */}
-        <nav className="flex gap-0 -mb-px">
+        {/* Navigation tabs — scroll horizontally on mobile so all tabs stay reachable */}
+        <nav className="flex gap-0 -mb-px overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}

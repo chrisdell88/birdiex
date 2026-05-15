@@ -113,8 +113,11 @@ async function main() {
   }
   console.log(`Loaded ${decompPlayers.length} players from decompositions.`);
 
-  // Load live stats if available (event_avg = cumulative through latest round)
-  const liveCum = await loadJson<LiveStatsFile>(slug, phase, 'live-stats-event-avg');
+  // Cumulative track = accumulating SG totals across completed rounds.
+  const liveCum =
+    (await loadJson<LiveStatsFile>(slug, phase, 'live-stats-event-cumulative')) ??
+    // Back-compat: older pulls saved this under the event-avg filename.
+    (await loadJson<LiveStatsFile>(slug, phase, 'live-stats-event-avg'));
   const liveR1 = await loadJson<LiveStatsFile>(slug, phase, 'live-stats-r1');
   const liveR2 = await loadJson<LiveStatsFile>(slug, phase, 'live-stats-r2');
   const liveR3 = await loadJson<LiveStatsFile>(slug, phase, 'live-stats-r3');

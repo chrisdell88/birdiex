@@ -47,14 +47,34 @@ Following the Masters pattern (`src/data/mastersR1Data.ts`), create a new file p
 
 ---
 
-## Compute X Scores + Generate Picks
+## Per-round update — exact commands
 
-After raw data is in `data/raw/<event-slug>/<round>/`:
+After round N completes, from the repo root (`~/Projects/birdiex`):
 
-1. Run `scripts/build-event.ts` to compute X Scores.
-2. The script uses `scripts/lib/xscore.ts` to apply the formula (see `docs/X_SCORE_FORMULA.md` for full reference).
-3. Output goes into `src/data/<event-slug>R<N>Data.ts` (typed, ready for the frontend).
-4. Spot-check 3-5 player rows against the raw JSON before committing.
+```
+# 1. Pull all DataGolf data for the round (live stats incl. event_cumulative,
+#    decompositions, matchup odds, outrights).
+npx tsx scripts/pull-event.ts --slug <slug> --phase r<N>
+
+# 2. Build X Scores (rankings). Produces src/data/<out>.ts with roundOnlyData
+#    + cumulativeData. The cumulative track uses event_cumulative (totals).
+npx tsx scripts/build-event.ts --slug <slug> --phase r<N> --course <course> --out <event>R<N>Data
+
+# 3. Build the H2H matchup odds file (MatchupOddsEntry[]).
+npx tsx scripts/build-matchups.ts --slug <slug> --phase r<N> \
+  --market round_matchups --export r<N+1>MatchupOddsData --out <event>R<N>Matchups
+```
+
+Example (PGA Championship, after round 2):
+`--slug pga-championship-2026 --phase r2 --course aronimink --out pgaChampR2Data`
+
+Notes:
+- `build-event.ts` applies the locked formula (`scripts/lib/xscore.ts`; see
+  `docs/X_SCORE_FORMULA.md`). Cumulative = `event_cumulative` (accumulating SG
+  totals — verified against the Masters; NOT `event_avg`).
+- Spot-check 3–5 player rows against the raw JSON before committing.
+- From round 2 on there are two tracks — round-only and cumulative — both
+  emitted into the same data file (`roundOnlyData` / `cumulativeData`).
 
 ---
 

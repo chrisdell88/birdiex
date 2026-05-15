@@ -99,10 +99,12 @@ async function main() {
   // Live data only meaningful from R1 onward
   if (phase !== 'pre') {
     console.log('Live tournament stats:');
-    const eventAvg = await safe('live-stats-event-avg', () =>
-      getLiveTournamentStats('event_avg')
+    // Cumulative track = accumulating SG totals across completed rounds.
+    const eventCumulative = await safe('live-stats-event-cumulative', () =>
+      getLiveTournamentStats('event_cumulative')
     );
-    if (eventAvg) await dump(slug, phase, 'live-stats-event-avg', eventAvg);
+    if (eventCumulative)
+      await dump(slug, phase, 'live-stats-event-cumulative', eventCumulative);
 
     // Pull per-round breakdowns up through current phase
     const roundsToPull: Array<'1' | '2' | '3' | '4'> = [];

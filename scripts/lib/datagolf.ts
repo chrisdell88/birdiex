@@ -65,9 +65,15 @@ export const getInPlay = (tour: Tour = 'pga') =>
 
 /**
  * Live tournament stats — SG breakdowns per round.
- * round: '1' | '2' | '3' | '4' | 'event_avg'
+ * round: '1' | '2' | '3' | '4' | 'event_avg' | 'event_cumulative'
+ *
+ * The cumulative X Score track uses 'event_cumulative' — the accumulating
+ * SG totals across all completed rounds (verified: this is what the Masters
+ * cumulative model used). 'event_avg' is the per-round average and is NOT
+ * used by the model.
  */
-export const getLiveTournamentStats = (round: '1' | '2' | '3' | '4' | 'event_avg' = 'event_avg') =>
+export type LiveStatsRound = '1' | '2' | '3' | '4' | 'event_avg' | 'event_cumulative';
+export const getLiveTournamentStats = (round: LiveStatsRound = 'event_cumulative') =>
   rateLimitedFetch(
     buildUrl('/preds/live-tournament-stats', {
       stats: 'sg_putt,sg_arg,sg_app,sg_ott,sg_bs,sg_t2g,distance,accuracy',

@@ -202,6 +202,22 @@ tool (not in the API) — see `docs/COURSE_COEFFICIENTS_RESEARCH.md`.
 
 ---
 
+## Alerts (signup + notifications) — live 2026-05-16
+
+- **ALERTS tab** on birdiex.co: email-capture signup + a "Join Discord" button.
+- **Supabase** holds the subscriber list (project `birdiex`, ref `xcgjmzinpanrbseyogqe`).
+  One table `subscribers`, RLS locked, public access only via the
+  `subscribe()` / `unsubscribe()` security-definer RPCs. Schema: `supabase/schema.sql`.
+- **Resend** sends the emails (domain `birdiex.co`, from `alerts@birdiex.co`).
+- **Discord**: alerts also post to a server channel via webhook.
+- Sending an alert is a deliberate manual step: `npm run notify` (emails every
+  subscriber + posts to Discord). `npm run notify -- --dry-run` to preview.
+- All keys live in `.env` (gitignored). Vercel has only the two public
+  `VITE_SUPABASE_*` + `VITE_DISCORD_INVITE_URL` vars; the secret keys
+  (service role, Resend) are local-only since `notify.ts` runs from a machine,
+  not Vercel. Setup walkthrough: `docs/ALERTS_SETUP.md`.
+- The signup/email/unsubscribe copy is draft pending Chris's final wording review.
+
 ## App Structure
 
 ### Pages/Tabs
@@ -322,6 +338,7 @@ Raw DataGolf JSON pulls from the Masters 2026 run: `masters_final_tracking.json`
 - [x] Golfer headshots with initials fallback
 - [x] Post-tournament wrap-up workflow — `docs/NEW_TOURNAMENT_RUNBOOK.md`
 - [x] 3-balls decision — removed from the site (H2H only)
+- [x] Alerts feature live — signup page + email (Resend) + Discord, backed by Supabase
 
 ### Next Tournament Prep
 - [ ] Build pre-tournament R1 betting model (use baseline skill + course fit as proxy)

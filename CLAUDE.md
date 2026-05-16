@@ -19,10 +19,14 @@ The DataGolf API key was leaked publicly via `MEMORY.md` from Apr 18 → May 13 
 
 ## 🏗 Architecture
 
-- **Pure static React+Vite app today.** No backend, no DB, no API routes.
+- **Static React+Vite app, no API routes / server.** The one exception: the
+  Alerts feature, where the browser talks directly to Supabase (subscriber
+  list) — see `MEMORY.md` "Alerts" + `docs/ALERTS_SETUP.md`.
 - **Event data is hardcoded TS files in `src/data/`.** Each event (Masters, PGA Championship, etc.) gets its own data module.
 - **Vercel** auto-deploys on push to `main`. Project linked via `.vercel/project.json`.
-- **Multi-event refactor + Supabase migration** is a planned post-PGA-Championship project, not in scope until explicitly requested.
+- **Multi-event refactor + full Supabase data migration** (moving event/results
+  data into the DB) is a planned post-PGA-Championship project, not in scope
+  until explicitly requested. Supabase is currently used ONLY for alert subscribers.
 
 ---
 

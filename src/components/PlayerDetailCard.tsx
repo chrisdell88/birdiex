@@ -1,6 +1,8 @@
 import type { PlayerData } from '../types';
 import StatBar from './StatBar';
 import SignalBadge from './SignalBadge';
+import Avatar from './Avatar';
+import { currentEvent } from '../config/event';
 
 interface PlayerDetailCardProps {
   player: PlayerData;
@@ -27,15 +29,18 @@ export default function PlayerDetailCard({ player }: PlayerDetailCardProps) {
         <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg mx-4 my-2 p-5">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-[10px] uppercase tracking-wider text-[#22c55e] font-medium font-['Inter',system-ui,sans-serif] bg-[#22c55e]/10 border border-[#22c55e]/30 rounded-full px-2.5 py-0.5">
-              Round 1 Data
+              R{currentEvent.picksRound - 1} Data
             </span>
           </div>
           <div className="flex flex-col md:flex-row gap-6">
             {/* Player info */}
             <div className="md:w-48 shrink-0">
-              <h3 className="text-[#f5f5f5] text-lg font-semibold font-['Inter',system-ui,sans-serif]">
-                {player.player_name}
-              </h3>
+              <div className="flex items-center gap-3 mb-2">
+                <Avatar playerName={player.player_name} size="lg" />
+                <h3 className="text-[#f5f5f5] text-base font-semibold font-['Inter',system-ui,sans-serif] leading-snug">
+                  {player.player_name}
+                </h3>
+              </div>
               <div className="flex items-center gap-2 mt-2">
                 <span className="text-[#d4d4d4] text-sm">{player.position}</span>
                 <span className="text-[#262626]">|</span>

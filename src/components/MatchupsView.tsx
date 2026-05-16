@@ -3,6 +3,7 @@ import type { PlayerData, Matchup, BucketType, MatchupOddsEntry } from '../types
 import { currentEvent } from '../config/event';
 import SignalBadge from './SignalBadge';
 import PlayerSearch from './PlayerSearch';
+import Avatar from './Avatar';
 
 interface MatchupsViewProps {
   data: PlayerData[];
@@ -485,24 +486,28 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
 
                 {/* Players row */}
                 <div className="flex items-center justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
-                      <ClickablePlayerName player={m.pick}>
-                        {m.pick.player_name}
-                      </ClickablePlayerName>
-                    </div>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-xs font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">
-                        X Score: {fmtXScore(m.pick.x_score)}
-                      </span>
-                      {m.pick.purity === 'PURE BUY' && (
-                        <span className="text-[10px] uppercase tracking-wider text-[#22c55e] font-medium font-['Inter',system-ui,sans-serif]">
-                          PURE BUY
-                          <svg width="10" height="10" viewBox="0 0 16 16" className="inline ml-0.5 -mt-0.5 text-[#22c55e]">
-                            <path fill="currentColor" d="M6.5 12.5l-4-4 1.4-1.4 2.6 2.6 5.6-5.6 1.4 1.4-7 7z" />
-                          </svg>
+                  {/* Pick (left) */}
+                  <div className="flex-1 flex items-start gap-2 min-w-0">
+                    <Avatar playerName={m.pick.player_name} size="sm" />
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif] leading-snug">
+                        <ClickablePlayerName player={m.pick}>
+                          {m.pick.player_name}
+                        </ClickablePlayerName>
+                      </div>
+                      <div className="flex items-center gap-3 mt-1 flex-wrap">
+                        <span className="text-xs font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">
+                          X Score: {fmtXScore(m.pick.x_score)}
                         </span>
-                      )}
+                        {m.pick.purity === 'PURE BUY' && (
+                          <span className="text-[10px] uppercase tracking-wider text-[#22c55e] font-medium font-['Inter',system-ui,sans-serif]">
+                            PURE BUY
+                            <svg width="10" height="10" viewBox="0 0 16 16" className="inline ml-0.5 -mt-0.5 text-[#22c55e]">
+                              <path fill="currentColor" d="M6.5 12.5l-4-4 1.4-1.4 2.6 2.6 5.6-5.6 1.4 1.4-7 7z" />
+                            </svg>
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -510,25 +515,29 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
                     vs
                   </div>
 
-                  <div className="flex-1 text-right">
-                    <div className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
-                      <ClickablePlayerName player={m.opponent}>
-                        {m.opponent.player_name}
-                      </ClickablePlayerName>
-                    </div>
-                    <div className="flex items-center justify-end gap-3 mt-1">
-                      {m.opponent.purity === 'PURE FADE' && (
-                        <span className="text-[10px] uppercase tracking-wider text-red-400 font-medium font-['Inter',system-ui,sans-serif]">
-                          PURE FADE
-                          <svg width="10" height="10" viewBox="0 0 16 16" className="inline ml-0.5 -mt-0.5 text-red-400">
-                            <path fill="currentColor" d="M6.5 12.5l-4-4 1.4-1.4 2.6 2.6 5.6-5.6 1.4 1.4-7 7z" />
-                          </svg>
+                  {/* Opponent (right) */}
+                  <div className="flex-1 flex items-start gap-2 justify-end min-w-0">
+                    <div className="min-w-0 text-right">
+                      <div className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif] leading-snug">
+                        <ClickablePlayerName player={m.opponent}>
+                          {m.opponent.player_name}
+                        </ClickablePlayerName>
+                      </div>
+                      <div className="flex items-center justify-end gap-3 mt-1 flex-wrap">
+                        {m.opponent.purity === 'PURE FADE' && (
+                          <span className="text-[10px] uppercase tracking-wider text-red-400 font-medium font-['Inter',system-ui,sans-serif]">
+                            PURE FADE
+                            <svg width="10" height="10" viewBox="0 0 16 16" className="inline ml-0.5 -mt-0.5 text-red-400">
+                              <path fill="currentColor" d="M6.5 12.5l-4-4 1.4-1.4 2.6 2.6 5.6-5.6 1.4 1.4-7 7z" />
+                            </svg>
+                          </span>
+                        )}
+                        <span className="text-xs font-['JetBrains_Mono','SF_Mono',monospace] text-red-400">
+                          X Score: {fmtXScore(m.opponent.x_score)}
                         </span>
-                      )}
-                      <span className="text-xs font-['JetBrains_Mono','SF_Mono',monospace] text-red-400">
-                        X Score: {fmtXScore(m.opponent.x_score)}
-                      </span>
+                      </div>
                     </div>
+                    <Avatar playerName={m.opponent.player_name} size="sm" />
                   </div>
                 </div>
 

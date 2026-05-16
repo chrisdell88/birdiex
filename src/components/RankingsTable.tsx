@@ -5,6 +5,7 @@ import PurityIcon from './PurityIcon';
 import SummaryCards from './SummaryCards';
 import PlayerDetailCard from './PlayerDetailCard';
 import PlayerSearch from './PlayerSearch';
+import Avatar from './Avatar';
 import { currentEvent } from '../config/event';
 
 interface RankingsTableProps {
@@ -295,8 +296,13 @@ export default function RankingsTable({ data }: RankingsTableProps) {
                   <td className="px-3 py-2.5 text-[#d4d4d4] font-['JetBrains_Mono','SF_Mono',monospace] text-xs">
                     {player.rank}
                   </td>
-                  <td className="px-3 py-2.5 text-[#f5f5f5] font-medium font-['Inter',system-ui,sans-serif] text-sm whitespace-nowrap">
-                    {player.player_name}
+                  <td className="px-3 py-2.5 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      <Avatar playerName={player.player_name} size="sm" />
+                      <span className="text-[#f5f5f5] font-medium font-['Inter',system-ui,sans-serif] text-sm">
+                        {player.player_name}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-3 py-2.5 text-[#d4d4d4] font-['JetBrains_Mono','SF_Mono',monospace] text-xs">
                     {player.position}

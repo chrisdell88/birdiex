@@ -10,7 +10,8 @@ html, body {
   to { transform: translateX(-50%); }
 }
 .ticker-track {
-  animation: ticker-scroll 90s linear infinite;
+  /* slow, readable crawl — ~300s for a full loop of the field */
+  animation: ticker-scroll 300s linear infinite;
 }
 .ticker-track:hover {
   animation-play-state: paused;

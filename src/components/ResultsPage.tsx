@@ -26,6 +26,19 @@ import {
   betLog,
 } from '../data/resultsData';
 
+// --- All-time totals (computed from raw data, not hardcoded) ---
+// All-time = Masters + PGA Championship, on a consistent stake-to-win-1 basis.
+const allTimeWins = overallRecord.wins + pgaR2Summary.wins;
+const allTimeLosses = overallRecord.losses + pgaR2Summary.losses;
+const allTimePushes = overallRecord.pushes + pgaR2Summary.pushes;
+const allTimeUnits = +(overallUnits + pgaR2Summary.units).toFixed(2);
+// ROI = net units / total staked. The Masters' staked is derived from its own
+// published units + ROI, so the Masters slice always reconciles to 17.8%.
+const mastersStaked = overallUnits / (overallROI / 100);
+const allTimeStaked = mastersStaked + pgaR2Summary.staked;
+const allTimeROI = +((allTimeUnits / allTimeStaked) * 100).toFixed(1);
+const allTimeBets = allTimeWins + allTimeLosses + allTimePushes;
+
 // --- Helpers ---
 function formatUnits(u: number): string {
   if (u === 0) return '0.00';
@@ -117,16 +130,106 @@ const sportsbookUrls: Record<string, string> = {
   Betcris: 'https://www.betcris.com/en/sports/golf',
 };
 
-// --- Sportsbook list ---
+// --- Sportsbook list (Masters bet log filter) ---
 const sportsbooks: Sportsbook[] = [
   'Best Odds (Overall)', 'DraftKings', 'FanDuel', 'BetMGM', 'Caesars',
   'bet365', 'BetOnline', 'Bovada', 'PointsBet', 'Unibet', 'Betcris', 'Pinnacle',
 ];
 
-const rounds = ['All Rounds', 'Round 2', 'Round 3', 'Round 4'];
+const mastersRounds = ['All Rounds', 'Round 2', 'Round 3', 'Round 4'];
 
-// --- Main Component ---
-export default function ResultsPage() {
+type TournamentView = 'all-time' | 'masters-2026' | 'pga-2026';
+
+// --- Shared style tokens ---
+const mono = "font-['JetBrains_Mono','SF_Mono',monospace]";
+const label = "text-[10px] uppercase tracking-wider text-[#a1a1aa] font-medium font-['Inter',system-ui,sans-serif]";
+
+// ─────────────────────────────────────────────────────────────────
+// SUB-VIEWS
+// ─────────────────────────────────────────────────────────────────
+
+// --- All-Time View ---
+function AllTimeView() {
+  const tournaments = [
+    {
+      name: 'Masters 2026',
+      status: 'COMPLETE',
+      wins: overallRecord.wins,
+      losses: overallRecord.losses,
+      pushes: overallRecord.pushes,
+      units: overallUnits,
+      roi: overallROI,
+    },
+    {
+      name: 'PGA Championship 2026',
+      status: 'IN PROGRESS',
+      wins: pgaR2Summary.wins,
+      losses: pgaR2Summary.losses,
+      pushes: pgaR2Summary.pushes,
+      units: pgaR2Summary.units,
+      roi: pgaR2Summary.roi,
+    },
+  ];
+
+  return (
+    <div>
+      <p className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mb-5">
+        Combined record across all tracked tournaments. Each event uses best available odds across real sportsbooks.
+      </p>
+      <div className="grid grid-cols-1 gap-3">
+        {tournaments.map(t => {
+          const isComplete = t.status === 'COMPLETE';
+          return (
+            <div
+              key={t.name}
+              className={`bg-[#0a0a0a] border ${borderColor(t.units)} rounded-lg p-5`}
+            >
+              <div className="flex flex-wrap items-center gap-3 mb-4">
+                <span className={`text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif] ${
+                  isComplete
+                    ? 'bg-[#22c55e]/15 text-[#22c55e]'
+                    : 'bg-[#a1a1aa]/15 text-[#a1a1aa]'
+                }`}>
+                  {t.status}
+                </span>
+                <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">{t.name}</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div>
+                  <div className={label}>Record</div>
+                  <div className={`text-base font-bold ${mono} text-[#f5f5f5]`}>
+                    {t.wins}-{t.losses}-{t.pushes}
+                  </div>
+                </div>
+                <div>
+                  <div className={label}>Units</div>
+                  <div className={`text-base font-bold ${mono} ${unitColor(t.units)}`}>
+                    {formatUnits(t.units)}u
+                  </div>
+                </div>
+                <div>
+                  <div className={label}>ROI</div>
+                  <div className={`text-base font-bold ${mono} ${unitColor(t.roi)}`}>
+                    {formatROI(t.roi)}
+                  </div>
+                </div>
+                <div>
+                  <div className={label}>Bets</div>
+                  <div className={`text-base font-bold ${mono} text-[#f5f5f5]`}>
+                    {t.wins + t.losses + t.pushes}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// --- Masters 2026 View ---
+function MastersView() {
   const [roundFilter, setRoundFilter] = useState('All Rounds');
   const [dataSetFilter, setDataSetFilter] = useState<'round-only' | 'cumulative'>('round-only');
   const [bookFilter, setBookFilter] = useState<Sportsbook>('Best Odds (Overall)');
@@ -144,31 +247,17 @@ export default function ResultsPage() {
 
   const sortArrow = (field: ResultsSortField) => {
     if (sortField !== field) return '';
-    return sortDir === 'asc' ? ' \u25B2' : ' \u25BC';
+    return sortDir === 'asc' ? ' ▲' : ' ▼';
   };
 
-  // Show data set toggle only for R3/R4 (R2 only has round-only)
   const showDataSetToggle = roundFilter === 'Round 3' || roundFilter === 'Round 4' || roundFilter === 'All Rounds';
 
-  // Compute active summary based on filters
   const activeSummary = useMemo(() => {
     if (roundFilter === 'All Rounds') {
-      return {
-        wins: overallRecord.wins,
-        losses: overallRecord.losses,
-        pushes: overallRecord.pushes,
-        units: overallUnits,
-        roi: overallROI,
-      };
+      return { wins: overallRecord.wins, losses: overallRecord.losses, pushes: overallRecord.pushes, units: overallUnits, roi: overallROI };
     }
     if (roundFilter === 'Round 2') {
-      return {
-        wins: r2Summary.wins,
-        losses: r2Summary.losses,
-        pushes: r2Summary.pushes,
-        units: r2Summary.units,
-        roi: r2Summary.roi,
-      };
+      return { wins: r2Summary.wins, losses: r2Summary.losses, pushes: r2Summary.pushes, units: r2Summary.units, roi: r2Summary.roi };
     }
     if (roundFilter === 'Round 3') {
       const s = dataSetFilter === 'cumulative' ? r3CumulativeSummary : r3RoundOnlySummary;
@@ -181,7 +270,6 @@ export default function ResultsPage() {
     return { wins: overallRecord.wins, losses: overallRecord.losses, pushes: overallRecord.pushes, units: overallUnits, roi: overallROI };
   }, [roundFilter, dataSetFilter]);
 
-  // Compute active tier/bucket breakdowns
   const activeTierBreakdowns = useMemo(() => {
     if (roundFilter === 'All Rounds') return totalTierBreakdowns;
     if (roundFilter === 'Round 2') return r2TierBreakdowns;
@@ -198,115 +286,31 @@ export default function ResultsPage() {
     return totalBucketBreakdowns;
   }, [roundFilter, dataSetFilter]);
 
-  // Filtered + sorted data
   const filteredBets = useMemo(() => {
     let bets = [...betLog];
-
     if (roundFilter !== 'All Rounds') {
       const rn = parseInt(roundFilter.replace('Round ', ''));
       bets = bets.filter(b => b.round === rn);
     }
-
-    // For R3 and R4, filter by data set
     if (roundFilter === 'Round 3' || roundFilter === 'Round 4') {
       bets = bets.filter(b => b.dataSet === dataSetFilter);
     }
-
     if (bookFilter !== 'Best Odds (Overall)') {
       bets = bets.filter(b => b.book === bookFilter);
     }
-
     bets.sort((a, b) => compareValues(a, b, sortField, sortDir));
     return bets;
   }, [roundFilter, dataSetFilter, bookFilter, sortField, sortDir]);
 
-  const mono = "font-['JetBrains_Mono','SF_Mono',monospace]";
-  const label = "text-[10px] uppercase tracking-wider text-[#a1a1aa] font-medium font-['Inter',system-ui,sans-serif]";
-
   return (
-    <div className="max-w-7xl mx-auto">
-      {/* PGA Championship — Round 2 Results */}
-      <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-5 mb-6">
-        <div className="flex items-center gap-3 mb-3">
-          <span className="bg-[#a1a1aa]/15 text-[#a1a1aa] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
-            IN PROGRESS
-          </span>
-          <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">PGA Championship 2026 — Round 2 Results</span>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
-          <div>
-            <div className={label}>Record</div>
-            <div className={`text-lg font-bold ${mono} text-[#f5f5f5]`}>{pgaR2Summary.record}</div>
-          </div>
-          <div>
-            <div className={label}>Units</div>
-            <div className={`text-lg font-bold ${mono} ${unitColor(pgaR2Summary.units)}`}>{formatUnits(pgaR2Summary.units)}u</div>
-          </div>
-          <div>
-            <div className={label}>ROI</div>
-            <div className={`text-lg font-bold ${mono} ${unitColor(pgaR2Summary.roi)}`}>{formatROI(pgaR2Summary.roi)}</div>
-          </div>
-          <div>
-            <div className={label}>Bets</div>
-            <div className={`text-lg font-bold ${mono} text-[#f5f5f5]`}>{pgaR2Summary.bets}</div>
-          </div>
-        </div>
-
-        {/* R2 Bet Log */}
-        <div className="overflow-x-auto rounded-lg border border-[#1a1a1a]">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-[#1a1a1a] bg-[#0f0f0f]">
-                {(['#', 'Pick', 'Over', 'Edge', 'Tier', 'Odds', 'Book', 'Result', 'Units'] as const).map(h => (
-                  <th key={h} className="px-3 py-2.5 text-[10px] uppercase tracking-wider text-[#a1a1aa] font-medium font-['Inter',system-ui,sans-serif] whitespace-nowrap">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {r2Results.map((bet, i) => (
-                <tr
-                  key={bet.id}
-                  className={`border-b border-[#1a1a1a] ${i % 2 === 0 ? 'bg-[#0a0a0a]' : 'bg-[#0f0f0f]'} hover:bg-[#141414] transition-colors`}
-                >
-                  <td className={`px-3 py-2 text-xs ${mono} text-[#a1a1aa]`}>{bet.id}</td>
-                  <td className="px-3 py-2 text-xs text-[#f5f5f5] font-['Inter',system-ui,sans-serif] whitespace-nowrap">{bet.pick}</td>
-                  <td className="px-3 py-2 text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif] whitespace-nowrap">{bet.opponent}</td>
-                  <td className={`px-3 py-2 text-xs ${mono} text-[#d4d4d4]`}>{bet.edge.toFixed(2)}</td>
-                  <td className="px-3 py-2">
-                    <span className={`text-[10px] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif] ${
-                      bet.tier === 'BEST BET' ? 'text-[#22c55e]' :
-                      bet.tier === 'STRONG PLAY' ? 'text-emerald-400' :
-                      'text-[#a1a1aa]'
-                    }`}>
-                      {bet.tier}
-                    </span>
-                  </td>
-                  <td className={`px-3 py-2 text-xs ${mono} text-[#d4d4d4]`}>{bet.bestOdds}</td>
-                  <td className="px-3 py-2 text-xs font-['Inter',system-ui,sans-serif] whitespace-nowrap">
-                    {sportsbookUrls[bet.book] ? (
-                      <a href={sportsbookUrls[bet.book]} target="_blank" rel="noopener noreferrer" className="text-[#22c55e] hover:underline transition-colors">
-                        {bet.book}<span className="ml-0.5 text-[10px]">{'↗'}</span>
-                      </a>
-                    ) : (
-                      <span className="text-[#a1a1aa]">{bet.book}</span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2">{resultBadge(bet.result)}</td>
-                  <td className={`px-3 py-2 text-xs ${mono} ${unitColor(bet.units)} font-bold`}>{formatUnits(bet.units)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
+    <div>
       {/* Tournament Summary Banner */}
       <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-lg p-4 mb-6">
         <div className="flex items-center gap-3 mb-2">
           <span className="bg-[#22c55e]/15 text-[#22c55e] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
             TOURNAMENT COMPLETE
           </span>
-          <span className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">The Masters 2026 -- Final Results</span>
+          <span className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">The Masters 2026 — Final Results</span>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
           <div>
@@ -328,9 +332,8 @@ export default function ResultsPage() {
         </div>
       </div>
 
-      {/* Section 1: Summary Dashboard */}
+      {/* Summary Dashboard */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {/* Overall Record */}
         <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-5">
           <div className={label + ' mb-3'}>
             {roundFilter === 'All Rounds' ? 'Overall Record' : `${roundFilter} Record`}
@@ -346,7 +349,6 @@ export default function ResultsPage() {
           </div>
         </div>
 
-        {/* Units +/- */}
         <div className={`bg-[#0a0a0a] border ${borderColor(activeSummary.units)} rounded-lg p-5`}>
           <div className={label + ' mb-3'}>Units +/-</div>
           <div className={`text-2xl font-bold ${mono} ${unitColor(activeSummary.units)}`}>
@@ -357,7 +359,6 @@ export default function ResultsPage() {
           </div>
         </div>
 
-        {/* ROI % */}
         <div className={`bg-[#0a0a0a] border ${borderColor(activeSummary.roi)} rounded-lg p-5`}>
           <div className={label + ' mb-3'}>ROI %</div>
           <div className={`text-2xl font-bold ${mono} ${unitColor(activeSummary.roi)}`}>
@@ -369,8 +370,7 @@ export default function ResultsPage() {
         </div>
       </div>
 
-      {/* Section 2: Breakdown Cards */}
-      {/* Row 1 - By Tier */}
+      {/* Tier Breakdowns */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         {activeTierBreakdowns.map(t => (
           <div key={t.tier} className={`bg-[#0a0a0a] border ${borderColor(t.units)} rounded-lg p-5`}>
@@ -391,7 +391,7 @@ export default function ResultsPage() {
         ))}
       </div>
 
-      {/* Row 2 - By Bucket */}
+      {/* Bucket Breakdowns */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
         {activeBucketBreakdowns.map(b => (
           <div key={b.bucket} className={`bg-[#0a0a0a] border ${borderColor(b.units)} rounded-lg p-5`}>
@@ -407,19 +407,17 @@ export default function ResultsPage() {
         ))}
       </div>
 
-      {/* Section 3: Filter Bar */}
+      {/* Filter Bar */}
       <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-4 mb-6">
         <div className="flex flex-wrap items-center gap-3">
-          {/* Round dropdown */}
           <select
             value={roundFilter}
             onChange={e => setRoundFilter(e.target.value)}
             className="bg-[#0a0a0a] border border-[#262626] rounded-lg px-3 py-2 text-xs text-[#d4d4d4] font-['Inter',system-ui,sans-serif] focus:border-[#22c55e]/50 focus:outline-none cursor-pointer"
           >
-            {rounds.map(r => <option key={r} value={r}>{r}</option>)}
+            {mastersRounds.map(r => <option key={r} value={r}>{r}</option>)}
           </select>
 
-          {/* Data Set toggle - only show for R3/R4/All */}
           {showDataSetToggle && (
             <div className="flex border border-[#262626] rounded-full p-0.5">
               <button
@@ -445,7 +443,6 @@ export default function ResultsPage() {
             </div>
           )}
 
-          {/* Sportsbook dropdown */}
           <select
             value={bookFilter}
             onChange={e => setBookFilter(e.target.value as Sportsbook)}
@@ -453,11 +450,10 @@ export default function ResultsPage() {
           >
             {sportsbooks.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
-
         </div>
       </div>
 
-      {/* Section 4: Full Bet Log Table */}
+      {/* Full Bet Log Table */}
       <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg overflow-hidden mb-8">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
@@ -522,7 +518,7 @@ export default function ResultsPage() {
                         rel="noopener noreferrer"
                         className="text-[#22c55e] hover:underline transition-colors"
                       >
-                        {bet.book}<span className="ml-0.5 text-[10px]">{'\u2197'}</span>
+                        {bet.book}<span className="ml-0.5 text-[10px]">{'↗'}</span>
                       </a>
                     ) : (
                       <span className="text-[#a1a1aa]">{bet.book}</span>
@@ -551,7 +547,7 @@ export default function ResultsPage() {
         </div>
       </div>
 
-      {/* Section 5: Data Set Comparison */}
+      {/* Data Set Comparison */}
       <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-5 mb-8">
         <div className={label + ' mb-4'}>Data Set Comparison (Full Tournament)</div>
         <div className="overflow-x-auto">
@@ -598,6 +594,243 @@ export default function ResultsPage() {
           Compares performance using round-only stats vs cumulative tournament stats for player scoring data
         </div>
       </div>
+    </div>
+  );
+}
+
+// --- PGA Championship 2026 View ---
+function PGAView() {
+  const [sortField, setSortField] = useState<ResultsSortField>('id');
+  const [sortDir, setSortDir] = useState<SortDirection>('asc');
+
+  const handleSort = (field: ResultsSortField) => {
+    if (field === sortField) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDir(field === 'edge' || field === 'units' ? 'desc' : 'asc');
+    }
+  };
+
+  const sortArrow = (field: ResultsSortField) => {
+    if (sortField !== field) return '';
+    return sortDir === 'asc' ? ' ▲' : ' ▼';
+  };
+
+  const sortedBets = useMemo(() => {
+    return [...r2Results].sort((a, b) => compareValues(a, b, sortField, sortDir));
+  }, [sortField, sortDir]);
+
+  // Rounds data — structured so R3, R4 can be added as new entries
+  const rounds = [
+    {
+      round: 2,
+      summary: pgaR2Summary,
+      bets: sortedBets,
+    },
+  ];
+
+  return (
+    <div>
+      {/* Tournament header */}
+      <div className="bg-[#0a0a0a] border border-[#a1a1aa]/20 rounded-lg p-4 mb-6">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="bg-[#a1a1aa]/15 text-[#a1a1aa] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
+            IN PROGRESS
+          </span>
+          <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">PGA Championship 2026</span>
+          <span className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">Valhalla Golf Club</span>
+        </div>
+      </div>
+
+      {rounds.map(({ round, summary, bets }) => (
+        <div key={round} className="mb-8">
+          {/* Round summary */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className={`w-0.5 h-5 rounded-full ${summary.units >= 0 ? 'bg-[#22c55e]' : 'bg-[#ef4444]'}`} />
+            <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">Round {round}</span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+            <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-4">
+              <div className={label}>Record</div>
+              <div className={`text-lg font-bold ${mono} text-[#f5f5f5] mt-1`}>{summary.record}</div>
+            </div>
+            <div className={`bg-[#0a0a0a] border ${borderColor(summary.units)} rounded-lg p-4`}>
+              <div className={label}>Units</div>
+              <div className={`text-lg font-bold ${mono} ${unitColor(summary.units)} mt-1`}>{formatUnits(summary.units)}u</div>
+            </div>
+            <div className={`bg-[#0a0a0a] border ${borderColor(summary.roi)} rounded-lg p-4`}>
+              <div className={label}>ROI</div>
+              <div className={`text-lg font-bold ${mono} ${unitColor(summary.roi)} mt-1`}>{formatROI(summary.roi)}</div>
+            </div>
+            <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-4">
+              <div className={label}>Bets</div>
+              <div className={`text-lg font-bold ${mono} text-[#f5f5f5] mt-1`}>{summary.bets}</div>
+            </div>
+          </div>
+
+          {/* Bet log table */}
+          <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-[#262626]">
+                    {([
+                      ['id', '#'],
+                      ['pick', 'Pick'],
+                      ['opponent', 'Over'],
+                      ['edge', 'Edge'],
+                      ['tier', 'Tier'],
+                      ['bestOdds', 'Best Odds'],
+                      ['book', 'Book'],
+                      ['result', 'Result'],
+                      ['units', 'Units +/-'],
+                    ] as [ResultsSortField, string][]).map(([field, headerLabel]) => (
+                      <th
+                        key={field}
+                        onClick={() => handleSort(field)}
+                        className={`px-3 py-3 text-[10px] uppercase tracking-wider text-[#a1a1aa] font-medium font-['Inter',system-ui,sans-serif] cursor-pointer hover:text-[#22c55e] transition-colors whitespace-nowrap select-none ${
+                          sortField === field ? 'text-[#22c55e]' : ''
+                        }`}
+                      >
+                        {headerLabel}{sortArrow(field)}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {bets.map((bet, i) => (
+                    <tr
+                      key={bet.id}
+                      className={`border-b border-[#1a1a1a] ${i % 2 === 0 ? 'bg-[#0a0a0a]' : 'bg-[#0f0f0f]'} hover:bg-[#141414] transition-colors`}
+                    >
+                      <td className={`px-3 py-2 text-xs ${mono} text-[#a1a1aa]`}>{bet.id}</td>
+                      <td className="px-3 py-2 text-xs text-[#f5f5f5] font-['Inter',system-ui,sans-serif] whitespace-nowrap">{bet.pick}</td>
+                      <td className="px-3 py-2 text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif] whitespace-nowrap">{bet.opponent}</td>
+                      <td className={`px-3 py-2 text-xs ${mono} text-[#d4d4d4]`}>{bet.edge.toFixed(2)}</td>
+                      <td className="px-3 py-2">
+                        <span className={`text-[10px] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif] ${
+                          bet.tier === 'BEST BET' ? 'text-[#22c55e]' :
+                          bet.tier === 'STRONG PLAY' ? 'text-emerald-400' :
+                          'text-[#a1a1aa]'
+                        }`}>
+                          {bet.tier}
+                        </span>
+                      </td>
+                      <td className={`px-3 py-2 text-xs ${mono} text-[#d4d4d4]`}>{bet.bestOdds}</td>
+                      <td className="px-3 py-2 text-xs font-['Inter',system-ui,sans-serif] whitespace-nowrap">
+                        {sportsbookUrls[bet.book] ? (
+                          <a href={sportsbookUrls[bet.book]} target="_blank" rel="noopener noreferrer" className="text-[#22c55e] hover:underline transition-colors">
+                            {bet.book}<span className="ml-0.5 text-[10px]">{'↗'}</span>
+                          </a>
+                        ) : (
+                          <span className="text-[#a1a1aa]">{bet.book}</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2">{resultBadge(bet.result)}</td>
+                      <td className={`px-3 py-2 text-xs ${mono} ${unitColor(bet.units)} font-bold`}>{formatUnits(bet.units)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="px-4 py-3 border-t border-[#262626] text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
+              {bets.length} bets graded — Round {round} complete
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// MAIN COMPONENT
+// ─────────────────────────────────────────────────────────────────
+
+const tournamentOptions: { value: TournamentView; label: string }[] = [
+  { value: 'all-time', label: 'All-Time' },
+  { value: 'masters-2026', label: 'Masters 2026' },
+  { value: 'pga-2026', label: 'PGA Championship 2026' },
+];
+
+export default function ResultsPage() {
+  const [activeView, setActiveView] = useState<TournamentView>('all-time');
+
+  return (
+    <div className="max-w-7xl mx-auto">
+
+      {/* ── All-Time Hero ── */}
+      <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-xl p-6 mb-6">
+        <div className="flex flex-wrap items-center gap-3 mb-5">
+          <span className="bg-[#22c55e]/15 text-[#22c55e] text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full font-['Inter',system-ui,sans-serif]">
+            All-Time Record
+          </span>
+          <span className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
+            {allTimeBets} bets across {tournamentOptions.length - 1} tournaments
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
+          <div>
+            <div className={label + ' mb-1'}>Record</div>
+            <div className={`text-2xl md:text-3xl font-black ${mono} text-[#f5f5f5] leading-none whitespace-nowrap`}>
+              {allTimeWins}-{allTimeLosses}-{allTimePushes}
+            </div>
+            <div className="text-[10px] text-[#a1a1aa] mt-1.5 font-['Inter',system-ui,sans-serif]">
+              {((allTimeWins / (allTimeWins + allTimeLosses)) * 100).toFixed(1)}% win rate
+            </div>
+          </div>
+
+          <div>
+            <div className={label + ' mb-1'}>Total Units</div>
+            <div className={`text-3xl font-black ${mono} text-[#22c55e] leading-none`}>
+              {formatUnits(allTimeUnits)}
+            </div>
+            <div className="text-[10px] text-[#a1a1aa] mt-1.5 font-['Inter',system-ui,sans-serif]">units profit</div>
+          </div>
+
+          <div>
+            <div className={label + ' mb-1'}>ROI</div>
+            <div className={`text-3xl font-black ${mono} text-[#22c55e] leading-none`}>
+              {formatROI(allTimeROI)}
+            </div>
+            <div className="text-[10px] text-[#a1a1aa] mt-1.5 font-['Inter',system-ui,sans-serif]">return on investment</div>
+          </div>
+
+          <div>
+            <div className={label + ' mb-1'}>Total Bets</div>
+            <div className={`text-3xl font-black ${mono} text-[#f5f5f5] leading-none`}>
+              {allTimeBets}
+            </div>
+            <div className="text-[10px] text-[#a1a1aa] mt-1.5 font-['Inter',system-ui,sans-serif]">graded H2H picks</div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Tournament Picker ── */}
+      <div className="flex flex-wrap items-center gap-2 mb-6">
+        <span className={label + ' mr-1'}>View:</span>
+        {tournamentOptions.map(opt => (
+          <button
+            key={opt.value}
+            onClick={() => setActiveView(opt.value)}
+            className={`px-4 py-2 text-xs font-medium rounded-lg border transition-colors font-['Inter',system-ui,sans-serif] cursor-pointer ${
+              activeView === opt.value
+                ? 'bg-[#22c55e] text-[#0a0a0a] border-[#22c55e] font-semibold'
+                : 'bg-transparent text-[#a1a1aa] border-[#262626] hover:text-[#f5f5f5] hover:border-[#404040]'
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── View Content ── */}
+      {activeView === 'all-time' && <AllTimeView />}
+      {activeView === 'masters-2026' && <MastersView />}
+      {activeView === 'pga-2026' && <PGAView />}
     </div>
   );
 }

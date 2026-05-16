@@ -44,10 +44,14 @@ const BOOK_NAMES: Record<string, string> = {
   betmgm: 'BetMGM', caesars: 'Caesars', pointsbet: 'PointsBet',
 };
 
-/** American odds string -> profit on a 1-unit win (e.g. "+120"->1.2, "-110"->0.909). */
-function profit(odds: string): number {
+/**
+ * American odds -> stake required to win 1 unit ("-145"->1.45, "+120"->0.833).
+ * Staking convention (matches the Masters results): every bet is sized to win
+ * 1 unit. Win => +1.00. Loss => -(stake). Push => 0.
+ */
+function stakeToWin1(odds: string): number {
   const n = parseInt(odds, 10);
-  return n > 0 ? n / 100 : 100 / Math.abs(n);
+  return n < 0 ? Math.abs(n) / 100 : 100 / n;
 }
 
 function side(signal: string): 'BUY' | 'FADE' | 'OTHER' {
@@ -108,6 +112,7 @@ async function main() {
   const bets: Record<string, unknown>[] = [];
   let skipped = 0;
   let id = 0;
+  let totalStaked = 0; // sum of stakes over settled (W/L) bets — pushes excluded
 
   for (const m of matchRaw.match_list ?? []) {
     const a = xs.get(m.p1_player_name);
@@ -123,17 +128,18 @@ async function main() {
     const opp = pickIsP1 ? b : a;
     const pickKey = pickIsP1 ? 'p1' : 'p2';
 
-    // Best odds for the pick across real books.
+    // Best odds for the pick across real books = the line with the smallest
+    // stake-to-win-1 (i.e. the most favorable American price).
     let bestOdds: string | null = null;
     let bestBook = '';
-    let bestProfit = -Infinity;
+    let bestStake = Infinity;
     for (const [bookKey, line] of Object.entries(m.odds ?? {})) {
       if (EXCLUDED_BOOKS.has(bookKey)) continue;
       const odds = (line as Record<string, string>)[pickKey];
       if (!odds) continue;
-      const pr = profit(odds);
-      if (pr > bestProfit) {
-        bestProfit = pr;
+      const st = stakeToWin1(odds);
+      if (st < bestStake) {
+        bestStake = st;
         bestOdds = odds;
         bestBook = BOOK_NAMES[bookKey] ?? bookKey;
       }
@@ -145,11 +151,13 @@ async function main() {
     if (pickScore == null || oppScore == null) { skipped++; continue; }
 
     // Lower score wins the round. Ties void (push).
+    // Stake-to-win-1: win => +1.00, loss => -(stake), push => 0.
     let result: 'W' | 'L' | 'P';
     let units: number;
-    if (pickScore < oppScore) { result = 'W'; units = bestProfit; }
-    else if (pickScore > oppScore) { result = 'L'; units = -1; }
+    if (pickScore < oppScore) { result = 'W'; units = 1; }
+    else if (pickScore > oppScore) { result = 'L'; units = -bestStake; }
     else { result = 'P'; units = 0; }
+    if (result !== 'P') totalStaked += bestStake;
 
     id += 1;
     bets.push({
@@ -173,8 +181,7 @@ async function main() {
   const l = bets.filter((b) => b.result === 'L').length;
   const p = bets.filter((b) => b.result === 'P').length;
   const totalUnits = bets.reduce((s, b) => s + (b.units as number), 0);
-  const staked = w + l; // pushes risk nothing net
-  const roi = staked > 0 ? (totalUnits / staked) * 100 : 0;
+  const roi = totalStaked > 0 ? (totalUnits / totalStaked) * 100 : 0;
 
   const summary = {
     round,
@@ -182,6 +189,7 @@ async function main() {
     record: `${w}-${l}-${p}`,
     wins: w, losses: l, pushes: p,
     units: Math.round(totalUnits * 100) / 100,
+    staked: Math.round(totalStaked * 100) / 100,
     roi: Math.round(roi * 10) / 10,
   };
 

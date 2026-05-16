@@ -34,7 +34,7 @@ const allTimeLosses = overallRecord.losses + pgaR2Summary.losses;
 const allTimePushes = overallRecord.pushes + pgaR2Summary.pushes;
 const allTimeUnits = +(overallUnits + pgaR2Summary.units).toFixed(2);
 // ROI = net units / total staked. The Masters' staked is derived from its own
-// published units + ROI, so the Masters slice always reconciles to 17.8%.
+// published units + ROI, so the Masters slice always reconciles to its own ROI.
 const mastersStaked = overallUnits / (overallROI / 100);
 const allTimeStaked = mastersStaked + pgaR2Summary.staked;
 const allTimeROI = +((allTimeUnits / allTimeStaked) * 100).toFixed(1);
@@ -331,19 +331,21 @@ function MastersView() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
           <div>
             <div className={label}>Total Record</div>
-            <div className={`text-lg font-bold ${mono} text-[#f5f5f5]`}>130-70-21</div>
+            <div className={`text-lg font-bold ${mono} text-[#f5f5f5]`}>
+              {overallRecord.wins}-{overallRecord.losses}-{overallRecord.pushes}
+            </div>
           </div>
           <div>
             <div className={label}>Total Units</div>
-            <div className={`text-lg font-bold ${mono} text-[#22c55e]`}>+46.60u</div>
+            <div className={`text-lg font-bold ${mono} text-[#22c55e]`}>+{overallUnits}u</div>
           </div>
           <div>
             <div className={label}>ROI</div>
-            <div className={`text-lg font-bold ${mono} text-[#22c55e]`}>+17.8%</div>
+            <div className={`text-lg font-bold ${mono} text-[#22c55e]`}>+{overallROI}%</div>
           </div>
           <div>
             <div className={label}>Total Bets</div>
-            <div className={`text-lg font-bold ${mono} text-[#f5f5f5]`}>221</div>
+            <div className={`text-lg font-bold ${mono} text-[#f5f5f5]`}>{betLog.length}</div>
           </div>
         </div>
       </div>

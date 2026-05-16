@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { overallRecord, overallUnits, overallROI } from '../data/resultsData';
 
 function ShareButtons() {
   const [copied, setCopied] = useState(false);
@@ -9,7 +10,7 @@ function ShareButtons() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const shareText = 'BirdieX X Score Model: 130-70, +46.60 units, +17.8% ROI at The Masters 2026. Putting regression works. birdiex.co';
+  const shareText = `BirdieX X Score Model: ${overallRecord.wins}-${overallRecord.losses}, +${overallUnits} units, +${overallROI}% ROI at The Masters 2026. Putting regression works. birdiex.co`;
 
   const handleShareX = () => {
     window.open(

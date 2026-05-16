@@ -89,6 +89,11 @@ async function main() {
     xsMod.roundOnlyData;
   const xs = new Map(xsList.map((p) => [p.player_name, p]));
 
+  // Tier-based bet sizing (Scheme D) — single source of truth in src/lib/sizing.ts.
+  const { betUnits, betStake } = await import(
+    pathToFileURL(join(PROJECT_ROOT, 'src', 'lib', 'sizing.ts')).href
+  );
+
   // Matchup odds for this round (pulled the phase before the round).
   const matchRaw = JSON.parse(
     await readFile(
@@ -151,13 +156,13 @@ async function main() {
     if (pickScore == null || oppScore == null) { skipped++; continue; }
 
     // Lower score wins the round. Ties void (push).
-    // Stake-to-win-1: win => +1.00, loss => -(stake), push => 0.
+    // Tier sizing (Scheme D): sized to win a tier-based number of units.
     let result: 'W' | 'L' | 'P';
-    let units: number;
-    if (pickScore < oppScore) { result = 'W'; units = 1; }
-    else if (pickScore > oppScore) { result = 'L'; units = -bestStake; }
-    else { result = 'P'; units = 0; }
-    if (result !== 'P') totalStaked += bestStake;
+    if (pickScore < oppScore) result = 'W';
+    else if (pickScore > oppScore) result = 'L';
+    else result = 'P';
+    const units: number = betUnits(result, bestOdds, tier);
+    if (result !== 'P') totalStaked += betStake(result, bestOdds, tier);
 
     id += 1;
     bets.push({

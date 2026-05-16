@@ -128,32 +128,40 @@ edge = pick − avg of the 2 fades.
 
 ## Masters 2026 Tournament Results (First Real Test)
 
-### Tournament Totals
-- **221 total bets (H2H + 3-Ball)**
+### Tournament Totals (Scheme D sizing)
+- **221 total bets**
 - **130-70-21 record**
-- **+46.60 units**
-- **+17.8% ROI**
+- **+84.91 units**
+- **+23.9% ROI**
 
-### Per-Round (H2H only)
+Flat 1u sizing would have been +46.62u / 18.5%. `src/data/resultsData.ts` is the
+live source of truth — re-run `scripts/recompute-results.ts` after any sizing change.
+
+### Per-Round (Scheme D)
 | Round | Bets | Record | Units | ROI |
 |-------|------|--------|-------|-----|
-| R2 (from R1 picks) | 63 | 36-23-4 | +5.15u | +6.5% |
-| R3 Round-Only (from R2 picks) | 38 | 21-14-3 | +4.37u | +10.6% |
-| R3 Cumulative (from R1+R2 picks) | 40 | 20-14-6 | +2.96u | +7.4% |
-| R4 Round-Only (from R3 picks) | 26 | 13-10-3 | +3.21u | +9.7% |
-| R4 Cumulative (from R1-R3 picks) | 54 | **40-9-5** | **+30.91u** | **+45.6%** |
+| R2 (from R1 picks) | 63 | 36-23-4 | +12.68u | +11.8% |
+| R3 Round-Only (from R2 picks) | 38 | 21-14-3 | +7.29u | +17.5% |
+| R3 Cumulative (from R1+R2 picks) | 40 | 20-14-6 | +2.66u | +4.8% |
+| R4 Round-Only (from R3 picks) | 26 | 13-10-3 | +1.53u | +4.3% |
+| R4 Cumulative (from R1-R3 picks) | 54 | **40-9-5** | **+60.75u** | **+52.7%** |
 
-### 3-Ball Results
-- R2: 6 qualifying, 3-3-0, -0.91u
-- R3: Data lost (not pulled in time)
-- R4: Books didn't offer 3-balls
+### Per-Tier (Scheme D, tournament total)
+| Tier | Record | Units | ROI |
+|------|--------|-------|-----|
+| BEST BET | 45-19-8 | +54.54u | 26.2% |
+| STRONG PLAY | 35-15-8 | +26.90u | 28.7% |
+| LEAN | 50-36-5 | +3.47u | 6.5% |
+
+### 3-Ball Results (historical — 3-balls now off the site)
+- R2: 6 qualifying, 3-3-0 (−0.91u flat). R3 data lost; R4 books didn't offer 3-balls.
 
 ### Key Findings
-1. **Cumulative model beat Round-Only across R3+R4:** 60-23-11, +33.87u, +31.4% ROI vs Round-Only 34-24-6, +7.58u, +10.2% ROI
-2. **STRONG PLAY tier was best:** 27.2% ROI across tournament
-3. **BUY+FADE bucket was best:** 22.0% ROI
-4. **FanDuel best book:** 48.1% ROI (small sample 9-1-3)
-5. **R4 cumulative model went on a heater:** 40-9-5 — historic performance
+1. **Cumulative model beat Round-Only:** cumulative 60-23-11, +63.41u, 37.1% ROI
+   vs round-only 70-47-10, +21.50u, 11.6% ROI.
+2. **STRONG PLAY is the top tier:** 28.7% ROI (BEST BET 26.2%, LEAN 6.5%).
+3. **BUY vs FADE was the best bucket:** 33.1% ROI.
+4. **R4 cumulative model went on a heater:** 40-9-5 — historic performance.
 
 ### Top X Scores (Full Tournament Cumulative, Final)
 1. Schauffele (+4.09)
@@ -168,18 +176,31 @@ edge = pick − avg of the 2 fades.
 ## PGA Championship 2026 (current event — Aronimink)
 
 - **Round 3 is live.** R1 and R2 complete; R2 picks graded.
-- **R2 results: 27-24-4, −2.27u, −3.6% ROI** (55 H2H bets). A flat/slightly-down
-  round — Aronimink is a low-predictability course (0.0413 vs Augusta's 0.144),
-  so the model runs close to a flat putting regression there.
-- **All-time (Masters + PGA): 157-94-25, +44.33u, +13.6% ROI** (276 bets).
+- **R2 results: 27-24-4, −4.67u, −7.7% ROI** (55 H2H bets, Scheme D sizing).
+  A down round, and Scheme D amplifies it (flat sizing was −2.27u). Aronimink is
+  a low-predictability course (0.0413 vs Augusta's 0.144), so the model runs
+  close to a flat putting regression there.
+- **All-time (Masters + PGA): 157-94-25, +80.24u, +19.3% ROI** (276 bets).
 
 ## Results accounting / grading convention
 
-Graded by `scripts/grade-round.ts`. Stake-to-win-1-unit (matches the Masters):
-**win = +1.00, loss = −(stake), push = 0.** Stake from American odds: −X → X/100,
-+X → 100/X. Best odds taken across **real** sportsbooks (DataGolf's "datagolf"
-model line excluded). ROI = net units ÷ total staked. The Masters' staked is
-derived from its published units ÷ ROI so its slice always reconciles to 17.8%.
+**Kelly tier sizing — "Scheme D" (adopted 2026-05-16).** Every bet is sized to
+win a tier-based number of units: **BEST BET 2.5u, STRONG PLAY 1.5u, LEAN 0.5u.**
+Multipliers live in `src/lib/sizing.ts` — change them and re-run
+`scripts/recompute-results.ts` to re-tune the whole record. Per bet:
+win = +M, loss = −(M × stake), push = 0. Stake from American odds:
+−X → X/100, +X → 100/X. Best odds across **real** sportsbooks (DataGolf's
+"datagolf" model line excluded). ROI = net units ÷ total staked.
+
+The entire history (Masters + PGA) was recomputed with Scheme D. The old method
+was flat 1u sizing (Masters flat = +46.62u / 18.5%; Scheme D = +84.91u / 23.9%).
+
+**Why Scheme D:** backtested 4 sizing schemes against the full Masters record.
+Dropping LEAN to 0.5u is what drives the ROI gain — LEAN is a real but weak tier
+(+6.4% ROI vs ~25-27% for BEST BET / STRONG PLAY), so starving it lifts the
+blended ROI. Scheme D (2.5/1.5/0.5) won on both ROI and total profit. Sizing
+never changes a tier's own ROI — only the blend. Philosophy: ship it, adjust
+with time; re-tune via `sizing.ts` whenever the data says so.
 
 ## Data pipeline (scripts/)
 
@@ -339,23 +360,33 @@ Raw DataGolf JSON pulls from the Masters 2026 run: `masters_final_tracking.json`
 - [x] Post-tournament wrap-up workflow — `docs/NEW_TOURNAMENT_RUNBOOK.md`
 - [x] 3-balls decision — removed from the site (H2H only)
 - [x] Alerts feature live — signup page + email (Resend) + Discord, backed by Supabase
+- [x] Kelly tier sizing (Scheme D) — backtested, adopted, whole history recomputed
 
-### Next Tournament Prep
-- [ ] Build pre-tournament R1 betting model (use baseline skill + course fit as proxy)
-- [ ] Add alerts/notifications (Discord, email, SMS)
-- [ ] Consider Supabase integration for persistent bet history across tournaments
-- [ ] Revisit `MAX_PREDICTABILITY = 0.15` — it's an unexplained magic number (see COURSE_COEFFICIENTS_RESEARCH.md §7)
+### Roadmap (agreed 2026-05-16, in priority order)
+1. **Line-movement monitoring** — automate odds pulls on a schedule (~30 min during
+   rounds), store each snapshot in a Supabase `odds_snapshots` table. Grading must
+   use the **best odds seen across the whole window** (every book × every snapshot),
+   never the closing line — so good closing-line value helps the record, not hurts
+   it. Add a small movement chart to each matchup card. Time-sensitive: DataGolf
+   does not retain historical round odds, so every week without this is lost data.
+2. **Win probabilities per matchup** — calibrate the matchup-score edge → historical
+   hit rate. Tier-level calibration exists now (BEST BET/STRONG PLAY ~70%, LEAN ~58%);
+   a smooth edge→% curve needs more results data. Display nicety; NOT needed for
+   Kelly sizing (the tiers are already the sizing buckets).
+3. **Pre-tournament / Round 1 model** — model currently only makes picks R2+ (needs
+   a completed round of live SG data). Use DataGolf pre-tournament projections +
+   course fit as a proxy so Thursday has picks too. This is a design discussion.
+4. Revisit `MAX_PREDICTABILITY = 0.15` magic number (COURSE_COEFFICIENTS_RESEARCH.md §7).
 
-### Future Features (Parked)
-- Clickable direct-to-bet links (not possible with current sportsbook URLs)
-- Historical backtesting against prior Masters/tournament data (DataGolf tier upgrade required)
-- Line movement monitoring
-- Bankroll-adjusted bet recommendations
+### Future Features (Parked — need outside dependencies)
+- Historical backtesting vs prior tournaments — needs a DataGolf tier upgrade
+- Direct-to-bet links — needs sportsbook affiliate programs (not just a URL problem)
 
 ### Known Issues
 - Deep linking to specific bets on sportsbook sites isn't possible — only golf section links
 - Course-fit coefficients still pulled manually from DataGolf's Course Fit web tool (not in the API)
-- No database yet — all data embedded in src/data/ files
+- Event/results data still embedded in `src/data/` TS files; Supabase is used only for
+  alert subscribers so far (full data migration is still a parked post-PGA project)
 
 ---
 

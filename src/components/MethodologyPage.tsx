@@ -1,3 +1,5 @@
+import { overallRecord, overallUnits, overallROI } from '../data/resultsData';
+
 interface MethodologyPageProps {
   onNavigateToResults?: () => void;
 }
@@ -12,7 +14,7 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
             Masters 2026 Results
           </div>
           <div className="text-2xl font-bold text-[#f5f5f5] font-['JetBrains_Mono','SF_Mono',monospace] mb-1">
-            130-70-21 &nbsp;|&nbsp; +46.60 units &nbsp;|&nbsp; +17.8% ROI
+            {overallRecord.wins}-{overallRecord.losses}-{overallRecord.pushes} &nbsp;|&nbsp; +{overallUnits} units &nbsp;|&nbsp; +{overallROI}% ROI
           </div>
           {onNavigateToResults && (
             <button

@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import type { PlayerData, Matchup, BucketType, MatchupOddsEntry } from '../types';
-import { r2MatchupOddsData } from '../data/pgaChampMatchups';
+import { r3MatchupOddsData } from '../data/pgaChampR3Matchups';
 import SignalBadge from './SignalBadge';
 
 interface MatchupsViewProps {
@@ -348,7 +348,7 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
   const [sortBy, setSortBy] = useState<MatchupSort>('edge-high');
   const [showDefinitions, setShowDefinitions] = useState(false);
 
-  const rawMatchups = useMemo(() => generateMatchups(data, r2MatchupOddsData), [data]);
+  const rawMatchups = useMemo(() => generateMatchups(data, r3MatchupOddsData), [data]);
 
   const matchups = useMemo(() => {
     const sorted = [...rawMatchups];
@@ -367,11 +367,11 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
 
   return (
     <div>
-      {/* Round 2 Picks Banner */}
+      {/* Round 3 Picks Banner */}
       <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-lg p-5 mb-6">
         <div className="flex items-center gap-3 mb-2">
           <span className="bg-[#22c55e]/15 text-[#22c55e] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
-            ROUND 2 PICKS
+            ROUND 3 PICKS
           </span>
           <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
             PGA Championship · Aronimink
@@ -386,7 +386,7 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
         <div className="flex items-center gap-2">
           <div>
             <h2 className="text-xl font-bold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
-              R2 Matchup Recommendations
+              R3 Matchup Recommendations
             </h2>
             <p className="text-sm text-[#d4d4d4] mt-1 font-['Inter',system-ui,sans-serif]">
               Picks ranked by X Score edge -- Min edge: 0.95

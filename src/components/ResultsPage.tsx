@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import type { BetRecord, TierType, BetType, ResultsSortField, SortDirection, Sportsbook } from '../types';
+import type { BetRecord, TierType, ResultsSortField, SortDirection, Sportsbook } from '../types';
+import { r2Results, r2Summary as pgaR2Summary } from '../data/pgaChampR2Results';
 import {
   overallRecord,
   overallUnits,
@@ -129,8 +130,6 @@ export default function ResultsPage() {
   const [roundFilter, setRoundFilter] = useState('All Rounds');
   const [dataSetFilter, setDataSetFilter] = useState<'round-only' | 'cumulative'>('round-only');
   const [bookFilter, setBookFilter] = useState<Sportsbook>('Best Odds (Overall)');
-  const [betTypeFilter, setBetTypeFilter] = useState<BetType | 'All'>('All');
-
   const [sortField, setSortField] = useState<ResultsSortField>('id');
   const [sortDir, setSortDir] = useState<SortDirection>('asc');
 
@@ -217,30 +216,88 @@ export default function ResultsPage() {
       bets = bets.filter(b => b.book === bookFilter);
     }
 
-    if (betTypeFilter !== 'All') {
-      bets = bets.filter(b => b.betType === betTypeFilter);
-    }
-
     bets.sort((a, b) => compareValues(a, b, sortField, sortDir));
     return bets;
-  }, [roundFilter, dataSetFilter, bookFilter, betTypeFilter, sortField, sortDir]);
+  }, [roundFilter, dataSetFilter, bookFilter, sortField, sortDir]);
 
   const mono = "font-['JetBrains_Mono','SF_Mono',monospace]";
   const label = "text-[10px] uppercase tracking-wider text-[#a1a1aa] font-medium font-['Inter',system-ui,sans-serif]";
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* PGA Championship Coming Soon */}
-      <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-4 mb-6">
-        <div className="flex items-center gap-3 mb-1">
+      {/* PGA Championship — Round 2 Results */}
+      <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-5 mb-6">
+        <div className="flex items-center gap-3 mb-3">
           <span className="bg-[#a1a1aa]/15 text-[#a1a1aa] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
             IN PROGRESS
           </span>
-          <span className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">PGA Championship 2026</span>
+          <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">PGA Championship 2026 — Round 2 Results</span>
         </div>
-        <p className="text-sm text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
-          PGA Championship — Round 2 results coming soon
-        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+          <div>
+            <div className={label}>Record</div>
+            <div className={`text-lg font-bold ${mono} text-[#f5f5f5]`}>{pgaR2Summary.record}</div>
+          </div>
+          <div>
+            <div className={label}>Units</div>
+            <div className={`text-lg font-bold ${mono} ${unitColor(pgaR2Summary.units)}`}>{formatUnits(pgaR2Summary.units)}u</div>
+          </div>
+          <div>
+            <div className={label}>ROI</div>
+            <div className={`text-lg font-bold ${mono} ${unitColor(pgaR2Summary.roi)}`}>{formatROI(pgaR2Summary.roi)}</div>
+          </div>
+          <div>
+            <div className={label}>Bets</div>
+            <div className={`text-lg font-bold ${mono} text-[#f5f5f5]`}>{pgaR2Summary.bets}</div>
+          </div>
+        </div>
+
+        {/* R2 Bet Log */}
+        <div className="overflow-x-auto rounded-lg border border-[#1a1a1a]">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-[#1a1a1a] bg-[#0f0f0f]">
+                {(['#', 'Pick', 'Over', 'Edge', 'Tier', 'Odds', 'Book', 'Result', 'Units'] as const).map(h => (
+                  <th key={h} className="px-3 py-2.5 text-[10px] uppercase tracking-wider text-[#a1a1aa] font-medium font-['Inter',system-ui,sans-serif] whitespace-nowrap">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {r2Results.map((bet, i) => (
+                <tr
+                  key={bet.id}
+                  className={`border-b border-[#1a1a1a] ${i % 2 === 0 ? 'bg-[#0a0a0a]' : 'bg-[#0f0f0f]'} hover:bg-[#141414] transition-colors`}
+                >
+                  <td className={`px-3 py-2 text-xs ${mono} text-[#a1a1aa]`}>{bet.id}</td>
+                  <td className="px-3 py-2 text-xs text-[#f5f5f5] font-['Inter',system-ui,sans-serif] whitespace-nowrap">{bet.pick}</td>
+                  <td className="px-3 py-2 text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif] whitespace-nowrap">{bet.opponent}</td>
+                  <td className={`px-3 py-2 text-xs ${mono} text-[#d4d4d4]`}>{bet.edge.toFixed(2)}</td>
+                  <td className="px-3 py-2">
+                    <span className={`text-[10px] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif] ${
+                      bet.tier === 'BEST BET' ? 'text-[#22c55e]' :
+                      bet.tier === 'STRONG PLAY' ? 'text-emerald-400' :
+                      'text-[#a1a1aa]'
+                    }`}>
+                      {bet.tier}
+                    </span>
+                  </td>
+                  <td className={`px-3 py-2 text-xs ${mono} text-[#d4d4d4]`}>{bet.bestOdds}</td>
+                  <td className="px-3 py-2 text-xs font-['Inter',system-ui,sans-serif] whitespace-nowrap">
+                    {sportsbookUrls[bet.book] ? (
+                      <a href={sportsbookUrls[bet.book]} target="_blank" rel="noopener noreferrer" className="text-[#22c55e] hover:underline transition-colors">
+                        {bet.book}<span className="ml-0.5 text-[10px]">{'↗'}</span>
+                      </a>
+                    ) : (
+                      <span className="text-[#a1a1aa]">{bet.book}</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2">{resultBadge(bet.result)}</td>
+                  <td className={`px-3 py-2 text-xs ${mono} ${unitColor(bet.units)} font-bold`}>{formatUnits(bet.units)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Tournament Summary Banner */}
@@ -397,22 +454,6 @@ export default function ResultsPage() {
             {sportsbooks.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
 
-          {/* Bet Type toggle */}
-          <div className="flex border border-[#262626] rounded-full p-0.5">
-            {(['H2H', '3-Ball', 'All'] as const).map(bt => (
-              <button
-                key={bt}
-                onClick={() => setBetTypeFilter(bt)}
-                className={`px-3 py-1.5 text-[10px] uppercase tracking-wider font-medium rounded-full transition-colors font-['Inter',system-ui,sans-serif] cursor-pointer ${
-                  betTypeFilter === bt
-                    ? 'bg-[#22c55e] text-[#0a0a0a]'
-                    : 'text-[#d4d4d4] hover:text-white'
-                }`}
-              >
-                {bt}
-              </button>
-            ))}
-          </div>
         </div>
       </div>
 

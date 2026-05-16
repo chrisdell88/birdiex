@@ -67,7 +67,7 @@ export default function Header({ activeTab, onTabChange, dataSet, onDataSetChang
                 is shown on every page's own content). */}
             <div className="hidden sm:block border border-[#22c55e]/50 rounded-full px-3 md:px-4 py-1.5 bg-[#0a0a0a]">
               <span className="text-[10px] md:text-xs text-[#f5f5f5] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif]">
-                PGA Championship <span className="text-[#f5f5f5]/50">|</span> R1 FINAL · ROUND 2 PICKS
+                PGA Championship <span className="text-[#f5f5f5]/50">|</span> R2 FINAL · ROUND 3 PICKS
               </span>
             </div>
           </div>

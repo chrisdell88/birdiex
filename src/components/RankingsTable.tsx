@@ -196,7 +196,7 @@ export default function RankingsTable({ data }: RankingsTableProps) {
     { field: 'rank', label: '#' },
     { field: 'player_name', label: 'Player' },
     { field: 'position', label: 'POS' },
-    { field: 'score_to_par', label: 'R1' },
+    { field: 'score_to_par', label: 'SCORE' },
     { field: 'sg_putt', label: 'SG_PUTT', hideOnMobile: true },
     { field: 'sg_app', label: 'SG_APP', hideOnMobile: true },
     { field: 'sg_ott', label: 'SG_OTT', hideOnMobile: true },
@@ -218,7 +218,7 @@ export default function RankingsTable({ data }: RankingsTableProps) {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
           <span className="text-[11px] text-[#d4d4d4] uppercase tracking-wider font-['Inter',system-ui,sans-serif]">
-            Last Updated: PGA Championship — R1 (Final)
+            Last Updated: PGA Championship — R2 (Final)
           </span>
           <button
             onClick={() => setShowStatsKey(true)}

@@ -14,6 +14,7 @@ const tabs: { id: TabId; label: string }[] = [
   { id: 'odds', label: 'ODDS' },
   { id: 'methodology', label: 'METHODOLOGY' },
   { id: 'results', label: 'RESULTS' },
+  { id: 'alerts', label: 'ALERTS' },
 ];
 
 export default function Header({ activeTab, onTabChange, dataSet, onDataSetChange }: HeaderProps) {

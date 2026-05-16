@@ -9,9 +9,11 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "pull:event": "tsx scripts/pull-event.ts",
-    "build:event": "tsx scripts/build-event.ts"
+    "build:event": "tsx scripts/build-event.ts",
+    "notify": "tsx scripts/notify.ts"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.105.4",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },

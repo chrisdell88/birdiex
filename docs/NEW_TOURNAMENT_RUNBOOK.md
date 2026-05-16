@@ -47,34 +47,53 @@ Following the Masters pattern (`src/data/mastersR1Data.ts`), create a new file p
 
 ---
 
-## Per-round update — exact commands
+## Per-round update — one command
 
-After round N completes, from the repo root (`~/Projects/birdiex`):
+After round N completes, from the repo root (`~/Projects/birdiex`), run the
+orchestrator. It runs the whole data pipeline in order (pull → build X Scores →
+build next-round matchups → grade the round → refresh headshots → build the
+ticker) and stops on the first error:
 
 ```
-# 1. Pull all DataGolf data for the round (live stats incl. event_cumulative,
-#    decompositions, matchup odds, outrights).
-npx tsx scripts/pull-event.ts --slug <slug> --phase r<N>
-
-# 2. Build X Scores (rankings). Produces src/data/<out>.ts with roundOnlyData
-#    + cumulativeData. The cumulative track uses event_cumulative (totals).
-npx tsx scripts/build-event.ts --slug <slug> --phase r<N> --course <course> --out <event>R<N>Data
-
-# 3. Build the H2H matchup odds file (MatchupOddsEntry[]).
-npx tsx scripts/build-matchups.ts --slug <slug> --phase r<N> \
-  --market round_matchups --export r<N+1>MatchupOddsData --out <event>R<N>Matchups
+npx tsx scripts/update-round.ts --slug <slug> --round <N> --course <course> --prefix <prefix>
 ```
 
 Example (PGA Championship, after round 2):
-`--slug pga-championship-2026 --phase r2 --course aronimink --out pgaChampR2Data`
+```
+npx tsx scripts/update-round.ts --slug pga-championship-2026 --round 2 --course aronimink --prefix pgaChamp
+```
+
+It skips grading after R1 (no picks yet) and skips next-round matchups/ticker
+after R4 (no next round).
+
+Then finish the round by hand (small, one-time per round):
+1. **`src/config/event.ts`** — point the data imports at the new files
+   (`<prefix>R<N>Data`, `<prefix>R<N+1>Matchups`), bump `picksRound`, update
+   `headerBanner` and `lastUpdated`.
+2. **Results page events registry** — add `<prefix>R<N>Results`.
+3. `npm run build && npm run lint`, verify in the browser, commit, push.
 
 Notes:
 - `build-event.ts` applies the locked formula (`scripts/lib/xscore.ts`; see
   `docs/X_SCORE_FORMULA.md`). Cumulative = `event_cumulative` (accumulating SG
   totals — verified against the Masters; NOT `event_avg`).
+- Grading uses the stake-to-win-1 convention (win +1.00, loss −stake), matching
+  the Masters; best odds across real books (DataGolf's model line excluded).
 - Spot-check 3–5 player rows against the raw JSON before committing.
-- From round 2 on there are two tracks — round-only and cumulative — both
-  emitted into the same data file (`roundOnlyData` / `cumulativeData`).
+- The individual scripts can still be run standalone — see each script's header
+  comment for its flags.
+
+## Post-tournament wrap-up (after R4)
+
+`update-round.ts --round 4` grades the final round and skips the matchup/ticker
+steps. To close the event out:
+1. Run the round-4 update as above.
+2. In the Results page events registry, flip the event's status from
+   "in progress" to **complete** — it then shows as a finished past tournament
+   and its totals fold permanently into the all-time record.
+3. Disable the GitHub Actions cron until the next event.
+4. The event's data files stay in the repo as the historical record — never
+   edit a completed event's graded numbers.
 
 ---
 

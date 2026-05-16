@@ -39,13 +39,14 @@ The radar gives **5** numbers per course. Our model needs **4**. The mapping:
 | APP  | Approach (direct read) |
 | ARG  | Around Green (direct read) |
 | PUTT | Putting (direct read) |
-| OTT  | **max(Driving Distance, Driving Accuracy)** |
+| OTT  | **the higher of the two driving numbers** (Driving Distance vs Driving Accuracy — whichever is greater at that course) |
 
-**Why OTT = max of the two driving axes:** the radar splits driving into Distance
-and Accuracy; the model needs one OTT weight. Distance and Accuracy move in
-opposite directions course-to-course, so averaging them washes out the course
-signal. `max` keeps whichever driving skill actually predicts scoring at that
-course (distance at Augusta, accuracy at a course like Harbour Town). Full
+**Why OTT = the higher of the two driving numbers:** the radar splits driving
+into Distance and Accuracy; the model needs one OTT weight. Distance and
+Accuracy move in opposite directions course-to-course, so averaging them washes
+out the course signal. Taking whichever number is higher keeps the driving
+skill that actually predicts scoring at that course (distance at Augusta,
+accuracy at a course like Harbour Town). Full
 reasoning: `docs/COURSE_COEFFICIENTS_RESEARCH.md`.
 
 **Relative Importance toggle must be OFF.** The ON view rescales each axis

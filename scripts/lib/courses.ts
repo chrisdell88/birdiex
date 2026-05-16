@@ -12,7 +12,7 @@
  *   come from DataGolf's "course fit tool" radar plot per venue (Relative
  *   Importance toggle OFF). The radar gives 5 axes; the model needs 4:
  *     APP / ARG / PUTT  = direct reads of the Approach / Around-Green / Putting axes
- *     OTT               = max(Driving Distance, Driving Accuracy)
+ *     OTT               = the higher of Driving Distance and Driving Accuracy
  *   These are NOT in the public API — pulled from the DataGolf web tool.
  *   Full reasoning: docs/COURSE_COEFFICIENTS_RESEARCH.md.
  *
@@ -75,7 +75,7 @@ export const COURSES: Record<string, CourseProfile> = {
     // coefficients: DataGolf Course Fit radar, Relative Importance OFF, pulled
     // 2026-05-15. Radar axes: DrivingDistance 0.780, DrivingAccuracy 0.428,
     // Approach 0.723, AroundGreen 0.413, Putting 0.524.
-    // ott = max(0.780, 0.428) = 0.780.
+    // ott = higher of DrivingDistance (0.780) and DrivingAccuracy (0.428) = 0.780.
     coefficients: { ott: 0.780, app: 0.723, arg: 0.413, putt: 0.524 },
     source_date: '2026-05-15',
     is_major: true,

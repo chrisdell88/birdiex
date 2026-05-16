@@ -12,7 +12,7 @@
 1. DataGolf's Course Fit tool gives **5** numbers per course: Driving Distance, Driving Accuracy, Approach, Around-Green, Putting. Our model needs **4** (OTT, APP, ARG, PUTT). APP / ARG / PUTT map straight across. **Driving Distance + Driving Accuracy must be combined into one OTT number** — there is no combined "off the tee" number anywhere on DataGolf, by design.
 2. The model pulls live SG data as four categories (`sg_ott, sg_app, sg_arg, sg_putt`). There is no live "distance" or "accuracy" stat. So the model **must** use 4 categories — splitting OTT is not an option. Combining the two driving numbers is forced.
 3. **Plain averaging of Distance + Accuracy is the wrong way to combine them** — it washes out the course signal (demonstrated below with real numbers). The Masters used Driving Distance only, which works for distance-heavy courses but breaks on accuracy-heavy courses.
-4. **Recommendation:** OTT coefficient = **the larger of Driving Distance and Driving Accuracy** (`max`). Reasoning below. This is Chris's decision to approve.
+4. **Recommendation:** OTT coefficient = **the higher of Driving Distance and Driving Accuracy** (whichever number is greater at that course). Reasoning below. This is Chris's decision to approve.
 5. For the PGA Championship specifically, the method choice does **not** change the answer — Aronimink is distance-dominant, so every sensible method gives OTT ≈ 0.78.
 
 ---
@@ -129,7 +129,7 @@ Partially and supportively, yes — not as flattery, it is in the numbers. Putti
 
 **Pick the OTT method** (everything else — APP, ARG, PUTT — is a direct radar read, no decision needed):
 
-- **M3 `max(Distance, Accuracy)`** — recommended. Robust across all course types, simple, automatable.
+- **M3 — the higher of Distance / Accuracy** — recommended. Robust across all course types, simple, automatable.
 - **M1 Distance only** — what the Masters used; fine for majors, breaks on accuracy courses.
 - **M4 distance-weighted blend** — middle ground, but the split ratio is arbitrary.
 - ~~M2 average~~ — ruled out by the evidence; do not use.

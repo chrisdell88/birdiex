@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { TabId, DataSet } from './types';
-import { roundOnlyData, cumulativeData } from './data/pgaChampR2Data';
+import { currentEvent } from './config/event';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import RankingsTable from './components/RankingsTable';
@@ -13,8 +13,9 @@ function App() {
   const [activeTab, setActiveTab] = useState<TabId>('rankings');
   const [dataSet, setDataSet] = useState<DataSet>('round');
 
-  // Toggle between R2-only X Scores and R1+R2 Cumulative X Scores
-  const activeData = dataSet === 'round' ? roundOnlyData : cumulativeData;
+  // Toggle between round-only and cumulative X Scores for the current event.
+  const activeData =
+    dataSet === 'round' ? currentEvent.rankingsRound : currentEvent.rankingsCumulative;
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">

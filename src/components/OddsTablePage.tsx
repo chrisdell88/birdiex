@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import type { PlayerData, MatchupOddsEntry } from '../types';
-import { r3MatchupOddsData } from '../data/pgaChampR3Matchups';
+import { currentEvent } from '../config/event';
 
 interface OddsTablePageProps {
   data: PlayerData[];
@@ -159,7 +159,7 @@ export default function OddsTablePage({ data }: OddsTablePageProps) {
 
   // Build R3 H2H rows
   const h2hRows = useMemo(() => {
-    return buildH2HRows(data, r3MatchupOddsData).filter(r => r.edge >= minEdge);
+    return buildH2HRows(data, currentEvent.matchups).filter(r => r.edge >= minEdge);
   }, [data, minEdge]);
 
   // Sort H2H rows
@@ -215,10 +215,10 @@ export default function OddsTablePage({ data }: OddsTablePageProps) {
       {/* Filter Controls */}
       <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-4 mb-6">
         <div className="flex flex-wrap items-center gap-3">
-          {/* Round badge — fixed R3 */}
+          {/* Round badge */}
           <div className="border border-[#22c55e]/50 rounded-full px-3 py-1">
             <span className="text-[10px] uppercase tracking-wider font-medium text-[#22c55e] font-['Inter',system-ui,sans-serif]">
-              Round 3
+              Round {currentEvent.picksRound}
             </span>
           </div>
 

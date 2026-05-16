@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import type { PlayerData, Matchup, BucketType, MatchupOddsEntry } from '../types';
 import { currentEvent } from '../config/event';
 import SignalBadge from './SignalBadge';
+import PlayerSearch from './PlayerSearch';
 
 interface MatchupsViewProps {
   data: PlayerData[];
@@ -347,8 +348,19 @@ function MatchupDefinitionsModal({ onClose }: { onClose: () => void }) {
 export default function MatchupsView({ data }: MatchupsViewProps) {
   const [sortBy, setSortBy] = useState<MatchupSort>('edge-high');
   const [showDefinitions, setShowDefinitions] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
 
   const rawMatchups = useMemo(() => generateMatchups(data, currentEvent.matchups), [data]);
+
+  // All unique player names that appear in qualifying matchups
+  const matchupPlayerNames = useMemo(() => {
+    const names = new Set<string>();
+    rawMatchups.forEach((m) => {
+      names.add(m.pick.player_name);
+      names.add(m.opponent.player_name);
+    });
+    return [...names].sort((a, b) => a.localeCompare(b));
+  }, [rawMatchups]);
 
   const matchups = useMemo(() => {
     const sorted = [...rawMatchups];
@@ -360,8 +372,15 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
         sorted.sort((a, b) => a.matchupScore - b.matchupScore);
         break;
     }
+    if (selectedPlayer) {
+      return sorted.filter(
+        (m) =>
+          m.pick.player_name === selectedPlayer ||
+          m.opponent.player_name === selectedPlayer
+      );
+    }
     return sorted;
-  }, [rawMatchups, sortBy]);
+  }, [rawMatchups, sortBy, selectedPlayer]);
 
   const fmtXScore = (v: number) => (v > 0 ? `+${v.toFixed(2)}` : v.toFixed(2));
 
@@ -380,6 +399,24 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
       </div>
 
       {showDefinitions && <MatchupDefinitionsModal onClose={() => setShowDefinitions(false)} />}
+
+      {/* Player search */}
+      <div className="mb-5">
+        <PlayerSearch
+          players={matchupPlayerNames}
+          selected={selectedPlayer}
+          onSelect={setSelectedPlayer}
+          onClear={() => setSelectedPlayer(null)}
+          placeholder="Filter by player..."
+        />
+        {selectedPlayer && (
+          <p className="mt-2 text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
+            Showing matchups involving{' '}
+            <span className="text-[#22c55e] font-medium">{selectedPlayer}</span>
+            {' '}({matchups.length} result{matchups.length !== 1 ? 's' : ''})
+          </p>
+        )}
+      </div>
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">

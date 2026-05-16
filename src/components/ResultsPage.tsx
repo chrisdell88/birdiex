@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import type { BetRecord, TierType, ResultsSortField, SortDirection, Sportsbook } from '../types';
+import PlayerSearch from './PlayerSearch';
 import { r2Results, r2Summary as pgaR2Summary } from '../data/pgaChampR2Results';
 import {
   overallRecord,
@@ -235,6 +236,16 @@ function MastersView() {
   const [bookFilter, setBookFilter] = useState<Sportsbook>('Best Odds (Overall)');
   const [sortField, setSortField] = useState<ResultsSortField>('id');
   const [sortDir, setSortDir] = useState<SortDirection>('asc');
+  const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
+
+  const mastersBetLogPlayerNames = useMemo(() => {
+    const names = new Set<string>();
+    betLog.forEach((b) => {
+      names.add(b.pick);
+      names.add(b.opponent);
+    });
+    return [...names].sort((a, b) => a.localeCompare(b));
+  }, []);
 
   const handleSort = (field: ResultsSortField) => {
     if (field === sortField) {
@@ -298,9 +309,14 @@ function MastersView() {
     if (bookFilter !== 'Best Odds (Overall)') {
       bets = bets.filter(b => b.book === bookFilter);
     }
+    if (selectedPlayer) {
+      bets = bets.filter(
+        (b) => b.pick === selectedPlayer || b.opponent === selectedPlayer
+      );
+    }
     bets.sort((a, b) => compareValues(a, b, sortField, sortDir));
     return bets;
-  }, [roundFilter, dataSetFilter, bookFilter, sortField, sortDir]);
+  }, [roundFilter, dataSetFilter, bookFilter, selectedPlayer, sortField, sortDir]);
 
   return (
     <div>
@@ -453,6 +469,24 @@ function MastersView() {
         </div>
       </div>
 
+      {/* Player search — filters the bet log */}
+      <div className="mb-4">
+        <PlayerSearch
+          players={mastersBetLogPlayerNames}
+          selected={selectedPlayer}
+          onSelect={setSelectedPlayer}
+          onClear={() => setSelectedPlayer(null)}
+          placeholder="Filter bet log by player..."
+        />
+        {selectedPlayer && (
+          <p className="mt-2 text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
+            Showing bets for{' '}
+            <span className="text-[#22c55e] font-medium">{selectedPlayer}</span>
+            {' '}({filteredBets.length} bet{filteredBets.length !== 1 ? 's' : ''})
+          </p>
+        )}
+      </div>
+
       {/* Full Bet Log Table */}
       <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg overflow-hidden mb-8">
         <div className="overflow-x-auto">
@@ -602,6 +636,16 @@ function MastersView() {
 function PGAView() {
   const [sortField, setSortField] = useState<ResultsSortField>('id');
   const [sortDir, setSortDir] = useState<SortDirection>('asc');
+  const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
+
+  const pgaPlayerNames = useMemo(() => {
+    const names = new Set<string>();
+    r2Results.forEach((b) => {
+      names.add(b.pick);
+      names.add(b.opponent);
+    });
+    return [...names].sort((a, b) => a.localeCompare(b));
+  }, []);
 
   const handleSort = (field: ResultsSortField) => {
     if (field === sortField) {
@@ -618,8 +662,14 @@ function PGAView() {
   };
 
   const sortedBets = useMemo(() => {
-    return [...r2Results].sort((a, b) => compareValues(a, b, sortField, sortDir));
-  }, [sortField, sortDir]);
+    let bets = [...r2Results];
+    if (selectedPlayer) {
+      bets = bets.filter(
+        (b) => b.pick === selectedPlayer || b.opponent === selectedPlayer
+      );
+    }
+    return bets.sort((a, b) => compareValues(a, b, sortField, sortDir));
+  }, [sortField, sortDir, selectedPlayer]);
 
   // Rounds data — structured so R3, R4 can be added as new entries
   const rounds = [
@@ -641,6 +691,24 @@ function PGAView() {
           <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">PGA Championship 2026</span>
           <span className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">Valhalla Golf Club</span>
         </div>
+      </div>
+
+      {/* Player search — filters bet logs */}
+      <div className="mb-5">
+        <PlayerSearch
+          players={pgaPlayerNames}
+          selected={selectedPlayer}
+          onSelect={setSelectedPlayer}
+          onClear={() => setSelectedPlayer(null)}
+          placeholder="Filter bet log by player..."
+        />
+        {selectedPlayer && (
+          <p className="mt-2 text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
+            Showing bets for{' '}
+            <span className="text-[#22c55e] font-medium">{selectedPlayer}</span>
+            {' '}({sortedBets.length} bet{sortedBets.length !== 1 ? 's' : ''})
+          </p>
+        )}
       </div>
 
       {rounds.map(({ round, summary, bets }) => (

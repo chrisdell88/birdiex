@@ -4,6 +4,7 @@ import SignalBadge from './SignalBadge';
 import PurityIcon from './PurityIcon';
 import SummaryCards from './SummaryCards';
 import PlayerDetailCard from './PlayerDetailCard';
+import PlayerSearch from './PlayerSearch';
 import { currentEvent } from '../config/event';
 
 interface RankingsTableProps {
@@ -102,9 +103,15 @@ export default function RankingsTable({ data }: RankingsTableProps) {
   const [sortField, setSortField] = useState<SortField>('rank');
   const [sortDir, setSortDir] = useState<SortDirection>('asc');
   const [search, setSearch] = useState('');
+  const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [signalFilter, setSignalFilter] = useState<string>('ALL');
   const [expandedPlayer, setExpandedPlayer] = useState<string | null>(null);
   const [showStatsKey, setShowStatsKey] = useState(false);
+
+  const playerNames = useMemo(
+    () => [...data].map((p) => p.player_name).sort((a, b) => a.localeCompare(b)),
+    [data]
+  );
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -127,7 +134,10 @@ export default function RankingsTable({ data }: RankingsTableProps) {
   const filtered = useMemo(() => {
     let result = [...data];
 
-    if (search) {
+    // selectedPlayer is an exact match (set by dropdown); search is free-type substring
+    if (selectedPlayer) {
+      result = result.filter((p) => p.player_name === selectedPlayer);
+    } else if (search) {
       const q = search.toLowerCase();
       result = result.filter((p) => p.player_name.toLowerCase().includes(q));
     }
@@ -191,7 +201,7 @@ export default function RankingsTable({ data }: RankingsTableProps) {
     });
 
     return result;
-  }, [data, search, signalFilter, sortField, sortDir]);
+  }, [data, search, selectedPlayer, signalFilter, sortField, sortDir]);
 
   const columns: { field: SortField; label: string; hideOnMobile?: boolean }[] = [
     { field: 'rank', label: '#' },
@@ -229,12 +239,17 @@ export default function RankingsTable({ data }: RankingsTableProps) {
           </button>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
-          <input
-            type="text"
-            placeholder="Search player..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="bg-[#0a0a0a] border border-[#262626] rounded-lg px-3 py-2 text-sm text-[#f5f5f5] placeholder-[#a1a1aa] focus:outline-none focus:border-[#22c55e] flex-1 sm:flex-none sm:w-48 font-['Inter',system-ui,sans-serif]"
+          <PlayerSearch
+            players={playerNames}
+            selected={selectedPlayer}
+            onSelect={(name) => {
+              setSelectedPlayer(name);
+              setSearch('');
+            }}
+            onClear={() => {
+              setSelectedPlayer(null);
+              setSearch('');
+            }}
           />
           <select
             value={signalFilter}

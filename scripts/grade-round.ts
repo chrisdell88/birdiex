@@ -136,7 +136,7 @@ async function main() {
     for (const [bookKey, line] of Object.entries(m.odds ?? {})) {
       if (EXCLUDED_BOOKS.has(bookKey)) continue;
       const odds = (line as Record<string, string>)[pickKey];
-      if (!odds) continue;
+      if (!odds || odds === '0') continue;
       const st = stakeToWin1(odds);
       if (st < bestStake) {
         bestStake = st;

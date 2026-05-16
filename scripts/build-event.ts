@@ -262,7 +262,13 @@ function buildRows(
 }
 
 function normalizeName(name: string): string {
-  return name.toLowerCase().replace(/[^a-z, ]/g, '').replace(/\s+/g, ' ').trim();
+  return name
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z, ]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function round2(n: number): number {

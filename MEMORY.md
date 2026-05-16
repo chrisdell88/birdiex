@@ -1,9 +1,10 @@
 # BirdieX — Project Memory
 
-**Last updated:** 2026-05-14
+**Last updated:** 2026-05-16
 **Repo:** https://github.com/chrisdell88/birdiex
 **Live:** https://birdiex.co
 **Project path:** ~/Projects/birdiex
+**Current event:** PGA Championship 2026 at Aronimink — Round 3 live (R2 complete & graded).
 
 ## 🚨 READ THIS FIRST (any new Claude session)
 
@@ -11,9 +12,11 @@ The full source-of-truth for BirdieX is **inside this repo** under `docs/`. You 
 
 | File | What's in it |
 |------|--------------|
-| `docs/X_SCORE_FORMULA.md` | Complete X Score methodology — the 4 layers, course weights, worked examples |
-| `docs/MASTERS_2026_RESULTS.md` | Full first-tournament results report |
-| `docs/NEW_TOURNAMENT_RUNBOOK.md` | Step-by-step for adding a new tournament |
+| `docs/X_SCORE_FORMULA.md` | Canonical X Score formula — LOCKED & VERIFIED. The 4 layers, course weights, worked examples |
+| `docs/COURSE_COEFFICIENTS_RESEARCH.md` | How course-fit coefficients are derived (incl. the OTT method) |
+| `docs/MASTERS_2026_RESULTS.md` | Full Masters results report |
+| `docs/NEW_TOURNAMENT_RUNBOOK.md` | Per-round + post-tournament workflow (the `update-round.ts` one-command flow) |
+| `docs/PGA_CHAMPIONSHIP_BUILD.md` | PGA Championship build state / decisions |
 | `docs/UPDATE_FROM_PHONE.md` | How Chris updates the app from his phone via Claude mobile |
 | `CLAUDE.md` | Rules + conventions (secrets, architecture, conventions) |
 | `MEMORY.md` (this file) | Project context, model summary, results, design, preferences |
@@ -51,7 +54,12 @@ PGA Tour golf betting analytics app. Proprietary "X Score" putting regression mo
 **CANONICAL FORMULA:** `docs/X_SCORE_FORMULA.md` is the single source of truth —
 LOCKED & VERIFIED 2026-05-15 (reproduces all 145 stored Masters X Scores, 145/145).
 Implemented in `scripts/lib/xscore.ts` + `scripts/lib/courses.ts`. Course-coefficient
-method (incl. OTT = max of the two driving axes): `docs/COURSE_COEFFICIENTS_RESEARCH.md`.
+method: `docs/COURSE_COEFFICIENTS_RESEARCH.md`. Key points:
+- Layer 1 weights = course-fit coefficients blended toward equal by course
+  predictability (`norm = predictability / 0.15`).
+- **OTT coefficient = the higher of the two driving numbers** (Driving Distance
+  vs Driving Accuracy) off the DataGolf Course Fit radar, Relative Importance OFF.
+- predictability = mean |total_course_history_adjustment| across the field.
 Never change the formula without Chris's explicit approval.
 
 **IMPORTANT:** The methodology page does NOT expose the actual weights/formula. Keep it proprietary.
@@ -86,10 +94,11 @@ Never change the formula without Chris's explicit approval.
 - Edge 0.95-1.44: LEAN (Tier 3)
 
 ### 3-Ball Rules
-- 2 of 3 players must be fades (X Score ≤ -0.50)
-- Pick = the non-fade player
-- Edge = pick X Score − average of 2 fades' X Scores
-- Same tier thresholds as H2H
+**3-balls are OFF the site as of 2026-05-16 (Chris's call — H2H only until further
+notice).** No 3-ball UI/picks anywhere. The Masters historical totals still
+include its 6 R2 3-ball bets (the published record is unchanged). Rules kept for
+reference if 3-balls return: 2 of 3 must be fades, pick = the non-fade player,
+edge = pick − avg of the 2 fades.
 
 ### Backtesting Buckets (6 total, paired for comparison)
 - A1: Raw Buy vs Raw Fade | A2: Pure Buy vs Pure Fade
@@ -156,32 +165,82 @@ Never change the formula without Chris's explicit approval.
 
 ---
 
+## PGA Championship 2026 (current event — Aronimink)
+
+- **Round 3 is live.** R1 and R2 complete; R2 picks graded.
+- **R2 results: 27-24-4, −2.27u, −3.6% ROI** (55 H2H bets). A flat/slightly-down
+  round — Aronimink is a low-predictability course (0.0413 vs Augusta's 0.144),
+  so the model runs close to a flat putting regression there.
+- **All-time (Masters + PGA): 157-94-25, +44.33u, +13.6% ROI** (276 bets).
+
+## Results accounting / grading convention
+
+Graded by `scripts/grade-round.ts`. Stake-to-win-1-unit (matches the Masters):
+**win = +1.00, loss = −(stake), push = 0.** Stake from American odds: −X → X/100,
++X → 100/X. Best odds taken across **real** sportsbooks (DataGolf's "datagolf"
+model line excluded). ROI = net units ÷ total staked. The Masters' staked is
+derived from its published units ÷ ROI so its slice always reconciles to 17.8%.
+
+## Data pipeline (scripts/)
+
+Per-round update is **one command**: `npx tsx scripts/update-round.ts --slug <slug>
+--round <N> --course <course> --prefix <prefix>`. It chains:
+- `pull-event.ts` — pulls DataGolf data for a round (live stats incl.
+  `event_cumulative`, decompositions, matchup odds, outrights)
+- `build-event.ts` — X Scores → `src/data/<prefix>R<N>Data.ts` (roundOnly + cumulative)
+- `build-matchups.ts` — H2H matchup odds → `MatchupOddsEntry[]`
+- `grade-round.ts` — grades the completed round's picks
+- `build-headshots.ts` — ESPN headshot map → `src/data/headshots.ts`
+- `build-ticker.ts` — tee times + scores → `src/data/ticker.ts`
+
+Then update `src/config/event.ts` (the single config that drives the current
+round across the app — data imports, `picksRound`, banner) + the Results events
+registry, then build/lint/verify/ship. Full steps: `docs/NEW_TOURNAMENT_RUNBOOK.md`.
+
+DataGolf course-fit coefficients are pulled manually from the Course Fit web
+tool (not in the API) — see `docs/COURSE_COEFFICIENTS_RESEARCH.md`.
+
+---
+
 ## App Structure
 
 ### Pages/Tabs
-1. **RANKINGS** — Sortable table, 54 post-cut players (R4-only or full cumulative toggle). SG_PUTT/APP/OTT columns + 4 layer breakdowns + X Score + Signal
-2. **MATCHUPS** — 2-col layout (H2H left, 3-balls right). Round filter (R2/R3/R4/All). Definitions key modal. Clickable player names with stat popup.
-3. **ODDS** — Full odds comparison table across 11 sportsbooks per bet. Filter by round/type/min edge. Best odds highlighted green.
-4. **METHODOLOGY** — Concept explanation (no formula exposed). Masters results banner. Chris Dell bio + "why putting regression" research.
-5. **RESULTS** — Full bet log, unit tracking, ROI. Filter by round, data set (round-only/cumulative), sportsbook, bet type. Tier + bucket breakdowns.
+1. **RANKINGS** — Sortable table (round-only or cumulative toggle). SG_PUTT/APP/OTT columns + 4 layer breakdowns + X Score + Signal. Player search dropdown.
+2. **MATCHUPS** — H2H matchup cards (3-balls off the site as of 2026-05-16). Round filter. Definitions key modal. Clickable player names with stat popup. Player search dropdown.
+3. **ODDS** — Full odds comparison table across sportsbooks per bet. Filter by round/type/min edge. Best odds highlighted green.
+4. **METHODOLOGY** — Concept explanation (no formula exposed). Results banner. Chris Dell bio + "why putting regression" research.
+5. **RESULTS** — Multi-event bet log. Tournament picker (All-Time / Masters / PGA Championship). All-Time view leads with the running total. Filter by round, data set, sportsbook, bet type. Tier + bucket breakdowns. Player search dropdown.
+
+Near the top of the app: an auto-scrolling **ticker** (`Ticker.tsx`) showing the current round's tee times + live scores.
 
 ### Key Components
 - `src/components/Header.tsx` — Logo, tabs, round/cumulative toggle, FINAL badge
 - `src/components/Footer.tsx` — Share bar (Copy Link, X, Text, Email) + "Chris Dell: Founder" + family links
 - `src/components/RankingsTable.tsx` — Main data table with sort/filter/search
-- `src/components/MatchupsView.tsx` — H2H + 3-ball cards
+- `src/components/MatchupsView.tsx` — H2H matchup cards
 - `src/components/OddsTablePage.tsx` — Cross-book odds comparison
-- `src/components/ResultsPage.tsx` — Bet log + breakdowns
+- `src/components/ResultsPage.tsx` — Multi-event bet log + breakdowns + tournament picker
 - `src/components/MethodologyPage.tsx` — About + model explanation
 - `src/components/PlayerDetailCard.tsx` — Inline expansion for stats
 - `src/components/SignalBadge.tsx` — Colored buy/sell badges
 - `src/components/PurityIcon.tsx` — Pure (✓) or Conflicted (⚠️) indicator
+- `src/components/Avatar.tsx` — Golfer headshot with initials-circle fallback
+- `src/components/PlayerSearch.tsx` — Reusable type-ahead player search combobox
+- `src/components/Ticker.tsx` — Auto-scrolling tee-times + scores marquee
+
+### Config (src/config/)
+- `event.ts` — single source of truth for the current round. `currentEvent` drives data imports, `picksRound`, header banner, `lastUpdated` across the whole app. Per-round update = edit this one file.
 
 ### Data Files (src/data/)
-- `mastersR1Data.ts` — exports `roundOnlyData` (R4-only) + `cumulativeData` (R1-R4 cumulative) + `r1Data`
-- `matchupOdds.ts` — exports per-round: `r2MatchupOddsData`, `r3MatchupOddsData`, `r4MatchupOddsData` + `r2XScores`, `r3XScores`, `r4XScores`
-- `threeBallData.ts` — R2 3-ball picks (only round with data)
-- `resultsData.ts` — 221 verified bets with round/tier/bucket/book breakdowns
+- `mastersR1Data.ts` — Masters: `roundOnlyData` (R4-only) + `cumulativeData` (R1-R4) + `r1Data`
+- `matchupOdds.ts` — Masters per-round H2H odds + X Score maps
+- `threeBallData.ts` — Masters R2 3-ball picks (historical only — 3-balls off the site)
+- `pgaChampR2Data.ts`, `pgaChampR3Data.ts`, … — PGA Championship per-round X Score data (roundOnly + cumulative), generated by `build-event.ts`
+- `pgaChampR3Matchups.ts`, … — PGA Championship per-round H2H matchup odds
+- `pgaChampR2Results.ts`, … — PGA Championship per-round graded results + summary
+- `resultsData.ts` — 221 verified Masters bets with round/tier/bucket/book breakdowns
+- `headshots.ts` — generated name→ESPN headshot URL map
+- `ticker.ts` — generated current-round tee times + live scores
 
 ---
 
@@ -254,12 +313,21 @@ Raw DataGolf JSON pulls from the Masters 2026 run: `masters_final_tracking.json`
 
 ## Open Items / Next Work
 
+### Done (2026-05 build)
+- [x] Automated DataGolf API pulls per round — `scripts/update-round.ts` one-command pipeline
+- [x] Event-config refactor — `src/config/event.ts`, per-round update needs no code edits
+- [x] Multi-event Results page with All-Time running total + tournament picker
+- [x] Player search dropdowns on Rankings / Matchups / Results
+- [x] Tee-times + live-scores ticker near the top
+- [x] Golfer headshots with initials fallback
+- [x] Post-tournament wrap-up workflow — `docs/NEW_TOURNAMENT_RUNBOOK.md`
+- [x] 3-balls decision — removed from the site (H2H only)
+
 ### Next Tournament Prep
-- [ ] Set up automated DataGolf API pulls for each round (include 3-balls!)
 - [ ] Build pre-tournament R1 betting model (use baseline skill + course fit as proxy)
 - [ ] Add alerts/notifications (Discord, email, SMS)
-- [ ] Separate 3-ball tracking section on Results page
 - [ ] Consider Supabase integration for persistent bet history across tournaments
+- [ ] Revisit `MAX_PREDICTABILITY = 0.15` — it's an unexplained magic number (see COURSE_COEFFICIENTS_RESEARCH.md §7)
 
 ### Future Features (Parked)
 - Clickable direct-to-bet links (not possible with current sportsbook URLs)
@@ -269,7 +337,7 @@ Raw DataGolf JSON pulls from the Masters 2026 run: `masters_final_tracking.json`
 
 ### Known Issues
 - Deep linking to specific bets on sportsbook sites isn't possible — only golf section links
-- Must manually pull API data each round (needs automation)
+- Course-fit coefficients still pulled manually from DataGolf's Course Fit web tool (not in the API)
 - No database yet — all data embedded in src/data/ files
 
 ---

@@ -361,7 +361,7 @@ function MastersView() {
             {activeSummary.wins}-{activeSummary.losses}-{activeSummary.pushes}
           </div>
           <div className="text-xs text-[#a1a1aa] mt-1 font-['Inter',system-ui,sans-serif]">
-            Win rate: {((activeSummary.wins / (activeSummary.wins + activeSummary.losses)) * 100).toFixed(1)}%
+            Win rate: {(activeSummary.wins + activeSummary.losses) > 0 ? ((activeSummary.wins / (activeSummary.wins + activeSummary.losses)) * 100).toFixed(1) + '%' : '--'}
           </div>
         </div>
 
@@ -847,7 +847,7 @@ export default function ResultsPage() {
               {allTimeWins}-{allTimeLosses}-{allTimePushes}
             </div>
             <div className="text-[10px] text-[#a1a1aa] mt-1.5 font-['Inter',system-ui,sans-serif]">
-              {((allTimeWins / (allTimeWins + allTimeLosses)) * 100).toFixed(1)}% win rate
+              {(allTimeWins + allTimeLosses) > 0 ? ((allTimeWins / (allTimeWins + allTimeLosses)) * 100).toFixed(1) + '%' : '--'} win rate
             </div>
           </div>
 

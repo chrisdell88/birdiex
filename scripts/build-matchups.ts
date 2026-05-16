@@ -51,10 +51,17 @@ async function main() {
   const raw = JSON.parse(await readFile(rawPath, 'utf8'));
   const list: RawMatchup[] = raw.match_list ?? [];
 
+  // Keep only p1/p2 per book — some books quote a 3-way line with a `tie`
+  // price; the model bets 2-way H2H (ties void), so drop the tie field.
   const entries = list.map((m) => ({
     p1_player_name: m.p1_player_name,
     p2_player_name: m.p2_player_name,
-    odds: m.odds,
+    odds: Object.fromEntries(
+      Object.entries(m.odds ?? {}).map(([book, line]) => {
+        const l = line as Record<string, string>;
+        return [book, { p1: l.p1, p2: l.p2 }];
+      })
+    ),
   }));
 
   const header = [

@@ -131,30 +131,19 @@ edge = pick − avg of the 2 fades.
 ### Tournament Totals (edge-banded sizing)
 - **221 total bets**
 - **130-70-21 record**
-- **+70.30 units**
-- **+25.3% ROI**
+- **+74.80 units**
+- **+26.2% ROI**
 
-Flat 1u sizing would have been +46.62u / 18.5%. `src/data/resultsData.ts` is the
-live source of truth — re-run `scripts/recompute-results.ts` after any sizing change.
+Flat 1u sizing would have been +46.62u / 18.5%. Per-round and per-edge-band
+breakdowns live in `src/data/resultsData.ts` (the live source of truth — exact
+numbers there, no stale copy kept here). Re-run `scripts/recompute-results.ts`
+after any sizing change. Headline: the R4 cumulative model was the engine
+(40-9-5, ~+59u) — the rest of the tournament was roughly flat.
 
-### Per-Round (edge-banded)
-| Round | Bets | Record | Units | ROI |
-|-------|------|--------|-------|-----|
-| R2 (from R1 picks) | 63 | 36-23-4 | +8.26u | +10.5% |
-| R3 Round-Only (from R2 picks) | 38 | 21-14-3 | +5.25u | +16.5% |
-| R3 Cumulative (from R1+R2 picks) | 40 | 20-14-6 | +1.04u | +2.5% |
-| R4 Round-Only (from R3 picks) | 26 | 13-10-3 | +1.56u | +6.2% |
-| R4 Cumulative (from R1-R3 picks) | 54 | **40-9-5** | **+54.19u** | **+53.5%** |
-
-### Per Edge-Band (tournament total)
-| Band | Edge | Bets | Units | ROI |
-|------|------|------|-------|-----|
-| 0.5u | 0.95–1.45 | 90 | +4.04u | 7.6% |
-| 1u | 1.45–1.95 | 59 | +16.78u | 26.4% |
-| 1.5u | 1.95–2.45 | 37 | +5.02u | 8.1% |
-| 2u | 2.45–2.95 | 18 | +14.82u | 38.0% |
-| 2.5u | 2.95–3.45 | 11 | +17.64u | 51.5% |
-| 3u | 3.45+ | 6 | +12.00u | 45.6% |
+**Win rate climbs with edge** (307-bet check, Masters + PGA): 0.95–1.45 ~58%,
+1.45–1.95 ~65%, a dip at 1.95–2.45 (~54%), then 78–83% for every band above
+2.45. The high-edge bets are the model's real strength — which is why the
+sizing ladder is uncapped and rewards them.
 
 ### 3-Ball Results (historical — 3-balls now off the site)
 - R2: 6 qualifying, 3-3-0 (−0.91u flat). R3 data lost; R4 books didn't offer 3-balls.
@@ -185,38 +174,45 @@ live source of truth — re-run `scripts/recompute-results.ts` after any sizing 
   tier ran cold (2-3) — the cold run that prompted switching off Scheme D.
 - Aronimink is a low-predictability course (0.0413 vs Augusta's 0.144), so the
   model runs close to a flat putting regression there.
-- **All-time (Masters + PGA R2 + R3): 172-106-29, +66.20u, +18.4% ROI** (307 bets).
+- **All-time (Masters + PGA R2 + R3): 172-106-29, +70.70u, +19.3% ROI** (307 bets).
 
 ## Results accounting / grading convention
 
 **Edge-banded bet sizing (adopted 2026-05-17).** A bet is sized to WIN units by
-its X Score edge, in 0.5-wide bands from the 0.95 pick floor:
+its X Score edge, in 0.5-wide bands from the 0.95 pick floor. The size also maps
+to a **1–5 star rating** (the unit size rounded) — the UI shows stars, not the
+unit number:
 
-| Edge band | Units to win |
-|-----------|--------------|
-| 0.95–1.45 | 0.5u |
-| 1.45–1.95 | 1.0u |
-| 1.95–2.45 | 1.5u |
-| 2.45–2.95 | 2.0u |
-| 2.95–3.45 | 2.5u |
-| 3.45+     | 3.0u (top band — caps at 3u) |
+| Edge band | Units to win | Stars |
+|-----------|--------------|-------|
+| 0.95–1.45 | 0.5u | ★ |
+| 1.45–1.95 | 1.0u | ★ |
+| 1.95–2.45 | 1.5u | ★★ |
+| 2.45–2.95 | 2.0u | ★★ |
+| 2.95–3.45 | 2.5u | ★★★ |
+| 3.45–3.95 | 3.0u | ★★★ |
+| 3.95–4.45 | 3.5u | ★★★★ |
+| 4.45–4.95 | 4.0u | ★★★★ |
+| 4.95+     | 4.5–5.0u | ★★★★★ (top band caps at 5u) |
 
-The ladder lives in `unitsForEdge()` in `src/lib/sizing.ts` — edit it and re-run
-`scripts/recompute-results.ts` (Masters + R2) and re-grade later rounds with
-`grade-round.ts` to re-tune the whole record. Per bet: win = +units,
-loss = −(units × stake), push = 0. Stake from American odds: −X → X/100,
-+X → 100/X. Best odds across **real** sportsbooks (DataGolf's "datagolf" model
-line excluded). ROI = net units ÷ total staked. Flat 1u sizing (the original
-method) was Masters +46.62u / 18.5%.
+The ladder lives in `unitsForEdge()` / `starsForEdge()` in `src/lib/sizing.ts` —
+edit it and re-run `scripts/recompute-results.ts` (Masters + R2) and re-grade
+later rounds with `grade-round.ts` to re-tune the whole record. Per bet:
+win = +units, loss = −(units × stake), push = 0. Stake from American odds:
+−X → X/100, +X → 100/X. Best odds across **real** sportsbooks (DataGolf's
+"datagolf" model line excluded). ROI = net units ÷ total staked. Flat 1u sizing
+(the original method) was Masters +46.62u / 18.5%. Stars show on the Matchups
+cards and the Results bet log.
 
 **History of the sizing model:** flat 1u → "Scheme D" (tier-flat 2.5/1.5/0.5,
-2026-05-16) → edge-banded ladder (2026-05-17). Scheme D over-sized the top tier
-(flat 2.5u for every BEST BET); the R3 BEST BET cold run exposed the variance.
-The edge-banded ladder is more Kelly-correct — stake scales with edge, so a 2.0
-edge and a 5.5 edge are sized differently. Net effect: lower raw units, higher
-ROI, much smaller drawdowns on cold rounds. Decision rule: ROI% (return per
-dollar risked) is what compares sizing schemes — total units between schemes
-just reflects how much was staked.
+2026-05-16) → edge-banded ladder, capped at 3u → edge-banded **uncapped to 5u**
+(2026-05-17). Scheme D over-sized the top tier (flat 2.5u for every BEST BET);
+the R3 BEST BET cold run exposed the variance. The edge-banded ladder is more
+Kelly-correct — stake scales with edge. The cap was lifted to 5u after a
+307-bet check confirmed win rate keeps climbing with edge (78–83% above edge
+2.45), so the highest-edge bets earn the bigger sizing. Decision rule: ROI%
+(return per dollar risked) is what compares sizing schemes — total units between
+schemes just reflects how much was staked.
 
 **Grader dedup (fixed 2026-05-17):** DataGolf's `round_matchups` feed can list
 the same pairing twice. `grade-round.ts` now dedups by pick/opponent (keeping

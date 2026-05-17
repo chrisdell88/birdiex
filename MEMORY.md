@@ -1,10 +1,10 @@
 # BirdieX — Project Memory
 
-**Last updated:** 2026-05-16
+**Last updated:** 2026-05-17
 **Repo:** https://github.com/chrisdell88/birdiex
 **Live:** https://birdiex.co
 **Project path:** ~/Projects/birdiex
-**Current event:** PGA Championship 2026 at Aronimink — Round 3 live (R2 complete & graded).
+**Current event:** PGA Championship 2026 at Aronimink — Round 4 live (R1–R3 complete & graded).
 
 ## 🚨 READ THIS FIRST (any new Claude session)
 
@@ -128,39 +128,43 @@ edge = pick − avg of the 2 fades.
 
 ## Masters 2026 Tournament Results (First Real Test)
 
-### Tournament Totals (Scheme D sizing)
+### Tournament Totals (edge-banded sizing)
 - **221 total bets**
 - **130-70-21 record**
-- **+84.91 units**
-- **+23.9% ROI**
+- **+70.30 units**
+- **+25.3% ROI**
 
 Flat 1u sizing would have been +46.62u / 18.5%. `src/data/resultsData.ts` is the
 live source of truth — re-run `scripts/recompute-results.ts` after any sizing change.
 
-### Per-Round (Scheme D)
+### Per-Round (edge-banded)
 | Round | Bets | Record | Units | ROI |
 |-------|------|--------|-------|-----|
-| R2 (from R1 picks) | 63 | 36-23-4 | +12.68u | +11.8% |
-| R3 Round-Only (from R2 picks) | 38 | 21-14-3 | +7.29u | +17.5% |
-| R3 Cumulative (from R1+R2 picks) | 40 | 20-14-6 | +2.66u | +4.8% |
-| R4 Round-Only (from R3 picks) | 26 | 13-10-3 | +1.53u | +4.3% |
-| R4 Cumulative (from R1-R3 picks) | 54 | **40-9-5** | **+60.75u** | **+52.7%** |
+| R2 (from R1 picks) | 63 | 36-23-4 | +8.26u | +10.5% |
+| R3 Round-Only (from R2 picks) | 38 | 21-14-3 | +5.25u | +16.5% |
+| R3 Cumulative (from R1+R2 picks) | 40 | 20-14-6 | +1.04u | +2.5% |
+| R4 Round-Only (from R3 picks) | 26 | 13-10-3 | +1.56u | +6.2% |
+| R4 Cumulative (from R1-R3 picks) | 54 | **40-9-5** | **+54.19u** | **+53.5%** |
 
-### Per-Tier (Scheme D, tournament total)
-| Tier | Record | Units | ROI |
-|------|--------|-------|-----|
-| BEST BET | 45-19-8 | +54.54u | 26.2% |
-| STRONG PLAY | 35-15-8 | +26.90u | 28.7% |
-| LEAN | 50-36-5 | +3.47u | 6.5% |
+### Per Edge-Band (tournament total)
+| Band | Edge | Bets | Units | ROI |
+|------|------|------|-------|-----|
+| 0.5u | 0.95–1.45 | 90 | +4.04u | 7.6% |
+| 1u | 1.45–1.95 | 59 | +16.78u | 26.4% |
+| 1.5u | 1.95–2.45 | 37 | +5.02u | 8.1% |
+| 2u | 2.45–2.95 | 18 | +14.82u | 38.0% |
+| 2.5u | 2.95–3.45 | 11 | +17.64u | 51.5% |
+| 3u | 3.45+ | 6 | +12.00u | 45.6% |
 
 ### 3-Ball Results (historical — 3-balls now off the site)
 - R2: 6 qualifying, 3-3-0 (−0.91u flat). R3 data lost; R4 books didn't offer 3-balls.
 
-### Key Findings
-1. **Cumulative model beat Round-Only:** cumulative 60-23-11, +63.41u, 37.1% ROI
-   vs round-only 70-47-10, +21.50u, 11.6% ROI.
-2. **STRONG PLAY is the top tier:** 28.7% ROI (BEST BET 26.2%, LEAN 6.5%).
-3. **BUY vs FADE was the best bucket:** 33.1% ROI.
+### Key Findings (qualitative — see `resultsData.ts` for live numbers)
+1. **Cumulative model beat Round-Only** — combining rounds clearly outperformed
+   round-only picks (esp. R3+R4).
+2. **High-edge bands carry the ROI** — the 2u/2.5u/3u bands ran 38–52% ROI; the
+   0.5u and 1.5u bands were the weak spots (see the per-band table above).
+3. **BUY vs FADE was the strongest bucket.**
 4. **R4 cumulative model went on a heater:** 40-9-5 — historic performance.
 
 ### Top X Scores (Full Tournament Cumulative, Final)
@@ -175,32 +179,49 @@ live source of truth — re-run `scripts/recompute-results.ts` after any sizing 
 
 ## PGA Championship 2026 (current event — Aronimink)
 
-- **Round 3 is live.** R1 and R2 complete; R2 picks graded.
-- **R2 results: 27-24-4, −4.67u, −7.7% ROI** (55 H2H bets, Scheme D sizing).
-  A down round, and Scheme D amplifies it (flat sizing was −2.27u). Aronimink is
-  a low-predictability course (0.0413 vs Augusta's 0.144), so the model runs
-  close to a flat putting regression there.
-- **All-time (Masters + PGA): 157-94-25, +80.24u, +19.3% ROI** (276 bets).
+- **Round 4 is live** (R4 picks on the site). R1–R3 complete and graded.
+- **R2 results: 27-24-4, −0.90u, −1.8% ROI** (55 H2H bets).
+- **R3 results: 15-12-4, −3.20u, −9.7% ROI** (31 H2H bets). The R3 BEST BET
+  tier ran cold (2-3) — the cold run that prompted switching off Scheme D.
+- Aronimink is a low-predictability course (0.0413 vs Augusta's 0.144), so the
+  model runs close to a flat putting regression there.
+- **All-time (Masters + PGA R2 + R3): 172-106-29, +66.20u, +18.4% ROI** (307 bets).
 
 ## Results accounting / grading convention
 
-**Kelly tier sizing — "Scheme D" (adopted 2026-05-16).** Every bet is sized to
-win a tier-based number of units: **BEST BET 2.5u, STRONG PLAY 1.5u, LEAN 0.5u.**
-Multipliers live in `src/lib/sizing.ts` — change them and re-run
-`scripts/recompute-results.ts` to re-tune the whole record. Per bet:
-win = +M, loss = −(M × stake), push = 0. Stake from American odds:
-−X → X/100, +X → 100/X. Best odds across **real** sportsbooks (DataGolf's
-"datagolf" model line excluded). ROI = net units ÷ total staked.
+**Edge-banded bet sizing (adopted 2026-05-17).** A bet is sized to WIN units by
+its X Score edge, in 0.5-wide bands from the 0.95 pick floor:
 
-The entire history (Masters + PGA) was recomputed with Scheme D. The old method
-was flat 1u sizing (Masters flat = +46.62u / 18.5%; Scheme D = +84.91u / 23.9%).
+| Edge band | Units to win |
+|-----------|--------------|
+| 0.95–1.45 | 0.5u |
+| 1.45–1.95 | 1.0u |
+| 1.95–2.45 | 1.5u |
+| 2.45–2.95 | 2.0u |
+| 2.95–3.45 | 2.5u |
+| 3.45+     | 3.0u (top band — caps at 3u) |
 
-**Why Scheme D:** backtested 4 sizing schemes against the full Masters record.
-Dropping LEAN to 0.5u is what drives the ROI gain — LEAN is a real but weak tier
-(+6.4% ROI vs ~25-27% for BEST BET / STRONG PLAY), so starving it lifts the
-blended ROI. Scheme D (2.5/1.5/0.5) won on both ROI and total profit. Sizing
-never changes a tier's own ROI — only the blend. Philosophy: ship it, adjust
-with time; re-tune via `sizing.ts` whenever the data says so.
+The ladder lives in `unitsForEdge()` in `src/lib/sizing.ts` — edit it and re-run
+`scripts/recompute-results.ts` (Masters + R2) and re-grade later rounds with
+`grade-round.ts` to re-tune the whole record. Per bet: win = +units,
+loss = −(units × stake), push = 0. Stake from American odds: −X → X/100,
++X → 100/X. Best odds across **real** sportsbooks (DataGolf's "datagolf" model
+line excluded). ROI = net units ÷ total staked. Flat 1u sizing (the original
+method) was Masters +46.62u / 18.5%.
+
+**History of the sizing model:** flat 1u → "Scheme D" (tier-flat 2.5/1.5/0.5,
+2026-05-16) → edge-banded ladder (2026-05-17). Scheme D over-sized the top tier
+(flat 2.5u for every BEST BET); the R3 BEST BET cold run exposed the variance.
+The edge-banded ladder is more Kelly-correct — stake scales with edge, so a 2.0
+edge and a 5.5 edge are sized differently. Net effect: lower raw units, higher
+ROI, much smaller drawdowns on cold rounds. Decision rule: ROI% (return per
+dollar risked) is what compares sizing schemes — total units between schemes
+just reflects how much was staked.
+
+**Grader dedup (fixed 2026-05-17):** DataGolf's `round_matchups` feed can list
+the same pairing twice. `grade-round.ts` now dedups by pick/opponent (keeping
+the better price), matching the site's Matchups page. R3 was the only round
+hit (43 graded → 31 real); R2 and the Masters were clean.
 
 ## Data pipeline (scripts/)
 

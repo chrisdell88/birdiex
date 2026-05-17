@@ -207,6 +207,8 @@ export default function RankingsTable({ data }: RankingsTableProps) {
   const columns: { field: SortField; label: string; hideOnMobile?: boolean }[] = [
     { field: 'rank', label: '#' },
     { field: 'player_name', label: 'Player' },
+    { field: 'x_score', label: 'X Score' },
+    { field: 'signal', label: 'Signal' },
     { field: 'position', label: 'POS' },
     { field: 'score_to_par', label: 'SCORE' },
     { field: 'sg_putt', label: 'SG_PUTT', hideOnMobile: true },
@@ -216,8 +218,6 @@ export default function RankingsTable({ data }: RankingsTableProps) {
     { field: 'course_history_l2', label: 'History', hideOnMobile: true },
     { field: 'fit_plus_category_l3', label: 'Fit', hideOnMobile: true },
     { field: 'major_adj_l4', label: 'Major', hideOnMobile: true },
-    { field: 'x_score', label: 'X Score' },
-    { field: 'signal', label: 'Signal' },
   ];
 
   return (
@@ -299,9 +299,22 @@ export default function RankingsTable({ data }: RankingsTableProps) {
                   <td className="px-3 py-2.5 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       <Avatar playerName={player.player_name} size="sm" />
-                      <span className="text-[#f5f5f5] font-medium font-['Inter',system-ui,sans-serif] text-sm">
+                      <span className="text-[#f5f5f5] font-medium font-['Inter',system-ui,sans-serif] text-sm truncate max-w-[120px] md:max-w-none">
                         {player.player_name}
                       </span>
+                    </div>
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <span className={`text-base font-bold font-['JetBrains_Mono','SF_Mono',monospace] ${
+                      player.x_score > 0 ? 'text-[#22c55e]' : player.x_score < 0 ? 'text-red-400' : 'text-[#f5f5f5]'
+                    }`}>
+                      {player.x_score > 0 ? '+' : ''}{player.x_score.toFixed(2)}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <div className="flex items-center gap-1.5">
+                      <SignalBadge signal={player.signal} compact />
+                      <PurityIcon player={player} />
                     </div>
                   </td>
                   <td className="px-3 py-2.5 text-[#d4d4d4] font-['JetBrains_Mono','SF_Mono',monospace] text-xs">
@@ -340,19 +353,6 @@ export default function RankingsTable({ data }: RankingsTableProps) {
                   </td>
                   <td className="px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs text-[#d4d4d4] hidden md:table-cell">
                     {player.major_adj_l4.toFixed(2)}
-                  </td>
-                  <td className="px-3 py-2.5">
-                    <span className={`text-base font-bold font-['JetBrains_Mono','SF_Mono',monospace] ${
-                      player.x_score > 0 ? 'text-[#22c55e]' : player.x_score < 0 ? 'text-red-400' : 'text-[#f5f5f5]'
-                    }`}>
-                      {player.x_score > 0 ? '+' : ''}{player.x_score.toFixed(2)}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2.5">
-                    <div className="flex items-center gap-1.5">
-                      <SignalBadge signal={player.signal} compact />
-                      <PurityIcon player={player} />
-                    </div>
                   </td>
                 </tr>
                 {expandedPlayer === player.player_name && (

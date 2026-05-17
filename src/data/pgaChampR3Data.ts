@@ -5,6 +5,9 @@ import type { PlayerData } from '../types';
 // Players: round=156, cumulative=156
 // DO NOT EDIT BY HAND — re-run `npm run build:event` after pulling new data.
 
+/** ISO timestamp of this data pull — powers the site's "Last Updated" line. */
+export const generatedAt = '2026-05-17T03:17:46.406Z';
+
 export const roundOnlyData: PlayerData[] = [
   {
     "player_name": "Aberg, Ludvig",

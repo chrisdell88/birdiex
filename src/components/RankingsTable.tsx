@@ -21,6 +21,16 @@ function formatSG(value: number): string {
   return value >= 0 ? `+${value.toFixed(2)}` : value.toFixed(2);
 }
 
+/** ISO data-pull timestamp -> friendly Eastern time, e.g. "6:05 PM ET". */
+function formatUpdated(iso: string): string {
+  const t = new Date(iso).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: 'America/New_York',
+  });
+  return `${t} ET`;
+}
+
 const signalOrder: Record<Signal, number> = {
   'STRONGEST BUY': 1,
   'STRONG BUY': 2,
@@ -204,20 +214,20 @@ export default function RankingsTable({ data }: RankingsTableProps) {
     return result;
   }, [data, search, selectedPlayer, signalFilter, sortField, sortDir]);
 
-  const columns: { field: SortField; label: string; hideOnMobile?: boolean }[] = [
+  const columns: { field: SortField; label: string }[] = [
     { field: 'rank', label: '#' },
     { field: 'player_name', label: 'Player' },
     { field: 'x_score', label: 'X Score' },
     { field: 'signal', label: 'Signal' },
     { field: 'position', label: 'POS' },
     { field: 'score_to_par', label: 'SCORE' },
-    { field: 'sg_putt', label: 'SG_PUTT', hideOnMobile: true },
-    { field: 'sg_app', label: 'SG_APP', hideOnMobile: true },
-    { field: 'sg_ott', label: 'SG_OTT', hideOnMobile: true },
+    { field: 'sg_putt', label: 'SG_PUTT' },
+    { field: 'sg_app', label: 'SG_APP' },
+    { field: 'sg_ott', label: 'SG_OTT' },
     { field: 'sg_score_l1', label: 'SG Score' },
-    { field: 'course_history_l2', label: 'History', hideOnMobile: true },
-    { field: 'fit_plus_category_l3', label: 'Fit', hideOnMobile: true },
-    { field: 'major_adj_l4', label: 'Major', hideOnMobile: true },
+    { field: 'course_history_l2', label: 'History' },
+    { field: 'fit_plus_category_l3', label: 'Fit' },
+    { field: 'major_adj_l4', label: 'Major' },
   ];
 
   return (
@@ -230,7 +240,7 @@ export default function RankingsTable({ data }: RankingsTableProps) {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
           <span className="text-[11px] text-[#d4d4d4] uppercase tracking-wider font-['Inter',system-ui,sans-serif]">
-            Last Updated: {currentEvent.lastUpdated}
+            Last Updated: {formatUpdated(currentEvent.dataUpdatedAt)} — RD{currentEvent.picksRound - 1} Results Below
           </span>
           <button
             onClick={() => setShowStatsKey(true)}
@@ -273,11 +283,17 @@ export default function RankingsTable({ data }: RankingsTableProps) {
                 <th
                   key={col.field}
                   onClick={() => handleSort(col.field)}
-                  className={`px-3 py-3 text-left text-[10px] uppercase tracking-wider text-[#d4d4d4] font-medium cursor-pointer hover:text-[#f5f5f5] transition-colors whitespace-nowrap font-['Inter',system-ui,sans-serif] ${
-                    col.hideOnMobile ? 'hidden md:table-cell' : ''
-                  }`}
+                  className="px-3 py-3 text-left text-[10px] uppercase tracking-wider text-[#d4d4d4] font-medium cursor-pointer hover:text-[#f5f5f5] transition-colors whitespace-nowrap font-['Inter',system-ui,sans-serif]"
                 >
                   {col.label}{sortArrow(col.field)}
+                  {col.field === 'signal' && (
+                    <span
+                      className="ml-1 text-[#22c55e]/70"
+                      title="Scroll right for full stats"
+                    >
+                      →
+                    </span>
+                  )}
                 </th>
               ))}
             </tr>
@@ -327,17 +343,17 @@ export default function RankingsTable({ data }: RankingsTableProps) {
                       {formatScore(player.score_to_par)}
                     </span>
                   </td>
-                  <td className={`px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs hidden md:table-cell ${
+                  <td className={`px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs ${
                     player.sg_putt >= 0 ? 'text-[#22c55e]' : 'text-red-400'
                   }`}>
                     {formatSG(player.sg_putt)}
                   </td>
-                  <td className={`px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs hidden md:table-cell ${
+                  <td className={`px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs ${
                     player.sg_app >= 0 ? 'text-[#22c55e]' : 'text-red-400'
                   }`}>
                     {formatSG(player.sg_app)}
                   </td>
-                  <td className={`px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs hidden md:table-cell ${
+                  <td className={`px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs ${
                     player.sg_ott >= 0 ? 'text-[#22c55e]' : 'text-red-400'
                   }`}>
                     {formatSG(player.sg_ott)}
@@ -345,13 +361,13 @@ export default function RankingsTable({ data }: RankingsTableProps) {
                   <td className="px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs text-[#d4d4d4]">
                     {player.sg_score_l1.toFixed(2)}
                   </td>
-                  <td className="px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs text-[#d4d4d4] hidden md:table-cell">
+                  <td className="px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs text-[#d4d4d4]">
                     {player.course_history_l2.toFixed(2)}
                   </td>
-                  <td className="px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs text-[#d4d4d4] hidden md:table-cell">
+                  <td className="px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs text-[#d4d4d4]">
                     {player.fit_plus_category_l3.toFixed(2)}
                   </td>
-                  <td className="px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs text-[#d4d4d4] hidden md:table-cell">
+                  <td className="px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs text-[#d4d4d4]">
                     {player.major_adj_l4.toFixed(2)}
                   </td>
                 </tr>

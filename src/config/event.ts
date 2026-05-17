@@ -8,7 +8,7 @@
  * edits needed.
  */
 import type { PlayerData, MatchupOddsEntry } from '../types';
-import { roundOnlyData, cumulativeData } from '../data/pgaChampR3Data';
+import { roundOnlyData, cumulativeData, generatedAt } from '../data/pgaChampR3Data';
 import { r4MatchupOddsData } from '../data/pgaChampR4Matchups';
 
 export interface CurrentEvent {
@@ -20,8 +20,8 @@ export interface CurrentEvent {
   picksRound: number;
   /** Header badge status text, e.g. "R2 FINAL · ROUND 3 PICKS". */
   headerBanner: string;
-  /** Rankings "Last Updated" line, e.g. "PGA Championship — R2 (Final)". */
-  lastUpdated: string;
+  /** ISO timestamp of the latest data pull — drives the "Last Updated" line. */
+  dataUpdatedAt: string;
   /** Round-only rankings data (latest completed round). */
   rankingsRound: PlayerData[];
   /** Cumulative rankings data (all rounds played). */
@@ -35,7 +35,7 @@ export const currentEvent: CurrentEvent = {
   course: 'Aronimink',
   picksRound: 4,
   headerBanner: 'R3 FINAL · ROUND 4 PICKS',
-  lastUpdated: 'PGA Championship — R3 (Final)',
+  dataUpdatedAt: generatedAt,
   rankingsRound: roundOnlyData,
   rankingsCumulative: cumulativeData,
   matchups: r4MatchupOddsData,

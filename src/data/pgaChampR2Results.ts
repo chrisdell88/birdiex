@@ -1,9 +1,9 @@
 import type { BetRecord } from '../types';
 
-// Recomputed by scripts/recompute-results.ts on 2026-05-16T23:16:34.218Z
+// Recomputed by scripts/recompute-results.ts on 2026-05-17T03:44:44.728Z
 // pga-championship-2026 round 2 — H2H, graded at best odds across real books.
-// Scheme D sizing: BEST BET=2.5u, STRONG PLAY=1.5u, LEAN=0.5u
-// Summary: 27-24-4, -4.67u, -7.7% ROI (55 bets).
+// Edge-banded sizing — see src/lib/sizing.ts
+// Summary: 27-24-4, -0.9u, -1.8% ROI (55 bets).
 // DO NOT EDIT BY HAND — re-run scripts/recompute-results.ts to regenerate.
 
 export const r2Results: BetRecord[] = [
@@ -72,7 +72,7 @@ export const r2Results: BetRecord[] = [
     "pickScore": -3,
     "oppScore": 0,
     "result": "W",
-    "units": 1.5,
+    "units": 1,
     "dataSet": "round-only"
   },
   {
@@ -106,7 +106,7 @@ export const r2Results: BetRecord[] = [
     "pickScore": 2,
     "oppScore": 1,
     "result": "L",
-    "units": -1.83,
+    "units": -1.22,
     "dataSet": "round-only"
   },
   {
@@ -174,7 +174,7 @@ export const r2Results: BetRecord[] = [
     "pickScore": 7,
     "oppScore": 2,
     "result": "L",
-    "units": -2.29,
+    "units": -1.38,
     "dataSet": "round-only"
   },
   {
@@ -259,7 +259,7 @@ export const r2Results: BetRecord[] = [
     "pickScore": 3,
     "oppScore": 4,
     "result": "W",
-    "units": 1.5,
+    "units": 1,
     "dataSet": "round-only"
   },
   {
@@ -293,7 +293,7 @@ export const r2Results: BetRecord[] = [
     "pickScore": 3,
     "oppScore": 0,
     "result": "L",
-    "units": -1.58,
+    "units": -1.05,
     "dataSet": "round-only"
   },
   {
@@ -378,7 +378,7 @@ export const r2Results: BetRecord[] = [
     "pickScore": 3,
     "oppScore": 0,
     "result": "L",
-    "units": -2.78,
+    "units": -1.66,
     "dataSet": "round-only"
   },
   {
@@ -412,7 +412,7 @@ export const r2Results: BetRecord[] = [
     "pickScore": 2,
     "oppScore": -4,
     "result": "L",
-    "units": -1.38,
+    "units": -0.92,
     "dataSet": "round-only"
   },
   {
@@ -514,7 +514,7 @@ export const r2Results: BetRecord[] = [
     "pickScore": 2,
     "oppScore": 5,
     "result": "W",
-    "units": 2.5,
+    "units": 2,
     "dataSet": "round-only"
   },
   {
@@ -582,7 +582,7 @@ export const r2Results: BetRecord[] = [
     "pickScore": -3,
     "oppScore": 1,
     "result": "W",
-    "units": 1.5,
+    "units": 1,
     "dataSet": "round-only"
   },
   {
@@ -599,7 +599,7 @@ export const r2Results: BetRecord[] = [
     "pickScore": 2,
     "oppScore": 0,
     "result": "L",
-    "units": -1.93,
+    "units": -1.29,
     "dataSet": "round-only"
   },
   {
@@ -616,7 +616,7 @@ export const r2Results: BetRecord[] = [
     "pickScore": 3,
     "oppScore": 0,
     "result": "L",
-    "units": -3.6,
+    "units": -2.4,
     "dataSet": "round-only"
   },
   {
@@ -650,7 +650,7 @@ export const r2Results: BetRecord[] = [
     "pickScore": 1,
     "oppScore": 4,
     "result": "W",
-    "units": 1.5,
+    "units": 1,
     "dataSet": "round-only"
   },
   {
@@ -684,7 +684,7 @@ export const r2Results: BetRecord[] = [
     "pickScore": 3,
     "oppScore": 0,
     "result": "L",
-    "units": -2.62,
+    "units": -1.58,
     "dataSet": "round-only"
   },
   {
@@ -837,7 +837,7 @@ export const r2Results: BetRecord[] = [
     "pickScore": 3,
     "oppScore": -1,
     "result": "L",
-    "units": -2.29,
+    "units": -1.53,
     "dataSet": "round-only"
   },
   {
@@ -854,7 +854,7 @@ export const r2Results: BetRecord[] = [
     "pickScore": 1,
     "oppScore": 6,
     "result": "W",
-    "units": 2.5,
+    "units": 2,
     "dataSet": "round-only"
   },
   {
@@ -871,7 +871,7 @@ export const r2Results: BetRecord[] = [
     "pickScore": 3,
     "oppScore": 4,
     "result": "W",
-    "units": 1.5,
+    "units": 1,
     "dataSet": "round-only"
   },
   {
@@ -951,7 +951,7 @@ export const r2Summary = {
   "wins": 27,
   "losses": 24,
   "pushes": 4,
-  "units": -4.67,
-  "staked": 60.43,
-  "roi": -7.7
+  "units": -0.9,
+  "staked": 48.76,
+  "roi": -1.8
 };

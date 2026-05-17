@@ -114,10 +114,11 @@ async function main() {
     if (typeof p.round === 'number') roundScore.set(p.player_name, p.round);
   }
 
-  const bets: Record<string, unknown>[] = [];
+  // DataGolf's round_matchups can list the same pairing more than once.
+  // Dedup by pick::opponent (matches the site's MatchupsView) so a pairing is
+  // graded once — keeping the better-priced copy.
+  const byPair = new Map<string, Record<string, unknown>>();
   let skipped = 0;
-  let id = 0;
-  let totalStaked = 0; // sum of stakes over settled (W/L) bets — pushes excluded
 
   for (const m of matchRaw.match_list ?? []) {
     const a = xs.get(m.p1_player_name);
@@ -156,17 +157,18 @@ async function main() {
     if (pickScore == null || oppScore == null) { skipped++; continue; }
 
     // Lower score wins the round. Ties void (push).
-    // Tier sizing (Scheme D): sized to win a tier-based number of units.
     let result: 'W' | 'L' | 'P';
     if (pickScore < oppScore) result = 'W';
     else if (pickScore > oppScore) result = 'L';
     else result = 'P';
-    const units: number = betUnits(result, bestOdds, tier);
-    if (result !== 'P') totalStaked += betStake(result, bestOdds, tier);
 
-    id += 1;
-    bets.push({
-      id, round,
+    // Keep this pairing only if it's new or better-priced than what we have.
+    const key = `${pick.player_name}::${opp.player_name}`;
+    const existing = byPair.get(key);
+    if (existing && stakeToWin1(existing.bestOdds as string) <= bestStake) continue;
+
+    byPair.set(key, {
+      id: 0, round,
       pick: pick.player_name,
       opponent: opp.player_name,
       edge: Math.round(edge * 10000) / 10000,
@@ -177,9 +179,18 @@ async function main() {
       betType: 'H2H',
       pickScore, oppScore,
       result,
-      units: Math.round(units * 100) / 100,
+      units: Math.round(betUnits(result, bestOdds, edge) * 100) / 100,
       dataSet: 'round-only',
     });
+  }
+
+  // Tier sizing (Scheme D): win = +M, loss = −(M × stake), push = 0.
+  const bets = [...byPair.values()];
+  bets.forEach((b, i) => { b.id = i + 1; });
+
+  let totalStaked = 0; // sum of stakes over settled (W/L) bets — pushes excluded
+  for (const b of bets) {
+    if (b.result !== 'P') totalStaked += betStake(b.result, b.bestOdds, b.edge);
   }
 
   const w = bets.filter((b) => b.result === 'W').length;

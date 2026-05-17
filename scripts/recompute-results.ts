@@ -2,23 +2,23 @@
  * recompute-results.ts
  *
  * Re-computes units for every bet record in both results data files using
- * tier-based sizing (Scheme D), then rewrites every summary export.
+ * edge-banded sizing, then rewrites every summary export.
  *
  * IDEMPOTENT: units are derived purely from (result, bestOdds, tier).
  * The existing `units` field on each record is ignored. Re-running this
  * script any number of times produces identical output.
  *
- * To change the sizing scheme: edit TIER_UNITS in src/lib/sizing.ts,
- * then re-run this script.
+ * To change the sizing scheme: edit unitsForEdge() in src/lib/sizing.ts (and
+ * keep the inlined mirror below in sync), then re-run this script.
  *
  * Usage:
  *   npx tsx scripts/recompute-results.ts
  *
  * Validation (the records ARE the source of truth — summaries derive bottom-up):
  *   - Masters win/loss/push counts must be 130-70-21 (counts never change with sizing).
- *   - Each tier's ROI must be the same flat vs Scheme D (sizing scales a tier's
- *     units and stake equally, so per-tier ROI is invariant).
- *   - Scheme D total must land in a sane range; all numbers are printed for review.
+ *   - Within each edge band the multiplier is constant, so the band's sized ROI
+ *     must equal its flat (1u) ROI — checked per band.
+ *   - All numbers are printed for review.
  */
 
 import { writeFileSync } from 'node:fs';
@@ -35,14 +35,14 @@ const PROJECT_ROOT = new URL('..', import.meta.url).pathname;
 type TierType = 'BEST BET' | 'STRONG PLAY' | 'LEAN';
 type BetResult = 'W' | 'L' | 'P';
 
-// SCHEME D — sized to win M units per tier.
-// Changing these here won't stick; edit src/lib/sizing.ts and re-run.
-// The TIER_UNITS are imported dynamically below for DRY correctness.
-const TIER_UNITS: Record<TierType, number> = {
-  'BEST BET':    2.5,
-  'STRONG PLAY': 1.5,
-  'LEAN':        0.5,
-};
+// Edge-banded sizing — mirrors src/lib/sizing.ts (inlined so this script has
+// no runtime import-chain issues). Keep the two in sync; sizing.ts is canonical.
+function unitsForEdge(edge: number): number {
+  const e = Math.round(edge * 10000);
+  if (e < 9500) return 0;
+  const band = Math.floor((e - 9500) / 5000);
+  return Math.min(3, 0.5 + 0.5 * band);
+}
 
 /** Stake required to win 1 unit at these American odds. */
 function stakeToWin1(odds: string): number {
@@ -50,19 +50,18 @@ function stakeToWin1(odds: string): number {
   return n < 0 ? Math.abs(n) / 100 : 100 / n;
 }
 
-/** Net units for a single bet under the current sizing scheme. */
-function betUnits(result: BetResult, bestOdds: string, tier: TierType): number {
-  const m = TIER_UNITS[tier];
+/** Net units for a single bet under edge-banded sizing. */
+function betUnits(result: BetResult, bestOdds: string, edge: number): number {
+  const m = unitsForEdge(edge);
   if (result === 'W') return Math.round(m * 100) / 100;
   if (result === 'L') return Math.round(-m * stakeToWin1(bestOdds) * 100) / 100;
   return 0;
 }
 
 /** Stake placed on this bet (0 for pushes). */
-function betStake(result: BetResult, bestOdds: string, tier: TierType): number {
+function betStake(result: BetResult, bestOdds: string, edge: number): number {
   if (result === 'P') return 0;
-  const m = TIER_UNITS[tier];
-  return Math.round(m * stakeToWin1(bestOdds) * 100) / 100;
+  return Math.round(unitsForEdge(edge) * stakeToWin1(bestOdds) * 100) / 100;
 }
 
 function r2dp(x: number) { return Math.round(x * 100) / 100; }
@@ -95,7 +94,7 @@ function agg(recs: Rec[]) {
   const losses = recs.filter((r) => r.result === 'L').length;
   const pushes = recs.filter((r) => r.result === 'P').length;
   const units = r2dp(recs.reduce((s, r) => s + r.units, 0));
-  const staked = r2dp(recs.reduce((s, r) => s + betStake(r.result, r.bestOdds, r.tier), 0));
+  const staked = r2dp(recs.reduce((s, r) => s + betStake(r.result, r.bestOdds, r.edge), 0));
   const roi = staked > 0 ? r1dp((units / staked) * 100) : 0;
   return { wins, losses, pushes, units, staked, roi };
 }
@@ -281,7 +280,7 @@ function buildMastersFile(recs: Rec[], rawRecs: Rec[]): string {
     ``,
     `// ===== OVERALL SUMMARY (All Rounds Combined: R2 + R3 + R4) =====`,
     `// Recomputed by scripts/recompute-results.ts on ${new Date().toISOString()}`,
-    `// Scheme D sizing: BEST BET=2.5u, STRONG PLAY=1.5u, LEAN=0.5u`,
+    `// Edge-banded sizing — see src/lib/sizing.ts`,
     `export const overallRecord = { wins: ${overall.wins}, losses: ${overall.losses}, pushes: ${overall.pushes} };`,
     `export const overallUnits = ${overall.units.toFixed(2)};`,
     `export const overallROI = ${overall.roi.toFixed(1)};`,
@@ -421,7 +420,7 @@ function buildPgaFile(recs: Rec[], rawRecs: Rec[]): string {
     ``,
     `// Recomputed by scripts/recompute-results.ts on ${new Date().toISOString()}`,
     `// pga-championship-2026 round 2 — H2H, graded at best odds across real books.`,
-    `// Scheme D sizing: BEST BET=2.5u, STRONG PLAY=1.5u, LEAN=0.5u`,
+    `// Edge-banded sizing — see src/lib/sizing.ts`,
     `// Summary: ${summary.record}, ${summary.units >= 0 ? '+' : ''}${summary.units}u, ${summary.roi >= 0 ? '+' : ''}${summary.roi}% ROI (${summary.bets} bets).`,
     `// DO NOT EDIT BY HAND — re-run scripts/recompute-results.ts to regenerate.`,
     ``,
@@ -447,14 +446,14 @@ async function main() {
   const pgaRaw = await loadPgaRecords();
   console.log(`  ${pgaRaw.length} records loaded.`);
 
-  // ---- Apply Scheme D — units derived purely from (result, bestOdds, tier) ----
+  // ---- Apply edge-banded sizing — units derived purely from (result, bestOdds, edge) ----
   const mastersRecs: Rec[] = mastersRaw.map((r) => ({
     ...r,
-    units: betUnits(r.result, r.bestOdds, r.tier),
+    units: betUnits(r.result, r.bestOdds, r.edge),
   }));
   const pgaRecs: Rec[] = pgaRaw.map((r) => ({
     ...r,
-    units: betUnits(r.result, r.bestOdds, r.tier),
+    units: betUnits(r.result, r.bestOdds, r.edge),
   }));
 
   // ---- Check: record counts never change with sizing ----
@@ -468,28 +467,29 @@ async function main() {
     process.exit(1);
   }
 
-  // ---- Invariant: each tier's ROI is identical flat vs Scheme D ----
-  const TIERS: TierType[] = ['BEST BET', 'STRONG PLAY', 'LEAN'];
+  // ---- Invariant: within an edge band the multiplier is constant, so the
+  //      band's sized ROI must equal its flat (1u) ROI. ----
+  const bands = [...new Set(mastersRecs.map((r) => unitsForEdge(r.edge)))].sort((a, b) => a - b);
   let invariantOk = true;
-  console.log('\n  Per-tier (Scheme D) — ROI must match the flat ROI:');
-  for (const t of TIERS) {
-    const flatSub = mastersRaw.filter((r) => r.tier === t);
-    const fUnits = r2dp(flatSub.reduce((s, r) => s + flatUnits(r.result, r.bestOdds), 0));
-    const fStaked = r2dp(flatSub.reduce((s, r) => (r.result === 'P' ? s : s + stakeToWin1(r.bestOdds)), 0));
+  console.log('\n  Per edge-band — sized ROI must match flat ROI:');
+  for (const mUnit of bands) {
+    const sub = mastersRecs.filter((r) => unitsForEdge(r.edge) === mUnit);
+    const fUnits = r2dp(sub.reduce((s, r) => s + flatUnits(r.result, r.bestOdds), 0));
+    const fStaked = r2dp(sub.reduce((s, r) => (r.result === 'P' ? s : s + stakeToWin1(r.bestOdds)), 0));
     const fRoi = fStaked > 0 ? r1dp((fUnits / fStaked) * 100) : 0;
-    const d = agg(mastersRecs.filter((r) => r.tier === t));
-    console.log(`    ${t}: +${d.units}u, ${d.roi}% ROI  (flat ROI ${fRoi}%)`);
+    const d = agg(sub);
+    console.log(`    ${mUnit}u band: ${sub.length} bets, +${d.units}u, ${d.roi}% ROI  (flat ROI ${fRoi}%)`);
     if (Math.abs(d.roi - fRoi) > 0.3) invariantOk = false;
   }
   if (!invariantOk) {
-    console.error('  FAIL — a tier ROI shifted under sizing; aggregation is wrong. Aborting.');
+    console.error('  FAIL — a band ROI shifted under sizing; aggregation is wrong. Aborting.');
     process.exit(1);
   }
 
   const mastersOverall = agg(mastersRecs);
-  console.log(`\n  Masters Scheme D total: ${record(mastersOverall.wins, mastersOverall.losses, mastersOverall.pushes)}, +${mastersOverall.units}u, ${mastersOverall.roi}% ROI`);
-  if (mastersOverall.units < 78 || mastersOverall.units > 92 || mastersOverall.roi < 19 || mastersOverall.roi > 28) {
-    console.error('  FAIL — Masters Scheme D total outside sane bounds; aborting.');
+  console.log(`\n  Masters total: ${record(mastersOverall.wins, mastersOverall.losses, mastersOverall.pushes)}, +${mastersOverall.units}u, ${mastersOverall.roi}% ROI`);
+  if (mastersOverall.units < 20 || mastersOverall.units > 110 || mastersOverall.roi < 5 || mastersOverall.roi > 35) {
+    console.error('  FAIL — Masters total outside sane bounds; aborting.');
     process.exit(1);
   }
 

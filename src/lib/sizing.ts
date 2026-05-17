@@ -1,15 +1,23 @@
 /**
- * Edge-banded bet sizing.
+ * Edge-banded bet sizing + star rating.
  *
- * Every bet is sized to WIN a number of units determined by its X Score edge,
- * in 0.5-wide bands starting at the 0.95 pick floor:
- *   edge [0.95, 1.45)  -> 0.5u
- *   edge [1.45, 1.95)  -> 1.0u
- *   edge [1.95, 2.45)  -> 1.5u
- *   edge [2.45, 2.95)  -> 2.0u
- *   edge [2.95, 3.45)  -> 2.5u
- *   edge [3.45,  inf)  -> 3.0u   (top band — caps at 3u)
- *   edge < 0.95        -> not a bet (0u)
+ * A bet is sized to WIN a number of units determined by its X Score edge,
+ * in 0.5-wide bands starting at the 0.95 pick floor. The size also maps to a
+ * 1–5 star rating (the unit size rounded) for display — the UI shows stars,
+ * not the unit number.
+ *
+ *   edge band     units   stars
+ *   0.95–1.45     0.5u    ★
+ *   1.45–1.95     1.0u    ★
+ *   1.95–2.45     1.5u    ★★
+ *   2.45–2.95     2.0u    ★★
+ *   2.95–3.45     2.5u    ★★★
+ *   3.45–3.95     3.0u    ★★★
+ *   3.95–4.45     3.5u    ★★★★
+ *   4.45–4.95     4.0u    ★★★★
+ *   4.95–5.45     4.5u    ★★★★★
+ *   5.45+         5.0u    ★★★★★   (top band — caps at 5u)
+ *   edge < 0.95   not a bet (0u, 0 stars)
  *
  * To re-tune: edit unitsForEdge() here, then re-run
  *   npx tsx scripts/recompute-results.ts   (rebuilds Masters + PGA R2)
@@ -28,8 +36,17 @@ import type { BetResult } from '../types';
 export function unitsForEdge(edge: number): number {
   const e = Math.round(edge * 10000);
   if (e < 9500) return 0; // below 0.95 — not a bet
-  const band = Math.floor((e - 9500) / 5000); // 0,1,2,3,4,5,...
-  return Math.min(3, 0.5 + 0.5 * band); // top band caps at 3u
+  const band = Math.floor((e - 9500) / 5000); // 0,1,2,3,...
+  return Math.min(5, 0.5 + 0.5 * band); // top band caps at 5u
+}
+
+/**
+ * Star rating (1–5) for a bet — its unit size rounded to the nearest whole.
+ * 0.5u/1u -> 1 star, 1.5u/2u -> 2, 2.5u/3u -> 3, 3.5u/4u -> 4, 4.5u/5u -> 5.
+ * Returns 0 for a non-bet (edge below the 0.95 floor).
+ */
+export function starsForEdge(edge: number): number {
+  return Math.round(unitsForEdge(edge));
 }
 
 /**

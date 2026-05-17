@@ -4,6 +4,7 @@ import { currentEvent } from '../config/event';
 import SignalBadge from './SignalBadge';
 import PlayerSearch from './PlayerSearch';
 import Avatar from './Avatar';
+import { starsForEdge } from '../lib/sizing';
 
 interface MatchupsViewProps {
   data: PlayerData[];
@@ -467,13 +468,27 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
               >
                 {/* Header row */}
                 <div className="flex items-center justify-between mb-3">
-                  <span
-                    className={`text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-semibold font-['Inter',system-ui,sans-serif] ${tierBadgeColor[m.tier]} ${
-                      m.tier === 'BEST BET' ? 'animate-pulse' : ''
-                    }`}
-                  >
-                    {m.tier}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-semibold font-['Inter',system-ui,sans-serif] ${tierBadgeColor[m.tier]} ${
+                        m.tier === 'BEST BET' ? 'animate-pulse' : ''
+                      }`}
+                    >
+                      {m.tier}
+                    </span>
+                    {(() => {
+                      const stars = starsForEdge(m.matchupScore);
+                      return (
+                        <span
+                          className="text-[#22c55e] text-xs tracking-tight"
+                          title={`${stars}-star play`}
+                          aria-label={`${stars} star play`}
+                        >
+                          {'★'.repeat(stars)}
+                        </span>
+                      );
+                    })()}
+                  </div>
                   <span className="text-xs text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">
                     Edge:{' '}
                     <span className="text-[#22c55e] font-bold font-['JetBrains_Mono','SF_Mono',monospace]">

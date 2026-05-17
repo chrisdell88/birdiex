@@ -41,7 +41,7 @@ function unitsForEdge(edge: number): number {
   const e = Math.round(edge * 10000);
   if (e < 9500) return 0;
   const band = Math.floor((e - 9500) / 5000);
-  return Math.min(3, 0.5 + 0.5 * band);
+  return Math.min(5, 0.5 + 0.5 * band);
 }
 
 /** Stake required to win 1 unit at these American odds. */

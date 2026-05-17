@@ -1,11 +1,11 @@
 import type { BetRecord, TierBreakdown, BucketBreakdown } from '../types';
 
 // ===== OVERALL SUMMARY (All Rounds Combined: R2 + R3 + R4) =====
-// Recomputed by scripts/recompute-results.ts on 2026-05-17T03:44:44.725Z
+// Recomputed by scripts/recompute-results.ts on 2026-05-17T05:00:53.884Z
 // Edge-banded sizing — see src/lib/sizing.ts
 export const overallRecord = { wins: 130, losses: 70, pushes: 21 };
-export const overallUnits = 70.30;
-export const overallROI = 25.3;
+export const overallUnits = 74.80;
+export const overallROI = 26.2;
 
 // ===== R2 SUMMARY =====
 export const r2Summary = {
@@ -39,7 +39,7 @@ export const r4RoundOnlySummary = {
 export const r4CumulativeSummary = {
   record: '40-9-5',
   wins: 40, losses: 9, pushes: 5,
-  units: 54.19, roi: 53.5,
+  units: 58.69, roi: 54.0,
 };
 
 // Tier breakdowns -- R2
@@ -55,10 +55,10 @@ export const r3CumTierBreakdowns: TierBreakdown[] = [{"tier":"BEST BET","wins":5
 export const r4ROTierBreakdowns: TierBreakdown[] = [{"tier":"BEST BET","wins":2,"losses":2,"pushes":1,"units":-0.15,"roi":-2.1},{"tier":"STRONG PLAY","wins":4,"losses":4,"pushes":2,"units":0.12,"roi":1.1},{"tier":"LEAN","wins":7,"losses":4,"pushes":0,"units":1.59,"roi":22.4}];
 
 // Tier breakdowns -- R4 cumulative
-export const r4CumTierBreakdowns: TierBreakdown[] = [{"tier":"BEST BET","wins":25,"losses":5,"pushes":3,"units":46.16,"roi":53.9},{"tier":"STRONG PLAY","wins":6,"losses":1,"pushes":1,"units":5.2,"roi":64},{"tier":"LEAN","wins":9,"losses":3,"pushes":1,"units":2.83,"roi":37.9}];
+export const r4CumTierBreakdowns: TierBreakdown[] = [{"tier":"BEST BET","wins":25,"losses":5,"pushes":3,"units":50.66,"roi":54.4},{"tier":"STRONG PLAY","wins":6,"losses":1,"pushes":1,"units":5.2,"roi":64},{"tier":"LEAN","wins":9,"losses":3,"pushes":1,"units":2.83,"roi":37.9}];
 
 // Tier breakdowns -- Tournament total (all bets combined)
-export const totalTierBreakdowns: TierBreakdown[] = [{"tier":"BEST BET","wins":45,"losses":19,"pushes":8,"units":49.48,"roi":30.6},{"tier":"STRONG PLAY","wins":35,"losses":15,"pushes":8,"units":17.92,"roi":28.7},{"tier":"LEAN","wins":50,"losses":36,"pushes":5,"units":2.9,"roi":5.4}];
+export const totalTierBreakdowns: TierBreakdown[] = [{"tier":"BEST BET","wins":45,"losses":19,"pushes":8,"units":53.98,"roi":32},{"tier":"STRONG PLAY","wins":35,"losses":15,"pushes":8,"units":17.92,"roi":28.7},{"tier":"LEAN","wins":50,"losses":36,"pushes":5,"units":2.9,"roi":5.4}];
 
 // Combined tier breakdowns (for backward compat)
 export const tierBreakdowns: TierBreakdown[] = totalTierBreakdowns;
@@ -76,10 +76,10 @@ export const r3CumBucketBreakdowns: BucketBreakdown[] = [{"bucket":"BUY vs FADE"
 export const r4ROBucketBreakdowns: BucketBreakdown[] = [{"bucket":"BUY vs FADE","wins":3,"losses":3,"pushes":1,"units":0.89,"roi":10.7},{"bucket":"BUY vs OTHER","wins":8,"losses":4,"pushes":1,"units":0.73,"roi":6.2},{"bucket":"FADE vs OTHER","wins":2,"losses":3,"pushes":1,"units":-0.06,"roi":-1.2}];
 
 // Bucket breakdowns -- R4 cumulative
-export const r4CumBucketBreakdowns: BucketBreakdown[] = [{"bucket":"BUY vs FADE","wins":12,"losses":1,"pushes":1,"units":26.1,"roi":65.7},{"bucket":"BUY vs OTHER","wins":24,"losses":8,"pushes":3,"units":24.59,"roi":42.6},{"bucket":"FADE vs OTHER","wins":4,"losses":0,"pushes":1,"units":3.5,"roi":91.6}];
+export const r4CumBucketBreakdowns: BucketBreakdown[] = [{"bucket":"BUY vs FADE","wins":12,"losses":1,"pushes":1,"units":30.6,"roi":65},{"bucket":"BUY vs OTHER","wins":24,"losses":8,"pushes":3,"units":24.59,"roi":42.6},{"bucket":"FADE vs OTHER","wins":4,"losses":0,"pushes":1,"units":3.5,"roi":91.6}];
 
 // Bucket breakdowns -- Tournament total
-export const totalBucketBreakdowns: BucketBreakdown[] = [{"bucket":"BUY vs FADE","wins":35,"losses":16,"pushes":3,"units":35.23,"roi":35.8},{"bucket":"BUY vs OTHER","wins":74,"losses":43,"pushes":15,"units":28.06,"roi":18.8},{"bucket":"FADE vs OTHER","wins":21,"losses":11,"pushes":3,"units":7.01,"roi":23}];
+export const totalBucketBreakdowns: BucketBreakdown[] = [{"bucket":"BUY vs FADE","wins":35,"losses":16,"pushes":3,"units":39.73,"roi":37.6},{"bucket":"BUY vs OTHER","wins":74,"losses":43,"pushes":15,"units":28.06,"roi":18.8},{"bucket":"FADE vs OTHER","wins":21,"losses":11,"pushes":3,"units":7.01,"roi":23}];
 
 // Combined bucket breakdowns (for backward compat)
 export const bucketBreakdowns: BucketBreakdown[] = totalBucketBreakdowns;
@@ -87,7 +87,7 @@ export const bucketBreakdowns: BucketBreakdown[] = totalBucketBreakdowns;
 // Data set comparison
 export const dataSetComparison = {
   roundOnly: { wins: 70, losses: 47, pushes: 10, units: 15.07, roi: 11.10 },
-  cumulative: { wins: 60, losses: 23, pushes: 11, units: 55.23, roi: 38.80 },
+  cumulative: { wins: 60, losses: 23, pushes: 11, units: 59.73, roi: 39.90 },
 };
 
 // Per-book breakdowns -- R2
@@ -191,8 +191,8 @@ export const r4ROBookBreakdowns = {
 export const r4CumBookBreakdowns = {
   "bet365": {
     "record": "21-3-1",
-    "units": 34.14,
-    "roi": "65.70%"
+    "units": 35.14,
+    "roi": "65.50%"
   },
   "betcris": {
     "record": "5-1-2",
@@ -201,8 +201,8 @@ export const r4CumBookBreakdowns = {
   },
   "betonline": {
     "record": "8-1-1",
-    "units": 9.1,
-    "roi": "65.80%"
+    "units": 9.6,
+    "roi": "66.90%"
   },
   "bovada": {
     "record": "0-1-0",
@@ -216,8 +216,8 @@ export const r4CumBookBreakdowns = {
   },
   "pointsbet": {
     "record": "3-2-0",
-    "units": 5.5,
-    "roi": "31.10%"
+    "units": 8.5,
+    "roi": "37.10%"
   }
 };
 
@@ -225,8 +225,8 @@ export const r4CumBookBreakdowns = {
 export const totalBookBreakdowns = {
   "bet365": {
     "record": "46-19-5",
-    "units": 37.89,
-    "roi": "41.40%"
+    "units": 38.89,
+    "roi": "41.80%"
   },
   "betcris": {
     "record": "18-11-6",
@@ -240,8 +240,8 @@ export const totalBookBreakdowns = {
   },
   "betonline": {
     "record": "24-10-4",
-    "units": 9.01,
-    "roi": "19.70%"
+    "units": 9.51,
+    "roi": "20.60%"
   },
   "bovada": {
     "record": "0-1-0",
@@ -265,8 +265,8 @@ export const totalBookBreakdowns = {
   },
   "pointsbet": {
     "record": "9-10-0",
-    "units": 7.31,
-    "roi": "21.30%"
+    "units": 10.31,
+    "roi": "26.10%"
   },
   "unibet": {
     "record": "15-11-2",
@@ -459,7 +459,7 @@ export const betLog: BetRecord[] = [
 { id: 179, round: 4, pick: "Reed, Patrick", opponent: "Morikawa, Collin", edge: 2.01, tier: "BEST BET", bucket: "BUY vs OTHER", bestOdds: "+110", book: "bet365", betType: "H2H", pickScore: 1, oppScore: -4, result: "L", units: -1.36, dataSet: "cumulative" },
 { id: 180, round: 4, pick: "Scheffler, Scottie", opponent: "McIlroy, Rory", edge: 1.55, tier: "STRONG PLAY", bucket: "BUY vs OTHER", bestOdds: "-140", book: "bet365", betType: "H2H", pickScore: -4, oppScore: -1, result: "W", units: 1, dataSet: "cumulative" },
 { id: 181, round: 4, pick: "Lowry, Shane", opponent: "Day, Jason", edge: 1.25, tier: "LEAN", bucket: "BUY vs OTHER", bestOdds: "-110", book: "Bovada", betType: "H2H", pickScore: 8, oppScore: 3, result: "L", units: -0.55, dataSet: "cumulative" },
-{ id: 182, round: 4, pick: "Rai, Aaron", opponent: "Schwartzel, Charl", edge: 5.54, tier: "BEST BET", bucket: "BUY vs FADE", bestOdds: "-120", book: "PointsBet", betType: "H2H", pickScore: -2, oppScore: 3, result: "W", units: 3, dataSet: "cumulative" },
+{ id: 182, round: 4, pick: "Rai, Aaron", opponent: "Schwartzel, Charl", edge: 5.54, tier: "BEST BET", bucket: "BUY vs FADE", bestOdds: "-120", book: "PointsBet", betType: "H2H", pickScore: -2, oppScore: 3, result: "W", units: 5, dataSet: "cumulative" },
 { id: 183, round: 4, pick: "Woodland, Gary", opponent: "Kitayama, Kurt", edge: 1.88, tier: "STRONG PLAY", bucket: "FADE vs OTHER", bestOdds: "+120", book: "bet365", betType: "H2H", pickScore: -6, oppScore: 0, result: "W", units: 1, dataSet: "cumulative" },
 { id: 184, round: 4, pick: "Rahm, Jon", opponent: "Garcia, Sergio", edge: 1.51, tier: "STRONG PLAY", bucket: "BUY vs OTHER", bestOdds: "-190", book: "bet365", betType: "H2H", pickScore: -4, oppScore: 3, result: "W", units: 1, dataSet: "cumulative" },
 { id: 185, round: 4, pick: "Hovland, Viktor", opponent: "Thomas, Justin", edge: 1.08, tier: "LEAN", bucket: "BUY vs OTHER", bestOdds: "+100", book: "bet365", betType: "H2H", pickScore: -5, oppScore: 1, result: "W", units: 0.5, dataSet: "cumulative" },
@@ -469,9 +469,9 @@ export const betLog: BetRecord[] = [
 { id: 189, round: 4, pick: "Gotterup, Chris", opponent: "Reitan, Kristoffer", edge: 2.79, tier: "BEST BET", bucket: "BUY vs FADE", bestOdds: "-125", book: "bet365", betType: "H2H", pickScore: 1, oppScore: 5, result: "W", units: 2, dataSet: "cumulative" },
 { id: 190, round: 4, pick: "Brennan, Michael", opponent: "Homa, Max", edge: 3.01, tier: "BEST BET", bucket: "BUY vs OTHER", bestOdds: "+120", book: "PointsBet", betType: "H2H", pickScore: 1, oppScore: -5, result: "L", units: -2.08, dataSet: "cumulative" },
 { id: 191, round: 4, pick: "Fitzpatrick, Matt", opponent: "Taylor, Nick", edge: 2.47, tier: "BEST BET", bucket: "BUY vs OTHER", bestOdds: "-160", book: "PointsBet", betType: "H2H", pickScore: -1, oppScore: 5, result: "W", units: 2, dataSet: "cumulative" },
-{ id: 192, round: 4, pick: "Aberg, Ludvig", opponent: "Campbell, Brian", edge: 4.85, tier: "BEST BET", bucket: "BUY vs FADE", bestOdds: "-280", book: "PointsBet", betType: "H2H", pickScore: 0, oppScore: 1, result: "W", units: 3, dataSet: "cumulative" },
+{ id: 192, round: 4, pick: "Aberg, Ludvig", opponent: "Campbell, Brian", edge: 4.85, tier: "BEST BET", bucket: "BUY vs FADE", bestOdds: "-280", book: "PointsBet", betType: "H2H", pickScore: 0, oppScore: 1, result: "W", units: 4, dataSet: "cumulative" },
 { id: 193, round: 4, pick: "Hatton, Tyrrell", opponent: "Fleetwood, Tommy", edge: 2.95, tier: "BEST BET", bucket: "BUY vs OTHER", bestOdds: "+162", book: "bet365", betType: "H2H", pickScore: -6, oppScore: 4, result: "W", units: 2.5, dataSet: "cumulative" },
-{ id: 194, round: 4, pick: "Schauffele, Xander", opponent: "Gerard, Ryan", edge: 4.56, tier: "BEST BET", bucket: "BUY vs FADE", bestOdds: "-163", book: "bet365", betType: "H2H", pickScore: -4, oppScore: 5, result: "W", units: 3, dataSet: "cumulative" },
+{ id: 194, round: 4, pick: "Schauffele, Xander", opponent: "Gerard, Ryan", edge: 4.56, tier: "BEST BET", bucket: "BUY vs FADE", bestOdds: "-163", book: "bet365", betType: "H2H", pickScore: -4, oppScore: 5, result: "W", units: 4, dataSet: "cumulative" },
 { id: 195, round: 4, pick: "Knapp, Jake", opponent: "Griffin, Ben", edge: 1.13, tier: "LEAN", bucket: "BUY vs OTHER", bestOdds: "-115", book: "bet365", betType: "H2H", pickScore: -2, oppScore: 5, result: "W", units: 0.5, dataSet: "cumulative" },
 { id: 196, round: 4, pick: "Cantlay, Patrick", opponent: "Henley, Russell", edge: 1.3, tier: "LEAN", bucket: "BUY vs OTHER", bestOdds: "+120", book: "PointsBet", betType: "H2H", pickScore: 1, oppScore: -4, result: "L", units: -0.42, dataSet: "cumulative" },
 { id: 197, round: 4, pick: "Scheffler, Scottie", opponent: "Li, Haotong", edge: 3.23, tier: "BEST BET", bucket: "BUY vs OTHER", bestOdds: "-280", book: "bet365", betType: "H2H", pickScore: -4, oppScore: 8, result: "W", units: 2.5, dataSet: "cumulative" },
@@ -486,7 +486,7 @@ export const betLog: BetRecord[] = [
 { id: 206, round: 4, pick: "Spieth, Jordan", opponent: "Matsuyama, Hideki", edge: 1.71, tier: "STRONG PLAY", bucket: "BUY vs OTHER", bestOdds: "+113", book: "Betcris", betType: "H2H", pickScore: -4, oppScore: -3, result: "W", units: 1, dataSet: "cumulative" },
 { id: 207, round: 4, pick: "Gotterup, Chris", opponent: "Straka, Sepp", edge: 1.21, tier: "LEAN", bucket: "BUY vs OTHER", bestOdds: "-127", book: "BetOnline", betType: "H2H", pickScore: 1, oppScore: 4, result: "W", units: 0.5, dataSet: "cumulative" },
 { id: 208, round: 4, pick: "Brennan, Michael", opponent: "Taylor, Nick", edge: 2.86, tier: "BEST BET", bucket: "BUY vs OTHER", bestOdds: "-105", book: "BetOnline", betType: "H2H", pickScore: 1, oppScore: 5, result: "W", units: 2, dataSet: "cumulative" },
-{ id: 209, round: 4, pick: "Clark, Wyndham", opponent: "Gerard, Ryan", edge: 4.02, tier: "BEST BET", bucket: "BUY vs FADE", bestOdds: "-105", book: "BetOnline", betType: "H2H", pickScore: 1, oppScore: 5, result: "W", units: 3, dataSet: "cumulative" },
+{ id: 209, round: 4, pick: "Clark, Wyndham", opponent: "Gerard, Ryan", edge: 4.02, tier: "BEST BET", bucket: "BUY vs FADE", bestOdds: "-105", book: "BetOnline", betType: "H2H", pickScore: 1, oppScore: 5, result: "W", units: 3.5, dataSet: "cumulative" },
 { id: 210, round: 4, pick: "Cantlay, Patrick", opponent: "Day, Jason", edge: 2.1, tier: "BEST BET", bucket: "BUY vs OTHER", bestOdds: "-125", book: "BetOnline", betType: "H2H", pickScore: 1, oppScore: 3, result: "W", units: 1.5, dataSet: "cumulative" },
 { id: 211, round: 4, pick: "Cantlay, Patrick", opponent: "Morikawa, Collin", edge: 3.41, tier: "BEST BET", bucket: "BUY vs OTHER", bestOdds: "-111", book: "FanDuel", betType: "H2H", pickScore: 1, oppScore: -4, result: "L", units: -2.78, dataSet: "cumulative" },
 { id: 212, round: 4, pick: "Spieth, Jordan", opponent: "Scott, Adam", edge: 1.08, tier: "LEAN", bucket: "BUY vs OTHER", bestOdds: "-125", book: "FanDuel", betType: "H2H", pickScore: -4, oppScore: -2, result: "W", units: 0.5, dataSet: "cumulative" },

@@ -3,6 +3,7 @@ import type { BetRecord, TierType, ResultsSortField, SortDirection, Sportsbook }
 import PlayerSearch from './PlayerSearch';
 import { r2Results, r2Summary as pgaR2Summary } from '../data/pgaChampR2Results';
 import { r3Results, r3Summary as pgaR3Summary } from '../data/pgaChampR3Results';
+import { starsForEdge } from '../lib/sizing';
 import {
   overallRecord,
   overallUnits,
@@ -790,6 +791,12 @@ function PGAView() {
                         }`}>
                           {bet.tier}
                         </span>
+                        <div
+                          className="text-[#22c55e] text-[10px] tracking-tight leading-none mt-0.5"
+                          aria-label={`${starsForEdge(bet.edge)} star play`}
+                        >
+                          {'★'.repeat(starsForEdge(bet.edge))}
+                        </div>
                       </td>
                       <td className={`px-3 py-2 text-xs ${mono} text-[#d4d4d4]`}>{bet.bestOdds}</td>
                       <td className="px-3 py-2 text-xs font-['Inter',system-ui,sans-serif] whitespace-nowrap">

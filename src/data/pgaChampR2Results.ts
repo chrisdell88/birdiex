@@ -1,6 +1,6 @@
 import type { BetRecord } from '../types';
 
-// Recomputed by scripts/recompute-results.ts on 2026-05-17T03:44:44.728Z
+// Recomputed by scripts/recompute-results.ts on 2026-05-17T05:00:53.889Z
 // pga-championship-2026 round 2 — H2H, graded at best odds across real books.
 // Edge-banded sizing — see src/lib/sizing.ts
 // Summary: 27-24-4, -0.9u, -1.8% ROI (55 bets).

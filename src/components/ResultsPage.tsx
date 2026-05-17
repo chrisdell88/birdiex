@@ -396,10 +396,9 @@ function MastersView() {
         {activeTierBreakdowns.map(t => (
           <div key={t.tier} className={`bg-[#0a0a0a] border ${borderColor(t.units)} rounded-lg p-5`}>
             <div className={label + ' mb-3'}>
-              {t.tier === 'BEST BET' && <span className="text-[#22c55e]">Tier 1</span>}
-              {t.tier === 'STRONG PLAY' && <span className="text-emerald-400">Tier 2</span>}
-              {t.tier === 'LEAN' && <span className="text-[#a1a1aa]">Tier 3</span>}
-              <span className="text-[#a1a1aa]"> ({t.tier})</span>
+              {t.tier === 'BEST BET' && <span className="text-[#22c55e]">Edge 1.95+</span>}
+              {t.tier === 'STRONG PLAY' && <span className="text-emerald-400">Edge 1.45–1.95</span>}
+              {t.tier === 'LEAN' && <span className="text-[#a1a1aa]">Edge 0.95–1.45</span>}
             </div>
             <div className={`text-lg font-bold ${mono} text-[#f5f5f5]`}>
               {t.wins}-{t.losses}{t.pushes > 0 ? `-${t.pushes}` : ''}
@@ -539,12 +538,11 @@ function MastersView() {
                   <td className="px-3 py-2.5 text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif] whitespace-nowrap">{bet.opponent}</td>
                   <td className={`px-3 py-2.5 text-xs ${mono} text-[#d4d4d4]`}>{bet.edge.toFixed(1)}</td>
                   <td className="px-3 py-2.5">
-                    <span className={`text-[10px] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif] ${
-                      bet.tier === 'BEST BET' ? 'text-[#22c55e]' :
-                      bet.tier === 'STRONG PLAY' ? 'text-emerald-400' :
-                      'text-[#a1a1aa]'
-                    }`}>
-                      {bet.tier}
+                    <span
+                      className="text-[#22c55e] text-xs tracking-tight"
+                      aria-label={`${starsForEdge(bet.edge)} star play`}
+                    >
+                      {'★'.repeat(starsForEdge(bet.edge))}
                     </span>
                   </td>
                   <td className="px-3 py-2.5 text-[10px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] whitespace-nowrap">{bet.bucket}</td>
@@ -755,7 +753,7 @@ function PGAView() {
                       ['pick', 'Pick'],
                       ['opponent', 'Over'],
                       ['edge', 'Edge'],
-                      ['tier', 'Tier'],
+                      ['tier', 'Stars'],
                       ['bestOdds', 'Best Odds'],
                       ['book', 'Book'],
                       ['result', 'Result'],
@@ -784,19 +782,12 @@ function PGAView() {
                       <td className="px-3 py-2 text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif] whitespace-nowrap">{bet.opponent}</td>
                       <td className={`px-3 py-2 text-xs ${mono} text-[#d4d4d4]`}>{bet.edge.toFixed(2)}</td>
                       <td className="px-3 py-2">
-                        <span className={`text-[10px] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif] ${
-                          bet.tier === 'BEST BET' ? 'text-[#22c55e]' :
-                          bet.tier === 'STRONG PLAY' ? 'text-emerald-400' :
-                          'text-[#a1a1aa]'
-                        }`}>
-                          {bet.tier}
-                        </span>
-                        <div
-                          className="text-[#22c55e] text-[10px] tracking-tight leading-none mt-0.5"
+                        <span
+                          className="text-[#22c55e] text-xs tracking-tight"
                           aria-label={`${starsForEdge(bet.edge)} star play`}
                         >
                           {'★'.repeat(starsForEdge(bet.edge))}
-                        </div>
+                        </span>
                       </td>
                       <td className={`px-3 py-2 text-xs ${mono} text-[#d4d4d4]`}>{bet.bestOdds}</td>
                       <td className="px-3 py-2 text-xs font-['Inter',system-ui,sans-serif] whitespace-nowrap">

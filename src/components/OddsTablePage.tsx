@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import type { PlayerData, MatchupOddsEntry } from '../types';
 import { currentEvent } from '../config/event';
+import { starsForEdge } from '../lib/sizing';
 
 interface OddsTablePageProps {
   data: PlayerData[];
@@ -132,11 +133,6 @@ function buildH2HRows(data: PlayerData[], oddsData: MatchupOddsEntry[]): H2HRow[
 const mono = "font-['JetBrains_Mono','SF_Mono',monospace]";
 const label = "text-[10px] uppercase tracking-wider text-[#a1a1aa] font-medium font-['Inter',system-ui,sans-serif]";
 
-const tierBadge: Record<string, string> = {
-  'BEST BET': 'bg-[#22c55e]/15 text-[#22c55e]',
-  'STRONG PLAY': 'bg-emerald-500/15 text-emerald-400',
-  'LEAN': 'bg-gray-500/15 text-gray-400',
-};
 
 export default function OddsTablePage({ data }: OddsTablePageProps) {
   const [minEdge, setMinEdge] = useState<number>(0.95);
@@ -231,6 +227,9 @@ export default function OddsTablePage({ data }: OddsTablePageProps) {
             <option value={0.95}>Min Edge: 0.95</option>
             <option value={1.45}>Min Edge: 1.45</option>
             <option value={1.95}>Min Edge: 1.95</option>
+            <option value={2.45}>Min Edge: 2.45</option>
+            <option value={2.95}>Min Edge: 2.95</option>
+            <option value={3.45}>Min Edge: 3.45</option>
           </select>
 
           <span className={`${label} ml-auto`}>
@@ -272,7 +271,7 @@ export default function OddsTablePage({ data }: OddsTablePageProps) {
                     onClick={() => handleSort('tier')}
                     className={`px-3 py-3 text-[10px] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif] cursor-pointer hover:text-[#22c55e] transition-colors whitespace-nowrap select-none ${sortField === 'tier' ? 'text-[#22c55e]' : 'text-[#a1a1aa]'}`}
                   >
-                    Tier{sortArrow('tier')}
+                    Stars{sortArrow('tier')}
                   </th>
                   <th className="px-3 py-3 text-[10px] uppercase tracking-wider text-[#a1a1aa] font-medium font-['Inter',system-ui,sans-serif] whitespace-nowrap">
                     Signal
@@ -319,8 +318,11 @@ export default function OddsTablePage({ data }: OddsTablePageProps) {
                       {row.edge.toFixed(2)}
                     </td>
                     <td className="px-3 py-2.5">
-                      <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full font-semibold font-['Inter',system-ui,sans-serif] ${tierBadge[row.tier]}`}>
-                        {row.tier}
+                      <span
+                        className="text-[#22c55e] text-xs tracking-tight"
+                        aria-label={`${starsForEdge(row.edge)} star play`}
+                      >
+                        {'★'.repeat(starsForEdge(row.edge))}
                       </span>
                     </td>
                     <td className="px-3 py-2.5">

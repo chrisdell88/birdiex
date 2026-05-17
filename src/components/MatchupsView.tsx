@@ -183,11 +183,6 @@ const tierBorderColor: Record<Matchup['tier'], string> = {
   'LEAN': 'border-l-gray-600',
 };
 
-const tierBadgeColor: Record<Matchup['tier'], string> = {
-  'BEST BET': 'bg-[#22c55e]/15 text-[#22c55e]',
-  'STRONG PLAY': 'bg-emerald-500/15 text-emerald-400',
-  'LEAN': 'bg-gray-500/15 text-gray-400',
-};
 
 // --- Player Stat Popup ---
 
@@ -334,11 +329,14 @@ function MatchupDefinitionsModal({ onClose }: { onClose: () => void }) {
             <p className="text-[#d4d4d4] mt-1">The most favorable odds available across all sportsbooks</p>
           </div>
           <div>
-            <span className="text-[#22c55e] font-semibold">Tier Thresholds</span>
+            <span className="text-[#22c55e] font-semibold">Star Ratings</span>
             <p className="text-[#d4d4d4] mt-1">
-              <span className="text-[#22c55e] font-medium">BEST BET:</span> Edge &gt;= 1.95 &nbsp;|&nbsp;
-              <span className="text-emerald-400 font-medium">STRONG PLAY:</span> Edge 1.45-1.94 &nbsp;|&nbsp;
-              <span className="text-[#a1a1aa] font-medium">LEAN:</span> Edge 0.95-1.44
+              More edge = more stars = bigger play.{' '}
+              <span className="text-[#22c55e]">★</span> 0.95–1.95 &nbsp;|&nbsp;
+              <span className="text-[#22c55e]">★★</span> 1.95–2.95 &nbsp;|&nbsp;
+              <span className="text-[#22c55e]">★★★</span> 2.95–3.95 &nbsp;|&nbsp;
+              <span className="text-[#22c55e]">★★★★</span> 3.95–4.95 &nbsp;|&nbsp;
+              <span className="text-[#22c55e]">★★★★★</span> 4.95+
             </p>
           </div>
         </div>
@@ -468,27 +466,18 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
               >
                 {/* Header row */}
                 <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-semibold font-['Inter',system-ui,sans-serif] ${tierBadgeColor[m.tier]} ${
-                        m.tier === 'BEST BET' ? 'animate-pulse' : ''
-                      }`}
-                    >
-                      {m.tier}
-                    </span>
-                    {(() => {
-                      const stars = starsForEdge(m.matchupScore);
-                      return (
-                        <span
-                          className="text-[#22c55e] text-xs tracking-tight"
-                          title={`${stars}-star play`}
-                          aria-label={`${stars} star play`}
-                        >
-                          {'★'.repeat(stars)}
-                        </span>
-                      );
-                    })()}
-                  </div>
+                  {(() => {
+                    const stars = starsForEdge(m.matchupScore);
+                    return (
+                      <span
+                        className="text-[#22c55e] text-sm tracking-tight"
+                        title={`${stars}-star play`}
+                        aria-label={`${stars} star play`}
+                      >
+                        {'★'.repeat(stars)}
+                      </span>
+                    );
+                  })()}
                   <span className="text-xs text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">
                     Edge:{' '}
                     <span className="text-[#22c55e] font-bold font-['JetBrains_Mono','SF_Mono',monospace]">

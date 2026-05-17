@@ -89,9 +89,12 @@ Never change the formula without Chris's explicit approval.
 - Putting is NOT a purity filter (already baked into X Score)
 
 ### Matchup Tiers (H2H)
-- Edge ≥ 1.95: BEST BET (Tier 1) — flashing badge
-- Edge 1.45-1.94: STRONG PLAY (Tier 2)
-- Edge 0.95-1.44: LEAN (Tier 3)
+The `tier` field still exists internally (BEST BET ≥1.95 / STRONG PLAY ≥1.45 /
+LEAN ≥0.95) but is **no longer shown to users.** As of 2026-05-17 the UI labels
+every bet with a **1–5 star rating** instead (the edge-banded sizing — see the
+star table in the grading-convention section). Stars on the Matchups cards,
+Odds table, and Results bet logs; the Results breakdown is labelled by edge
+range. No "BEST BET / STRONG PLAY / LEAN" wording shows anywhere on the site.
 
 ### 3-Ball Rules
 **3-balls are OFF the site as of 2026-05-16 (Chris's call — H2H only until further

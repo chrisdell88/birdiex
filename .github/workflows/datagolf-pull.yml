@@ -1,47 +1,47 @@
-name: DataGolf pull (auto-update event data)
+name: DataGolf round update
 
-# Runs the DataGolf pipeline, regenerates the active event's TS data file, and
-# commits + pushes any changes. Vercel auto-deploys on push to main.
+# Runs the full per-round DataGolf pipeline for a COMPLETED round via
+# scripts/update-round.ts (pull -> build X Scores -> build next-round matchups
+# -> grade the round -> refresh headshots -> build ticker), then commits and
+# pushes the regenerated src/data files to the branch the workflow ran on.
 #
-# Triggers:
-#   - workflow_dispatch — manual run via GitHub UI, with slug/phase/course inputs
-#   - schedule         — disabled by default. Uncomment the cron block when an
-#                        event is active to auto-pull every 30 min during play.
+# The frontend wiring lives in src/config/event.ts and
+# src/components/ResultsPage.tsx — those already reference the round's data
+# files, so once this workflow commits them the app builds and shows the round.
+#
+# Trigger:
+#   - workflow_dispatch — manual run via the GitHub UI; pick the round.
 #
 # Secrets required:
-#   DATAGOLF_API_KEY — DataGolf API key (Repo Settings → Secrets → Actions)
+#   DATAGOLF_API_KEY — DataGolf API key (Repo Settings -> Secrets -> Actions)
 
 on:
   workflow_dispatch:
     inputs:
       slug:
-        description: Event slug (e.g. pga-championship-2026)
+        description: Event slug
         required: true
         default: pga-championship-2026
-      phase:
-        description: Tournament phase (pre, r1, r2, r3, r4, final)
+      round:
+        description: Completed round to process
         required: true
-        default: pre
+        default: '4'
         type: choice
-        options: [pre, r1, r2, r3, r4, final]
+        options: ['1', '2', '3', '4']
       course:
         description: Course slug (must exist in scripts/lib/courses.ts)
         required: true
         default: aronimink
-      out_file:
-        description: Output filename in src/data/ (no extension)
+      prefix:
+        description: Data-file prefix (e.g. pgaChamp -> pgaChampR4Data)
         required: true
-        default: pgaChampPreData
-
-  # Schedule: enable when a tournament is live. Polls every 30 min.
-  # schedule:
-  #   - cron: '*/30 * * * *'
+        default: pgaChamp
 
 permissions:
   contents: write
 
 jobs:
-  pull-and-build:
+  update-round:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -54,35 +54,27 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Pull DataGolf data
+      - name: Run the per-round DataGolf pipeline
         env:
           DATAGOLF_API_KEY: ${{ secrets.DATAGOLF_API_KEY }}
         run: |
-          npm run pull:event -- \
+          npm run update:round -- \
             --slug "${{ inputs.slug }}" \
-            --phase "${{ inputs.phase }}"
-
-      - name: Rebuild TS data file
-        env:
-          DATAGOLF_API_KEY: ${{ secrets.DATAGOLF_API_KEY }}
-        run: |
-          npm run build:event -- \
-            --slug "${{ inputs.slug }}" \
-            --phase "${{ inputs.phase }}" \
+            --round "${{ inputs.round }}" \
             --course "${{ inputs.course }}" \
-            --out "${{ inputs.out_file }}"
+            --prefix "${{ inputs.prefix }}"
 
-      - name: Verify TypeScript build still passes
+      - name: Verify the production build still passes
         run: npm run build
 
-      - name: Commit changes if any
+      - name: Commit regenerated data files
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet src/data/; then
-            echo "No changes to src/data — skipping commit."
+          if [ -z "$(git status --porcelain src/data/)" ]; then
+            echo "No changes in src/data — nothing to commit."
           else
             git add src/data/
-            git commit -m "data: refresh ${{ inputs.slug }} (${{ inputs.phase }})"
+            git commit -m "data: ${{ inputs.slug }} round ${{ inputs.round }} update"
             git push
           fi

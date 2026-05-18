@@ -8,7 +8,7 @@
  * edits needed.
  */
 import type { PlayerData, MatchupOddsEntry } from '../types';
-import { roundOnlyData, cumulativeData, generatedAt } from '../data/pgaChampR3Data';
+import { roundOnlyData, cumulativeData, generatedAt } from '../data/pgaChampR4Data';
 import { r4MatchupOddsData } from '../data/pgaChampR4Matchups';
 
 export interface CurrentEvent {
@@ -34,7 +34,7 @@ export const currentEvent: CurrentEvent = {
   name: 'PGA Championship',
   course: 'Aronimink',
   picksRound: 4,
-  headerBanner: 'R3 FINAL · ROUND 4 PICKS',
+  headerBanner: 'R4 FINAL · TOURNAMENT COMPLETE',
   dataUpdatedAt: generatedAt,
   rankingsRound: roundOnlyData,
   rankingsCumulative: cumulativeData,

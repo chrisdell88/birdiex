@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "pull:event": "tsx scripts/pull-event.ts",
     "build:event": "tsx scripts/build-event.ts",
+    "update:round": "tsx scripts/update-round.ts",
     "notify": "tsx scripts/notify.ts"
   },
   "dependencies": {

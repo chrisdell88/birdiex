@@ -101,34 +101,41 @@ export function betStake(result: BetResult, bestOdds: string, edge: number): num
 // only break even from ~2.45 upward.
 //
 // Two anchors so far:
-//   Augusta National (pred 0.1439)  →  floor 0.95  (every ★+ recommended)
-//   Aronimink         (pred 0.0413) →  floor 2.45  (★★+ only)
+//   Augusta National (pred 0.1439)  →  floor 0.95  (every model pick)
+//   Aronimink         (pred 0.0413) →  floor 2.45  (only the strongest edges)
 //
 // Linear fit through the two anchors: floor = 3.05 − 14.62 × predictability.
-// Then SNAP UP to the next tier boundary in {0.95, 1.45, 1.95, 2.45, 2.95}.
+// Clamped to [0.95, 2.95] and rounded to 2 decimals.
+//
+// NOTE: an earlier version snapped UP to a tier boundary in
+// {0.95, 1.45, 1.95, 2.45, 2.95}. That created an artificial cliff between
+// venues with nearly-identical predictability (e.g., Aronimink at 0.0413 →
+// raw 2.45 stayed at 2.45, but Craig Ranch at 0.0373 → raw 2.51 snapped a
+// full tier higher to 2.95). Since the threshold is a pure numeric edge
+// cutoff (independent of star ratings, which encode bet size only), the
+// snap-to-tier rule was UX baggage that introduced noise-level instability.
+// Removed in favour of the continuous formula.
 //
 // Source-of-truth doc: docs/THRESHOLD_SWEEP.md.
 
-/** The legal recommended-floor tier boundaries (star-tier breakpoints). */
-const FLOOR_TIERS = [0.95, 1.45, 1.95, 2.45, 2.95] as const;
+const FLOOR_MIN = 0.95; // the model's hard pick floor
+const FLOOR_MAX = 2.95; // above this the tracked sample collapses to noise
 
 /**
  * Recommended bet floor (edge) for a venue, derived from its predictability.
  *
- * Formula: `raw = 3.05 − 14.62 × predictability`, then snap UP to the next
- * tier boundary in {0.95, 1.45, 1.95, 2.45, 2.95}. Clamped so the floor never
- * sits below 0.95 (the model's hard pick floor) or above 2.95 (above that
- * the tracked sample collapses to noise).
+ * Formula: `raw = 3.05 − 14.62 × predictability`, clamped to [0.95, 2.95],
+ * rounded to 2 decimals.
  *
  * Sanity checks:
- *   predictability 0.1439 (Augusta)   → raw 0.946 → tier 0.95  ✓
- *   predictability 0.0413 (Aronimink) → raw 2.446 → tier 2.45  ✓
+ *   predictability 0.1439 (Augusta)   → raw 0.946 → 0.95  ✓
+ *   predictability 0.0413 (Aronimink) → raw 2.446 → 2.45  ✓
+ *   predictability 0.0373 (Craig Rch) → raw 2.505 → 2.51  ✓ (was 2.95 under snap-up)
  */
 export function recommendedFloorForPredictability(predictability: number): number {
   const raw = 3.05 - 14.62 * predictability;
-  // Snap UP to the next legal tier boundary.
-  for (const t of FLOOR_TIERS) if (raw <= t + 1e-9) return t;
-  return FLOOR_TIERS[FLOOR_TIERS.length - 1]; // cap at 2.95
+  const clamped = Math.max(FLOOR_MIN, Math.min(FLOOR_MAX, raw));
+  return Math.round(clamped * 100) / 100;
 }
 
 /**

@@ -4,7 +4,7 @@
 **Repo:** https://github.com/chrisdell88/birdiex
 **Live:** https://birdiex.co
 **Project path:** ~/Projects/birdiex
-**Current event:** CJ Cup Byron Nelson 2026 at TPC Craig Ranch — pre-tournament. Recommended threshold: edge ≥ 2.50 (formula output, no longer tier-snapped).
+**Current event:** CJ Cup Byron Nelson 2026 at TPC Craig Ranch — pre-tournament. Recommended threshold: edge ≥ 2.45 (formula → snap-to-NEAREST tier).
 **All-Time tracked record (venue-aware floor):** 135-70-21 · +85.30u · +28.4% ROI (Masters + PGA Champ).
 
 ## 🚨 READ THIS FIRST (any new Claude session)
@@ -373,18 +373,17 @@ Raw DataGolf JSON pulls from the Masters 2026 run: `masters_final_tracking.json`
 
 ### Done (2026-05-21 session — major stealth-mode iteration)
 - [x] **Predictability-aware matchup score threshold** — venue floor formula:
-      `floor = clamp(3.05 − 14.62 × predictability, 0.95, 2.95)`, rounded to
-      2 decimals. **Continuous**, no tier snap. Source of truth:
+      `floor = clamp(3.05 − 14.62 × predictability, 0.95, 2.95)`, then snap to
+      the **NEAREST** tier in {0.95, 1.45, 1.95, 2.45, 2.95}. Source of truth:
       `src/lib/sizing.ts` (`recommendedFloorForPredictability`). Backtest sweep in
       `docs/THRESHOLD_SWEEP.md`. Derived from Masters (Augusta 0.144 → 0.95)
       and PGA Champ (Aronimink 0.0413 → 2.45) two-anchor linear fit.
-      **Earlier design used a snap-up to tier boundaries {0.95, 1.45, 1.95,
-      2.45, 2.95} — removed because it created artificial cliffs (Craig Ranch
-      pred 0.0373 → raw 2.50, was being snapped a full tier to 2.95 even
-      though Aronimink at pred 0.0413 → 2.45 was barely 0.05 lower in raw
-      output). The threshold is a pure numeric edge cutoff; star ratings encode
-      bet size only — there's no UX reason to snap thresholds to star
-      boundaries.**
+      **Design evolution: first version snapped UP to next tier (created
+      artificial cliffs); second version was continuous (produced awkward
+      non-tier numbers like 2.50); current version snaps to NEAREST tier so
+      we stay on clean breaks WITHOUT artificial jumps. Craig Ranch raw 2.50 →
+      nearest tier is 2.45 (Δ=0.05) not 2.95 (Δ=0.45) → 2.45. Once n>2 we can
+      drop the snap entirely.**
 - [x] **Venue map** — `src/config/venues.ts` with predictability per event.
       Currently: Masters/Augusta 0.144, PGA Champ/Aronimink 0.0413, CJ Cup/Craig Ranch 0.0373.
 - [x] **Tracked vs Scored separation** — every 0.95+ pick is scored internally for

@@ -105,37 +105,53 @@ export function betStake(result: BetResult, bestOdds: string, edge: number): num
 //   Aronimink         (pred 0.0413) →  floor 2.45  (only the strongest edges)
 //
 // Linear fit through the two anchors: floor = 3.05 − 14.62 × predictability.
-// Clamped to [0.95, 2.95] and rounded to 2 decimals.
+// Then snap to the NEAREST tier boundary in {0.95, 1.45, 1.95, 2.45, 2.95}.
 //
-// NOTE: an earlier version snapped UP to a tier boundary in
-// {0.95, 1.45, 1.95, 2.45, 2.95}. That created an artificial cliff between
-// venues with nearly-identical predictability (e.g., Aronimink at 0.0413 →
-// raw 2.45 stayed at 2.45, but Craig Ranch at 0.0373 → raw 2.51 snapped a
-// full tier higher to 2.95). Since the threshold is a pure numeric edge
-// cutoff (independent of star ratings, which encode bet size only), the
-// snap-to-tier rule was UX baggage that introduced noise-level instability.
-// Removed in favour of the continuous formula.
+// DESIGN EVOLUTION:
+// 1. First version: snap UP to next tier — created an artificial cliff
+//    (Craig Ranch raw 2.50 jumped to 2.95 even though Aronimink raw 2.45
+//    stayed at 2.45).
+// 2. Second version: continuous (no snap, rounded to 2 decimals) — exact
+//    formula output, but produces awkward non-tier numbers like 2.50.
+// 3. Current: snap to NEAREST tier — preserves tier-break cleanliness
+//    while reflecting the honest "closest legal threshold" from the
+//    formula. Craig Ranch raw 2.50 → nearest is 2.45 (Δ=0.05) not 2.95
+//    (Δ=0.45) → snaps to 2.45.
+//
+// Once we have more venue data points (n>2), this snap can come off and
+// we can use the continuous formula directly.
 //
 // Source-of-truth doc: docs/THRESHOLD_SWEEP.md.
 
-const FLOOR_MIN = 0.95; // the model's hard pick floor
-const FLOOR_MAX = 2.95; // above this the tracked sample collapses to noise
+const FLOOR_MIN = 0.95;
+const FLOOR_MAX = 2.95;
+const FLOOR_TIERS = [0.95, 1.45, 1.95, 2.45, 2.95] as const;
 
 /**
  * Recommended bet floor (edge) for a venue, derived from its predictability.
  *
  * Formula: `raw = 3.05 − 14.62 × predictability`, clamped to [0.95, 2.95],
- * rounded to 2 decimals.
+ * then snapped to the NEAREST tier boundary in {0.95, 1.45, 1.95, 2.45, 2.95}.
  *
  * Sanity checks:
- *   predictability 0.1439 (Augusta)   → raw 0.946 → 0.95  ✓
- *   predictability 0.0413 (Aronimink) → raw 2.446 → 2.45  ✓
- *   predictability 0.0373 (Craig Rch) → raw 2.505 → 2.51  ✓ (was 2.95 under snap-up)
+ *   predictability 0.1439 (Augusta)   → raw 0.946 → snap 0.95  ✓
+ *   predictability 0.0413 (Aronimink) → raw 2.446 → snap 2.45  ✓
+ *   predictability 0.0373 (Craig Rch) → raw 2.505 → snap 2.45  ✓ (Δ to 2.45 is 0.05, Δ to 2.95 is 0.45)
  */
 export function recommendedFloorForPredictability(predictability: number): number {
   const raw = 3.05 - 14.62 * predictability;
   const clamped = Math.max(FLOOR_MIN, Math.min(FLOOR_MAX, raw));
-  return Math.round(clamped * 100) / 100;
+  // Snap to nearest tier.
+  let nearest = FLOOR_TIERS[0];
+  let bestDelta = Math.abs(clamped - nearest);
+  for (const t of FLOOR_TIERS) {
+    const d = Math.abs(clamped - t);
+    if (d < bestDelta) {
+      bestDelta = d;
+      nearest = t;
+    }
+  }
+  return nearest;
 }
 
 /**

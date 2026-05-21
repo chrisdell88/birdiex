@@ -36,6 +36,7 @@ import {
 
 const mastersFloor = floorForEvent('masters-2026');
 const pgaFloor = floorForEvent('pga-2026');
+const cjCupFloor = floorForEvent('cj-cup-byron-nelson-2026');
 
 /** Filter a bet array down to the tracked bets at this venue's floor. */
 function trackedAt(bets: BetRecord[], floor: number): BetRecord[] {
@@ -96,7 +97,7 @@ void pgaR2SummaryRaw; void pgaR3SummaryRaw; void pgaR4SummaryRaw;
 // ─────────────────────────────────────────────────────────────────
 type EventStatus = 'IN PROGRESS' | 'COMPLETE';
 interface EventEntry {
-  id: 'masters-2026' | 'pga-2026';
+  id: 'masters-2026' | 'pga-2026' | 'cj-cup-byron-nelson-2026';
   name: string;
   status: EventStatus;
   wins: number;
@@ -138,6 +139,19 @@ const EVENT_REGISTRY: EventEntry[] = [
     floorLabel: pgaFloor.label,
     course: pgaFloor.course,
     predictability: pgaFloor.predictability,
+  },
+  {
+    id: 'cj-cup-byron-nelson-2026',
+    name: 'CJ Cup Byron Nelson 2026',
+    status: 'IN PROGRESS',
+    wins: 0,
+    losses: 0,
+    pushes: 0,
+    units: 0,
+    roi: 0,
+    floorLabel: cjCupFloor.label,
+    course: cjCupFloor.course,
+    predictability: cjCupFloor.predictability,
   },
 ];
 
@@ -249,7 +263,7 @@ const sportsbooks: Sportsbook[] = [
 
 const mastersRounds = ['All Rounds', 'Round 2', 'Round 3', 'Round 4'];
 
-type TournamentView = 'all-time' | 'masters-2026' | 'pga-2026';
+type TournamentView = 'all-time' | 'masters-2026' | 'pga-2026' | 'cj-cup-byron-nelson-2026';
 
 // --- Shared style tokens ---
 const mono = "font-['JetBrains_Mono','SF_Mono',monospace]";
@@ -948,6 +962,51 @@ function PGAView() {
   );
 }
 
+// --- CJ Cup Byron Nelson View (in-progress, no graded bets yet) ---
+function CJCupView() {
+  return (
+    <div>
+      {/* Tournament header */}
+      <div className="bg-[#0a0a0a] border border-[#a1a1aa]/20 rounded-lg p-4 mb-6">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="bg-[#22c55e]/15 text-[#22c55e] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
+            IN PROGRESS
+          </span>
+          <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
+            CJ Cup Byron Nelson 2026
+          </span>
+          <span className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
+            TPC Craig Ranch
+          </span>
+          <RecommendedFloorBadge floorLabel={cjCupFloor.label} course={cjCupFloor.course} />
+        </div>
+      </div>
+
+      {/* Pre-tournament message */}
+      <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-6 text-center">
+        <div className="text-[10px] uppercase tracking-wider text-[#22c55e] font-medium font-['Inter',system-ui,sans-serif] mb-3">
+          Pre-Tournament — Awaiting Round 1
+        </div>
+        <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed max-w-md mx-auto">
+          Picks for Round 1 generate from pre-tournament data. The X Score model uses
+          Layer 2 (course history), Layer 3 (course fit), and Layer 4 (major adjustment)
+          pre-round &mdash; Layer 1 (strokes-gained) lights up after Round 1 completes.
+        </p>
+        <p className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif] leading-relaxed mt-4 max-w-md mx-auto">
+          At TPC Craig Ranch&rsquo;s low predictability ({cjCupFloor.predictability.toFixed(3)}),
+          the recommended bet floor is{' '}
+          <span className="text-[#22c55e] font-semibold">{cjCupFloor.label}</span>.
+          Tracked bets and graded results will appear here as the weekend unfolds.
+        </p>
+        <p className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mt-5">
+          Check the <span className="text-[#22c55e]">Matchups</span> or{' '}
+          <span className="text-[#22c55e]">Odds</span> page for live picks.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────
@@ -1038,6 +1097,7 @@ export default function ResultsPage() {
         {activeView === 'all-time' && <AllTimeView />}
         {activeView === 'masters-2026' && <MastersView />}
         {activeView === 'pga-2026' && <PGAView />}
+        {activeView === 'cj-cup-byron-nelson-2026' && <CJCupView />}
       </div>
     </div>
   );

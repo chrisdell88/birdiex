@@ -469,6 +469,22 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
           </span>
         </div>
         <div className="flex flex-col gap-3">
+          {matchups.length === 0 && (
+            <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-6 text-center">
+              <div className="text-[10px] uppercase tracking-wider text-[#22c55e] font-medium font-['Inter',system-ui,sans-serif] mb-2">
+                No picks at the recommended floor yet
+              </div>
+              <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed max-w-md mx-auto">
+                Pre-tournament X Scores are intentionally small (Layer 1 strokes-gained
+                contribution is zero until live round data exists). Once Round 1
+                completes, the model produces actionable edges and matchups will
+                populate here.
+              </p>
+              <p className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mt-3">
+                Tracked floor at {currentEvent.course}: {currentEvent.recommendedFloorLabel}
+              </p>
+            </div>
+          )}
           {matchups.map((m, idx) => (
               <div
                 key={idx}

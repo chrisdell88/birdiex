@@ -33,13 +33,14 @@ export const VENUES: Record<EventId, VenueInfo> = {
     course: 'Aronimink',
     predictability: 0.0413,
   },
-  // Filled in when we pull predictability from DataGolf decompositions for
-  // TPC Craig Ranch. Placeholder uses a conservative low-pred default so
-  // we'd recommend at the ★★+ floor until we have real data.
+  // Predictability computed 2026-05-20 from DataGolf player-decompositions
+  // (mean |total_course_history_adjustment| over the 147-player field). Lower
+  // than Aronimink's 0.0413, so the formula bumps the recommended floor up
+  // a tier — see docs/THRESHOLD_SWEEP.md.
   'cj-cup-byron-nelson-2026': {
     eventName: 'CJ Cup Byron Nelson 2026',
     course: 'TPC Craig Ranch',
-    predictability: 0.05,
+    predictability: 0.0373,
   },
 };
 

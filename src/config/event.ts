@@ -8,8 +8,8 @@
  * edits needed.
  */
 import type { PlayerData, MatchupOddsEntry } from '../types';
-import { roundOnlyData, cumulativeData, generatedAt } from '../data/pgaChampR3Data';
-import { r4MatchupOddsData } from '../data/pgaChampR4Matchups';
+import { roundOnlyData, cumulativeData, generatedAt } from '../data/cjCupPreData';
+import { r1MatchupOddsData } from '../data/cjCupR1Matchups';
 import { recommendedFloorForPredictability, floorTierLabel } from '../lib/sizing';
 
 export interface CurrentEvent {
@@ -37,18 +37,18 @@ export interface CurrentEvent {
   matchups: MatchupOddsEntry[];
 }
 
-const ARONIMINK_PREDICTABILITY = 0.0413;
+const CRAIG_RANCH_PREDICTABILITY = 0.0373;
 
 export const currentEvent: CurrentEvent = {
-  name: 'PGA Championship',
-  course: 'Aronimink',
-  predictability: ARONIMINK_PREDICTABILITY,
-  recommendedFloor: recommendedFloorForPredictability(ARONIMINK_PREDICTABILITY),
-  recommendedFloorLabel: floorTierLabel(recommendedFloorForPredictability(ARONIMINK_PREDICTABILITY)),
-  picksRound: 4,
-  headerBanner: 'R3 FINAL · ROUND 4 PICKS',
+  name: 'CJ Cup Byron Nelson',
+  course: 'TPC Craig Ranch',
+  predictability: CRAIG_RANCH_PREDICTABILITY,
+  recommendedFloor: recommendedFloorForPredictability(CRAIG_RANCH_PREDICTABILITY),
+  recommendedFloorLabel: floorTierLabel(recommendedFloorForPredictability(CRAIG_RANCH_PREDICTABILITY)),
+  picksRound: 1,
+  headerBanner: 'PRE-TOURNAMENT · ROUND 1 PICKS',
   dataUpdatedAt: generatedAt,
   rankingsRound: roundOnlyData,
   rankingsCumulative: cumulativeData,
-  matchups: r4MatchupOddsData,
+  matchups: r1MatchupOddsData,
 };

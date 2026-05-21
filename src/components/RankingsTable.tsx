@@ -245,7 +245,10 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-[11px] text-[#d4d4d4] uppercase tracking-wider font-['Inter',system-ui,sans-serif]">
-            Last Updated: {formatUpdated(currentEvent.dataUpdatedAt)} — RD{currentEvent.picksRound - 1} Results Below
+            Last Updated: {formatUpdated(currentEvent.dataUpdatedAt)} —{' '}
+            {currentEvent.picksRound > 1
+              ? `RD${currentEvent.picksRound - 1} Results Below`
+              : 'Pre-Tournament Projections Below'}
           </span>
           <button
             onClick={() => setShowStatsKey(true)}

@@ -33,7 +33,7 @@ export default function PlayerDetailCard({ player }: PlayerDetailCardProps) {
         <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg mx-3 sm:mx-4 my-2 p-4">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-[10px] uppercase tracking-wider text-[#22c55e] font-medium font-['Inter',system-ui,sans-serif] bg-[#22c55e]/10 border border-[#22c55e]/30 rounded-full px-2.5 py-0.5">
-              R{currentEvent.picksRound - 1} Data
+              {currentEvent.picksRound > 1 ? `R${currentEvent.picksRound - 1} Data` : 'Pre-Tournament'}
             </span>
           </div>
           <div className="flex flex-col md:flex-row gap-4 md:gap-6">

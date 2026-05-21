@@ -17,7 +17,7 @@
  * Usage:
  *   npx tsx scripts/build-headshots.ts --players pgaChampR2Data --out headshots
  */
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -57,13 +57,22 @@ async function main() {
 
   // Load the existing headshot map (if it exists) — we MERGE rather than
   // overwrite so a post-cut ESPN response can't drop previously matched players.
+  // We read the .ts file as TEXT and extract the JSON literal, because tsx's
+  // dynamic import() of a .ts module silently fails to expose named exports
+  // in some setups (returns an empty module).
   let existing: Record<string, string> = {};
   try {
-    const existingMod = await import(
-      pathToFileURL(join(PROJECT_ROOT, 'src', 'data', `${out}.ts`)).href
+    const raw = await readFile(
+      join(PROJECT_ROOT, 'src', 'data', `${out}.ts`),
+      'utf8',
     );
-    if (existingMod.headshots && typeof existingMod.headshots === 'object') {
-      existing = { ...(existingMod.headshots as Record<string, string>) };
+    // Match the JSON object literal after `export const headshots: ... = `.
+    const m = raw.match(/export const headshots[^=]*=\s*(\{[\s\S]*?\});/);
+    if (m) {
+      const parsed = JSON.parse(m[1]);
+      if (parsed && typeof parsed === 'object') {
+        existing = parsed as Record<string, string>;
+      }
     }
   } catch {
     // First run — no existing file. Start fresh.

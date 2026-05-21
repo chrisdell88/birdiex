@@ -1,19 +1,23 @@
 /**
- * CourseFitScatter — 1D diagonal arrangement of the model's top picks at
- * the current venue.
+ * CourseFitScatter — 2D scatter of the model's top picks at the current
+ * venue, with a visible diagonal trend line.
  *
- * Each head is positioned along a single diagonal line, sorted left-to-
- * right by X Score (the combined model output: skill + course history +
- * course fit + major adjustment). The diagonal layout makes the ranking
- * visually crisp at a glance — most-bullish picks at the top-right,
- * fading toward the bottom-left.
+ * X axis: Course History (L2 adjustment — how this player has performed
+ *   at this venue in the past)
+ * Y axis: Course Fit (L3 adjustment — how this player's skill set
+ *   matches what the course demands)
+ *
+ * Heads at their actual (history, fit) data positions. A diagonal
+ * reference line runs from the WEAK quadrant (bottom-left: low history,
+ * low fit) to the STRONG quadrant (top-right). Players hugging that
+ * diagonal are the model's strongest picks; the further into the
+ * top-right they sit, the higher their X Score.
  *
  * Collision avoidance pushes overlapping heads PERPENDICULAR to the
- * diagonal so the natural left-to-right ordering stays intact.
+ * diagonal so close-together players don't stack.
  *
  * Pre-R1: no signal-based ring colouring (signals aren't meaningful
  * yet). Hover tooltip shows name + X Score + DataGolf "To Win" odds.
- * Post-R1: ring colour optionally reflects BUY/FADE signal.
  */
 import { useMemo, useState } from 'react';
 import type { PlayerData } from '../types';
@@ -66,42 +70,49 @@ export default function CourseFitScatter({ topN = 20, onPlayerClick }: Props) {
     return m;
   }, []);
 
-  const points: Point[] = useMemo(() => {
-    // Top-N by X Score (descending). Sort RETURNS highest first for the
-    // ladder; we'll lay them out so the highest sits at the top-right.
+  const { points, ranges } = useMemo(() => {
+    // Top-N by X Score (descending). Filter to positive X Score so we
+    // surface model favorites only.
     const sorted = [...currentEvent.rankingsRound]
       .filter((p) => p.x_score != null)
       .sort((a, b) => b.x_score - a.x_score)
       .slice(0, topN);
 
-    if (sorted.length === 0) return [];
+    if (sorted.length === 0) {
+      return { points: [] as Point[], ranges: { xLo: 0, xHi: 0, yLo: 0, yHi: 0 } };
+    }
 
-    const xs = sorted.map((p) => p.x_score);
-    const minX = Math.min(...xs);
-    const maxX = Math.max(...xs);
-    const range = Math.max(0.01, maxX - minX);
+    // Compute data ranges for x = course history, y = course fit, with
+    // some padding so the heads sit comfortably inside the plot area.
+    const xs = sorted.map((p) => p.course_history_l2);
+    const ys = sorted.map((p) => p.fit_plus_category_l3);
+    const xMin = Math.min(...xs), xMax = Math.max(...xs);
+    const yMin = Math.min(...ys), yMax = Math.max(...ys);
+    const xPad = Math.max(0.02, (xMax - xMin) * 0.20);
+    const yPad = Math.max(0.02, (yMax - yMin) * 0.20);
+    const xLo = xMin - xPad, xHi = xMax + xPad;
+    const yLo = yMin - yPad, yHi = yMax + yPad;
 
-    // Diagonal spans from (PAD_X, H - PAD_Y) [low X Score, bottom-left] to
-    // (W - PAD_X, PAD_Y) [high X Score, top-right].
-    const startX = PAD_X;
-    const startY = H - PAD_Y;
-    const endX = W - PAD_X;
-    const endY = PAD_Y;
+    // Map each player to their (history, fit) plot position.
+    const plotLeft = PAD_X;
+    const plotTop = PAD_Y;
+    const plotW = W - 2 * PAD_X;
+    const plotH = H - 2 * PAD_Y;
 
     const raw: Point[] = sorted.map((p) => {
-      const t = (p.x_score - minX) / range;
-      const cx = startX + t * (endX - startX);
-      const cy = startY + t * (endY - startY);
-      return { player: p, cx, cy, size: HEAD_SIZE, t };
+      const cx = plotLeft + ((p.course_history_l2 - xLo) / (xHi - xLo)) * plotW;
+      // Y inverted because SVG y grows downward but we want positive fit
+      // at the TOP.
+      const cy = plotTop + plotH - ((p.fit_plus_category_l3 - yLo) / (yHi - yLo)) * plotH;
+      return { player: p, cx, cy, size: HEAD_SIZE, t: 0 };
     });
 
     // Collision avoidance — push overlapping heads PERPENDICULAR to the
-    // diagonal so the left-to-right ordering by X Score stays intact.
-    // Diagonal direction: (endX - startX, endY - startY), normalized.
-    const dx0 = endX - startX;
-    const dy0 = endY - startY;
+    // diagonal trend line so close-together players don't stack on top of
+    // each other. The diagonal runs from bottom-left → top-right.
+    const dx0 = plotW;
+    const dy0 = -plotH;
     const len = Math.sqrt(dx0 * dx0 + dy0 * dy0);
-    // Perpendicular unit vector (rotated 90° from diagonal direction).
     const perpX = -dy0 / len;
     const perpY = dx0 / len;
     const PADDING = 4;
@@ -118,8 +129,6 @@ export default function CourseFitScatter({ topN = 20, onPlayerClick }: Props) {
           const minDist = HEAD_SIZE + PADDING;
           if (dist < minDist) {
             const push = (minDist - dist) / 2;
-            // Push the LATER (lower-X-Score) head one way along perp,
-            // the EARLIER head the other way. Index order matches rank.
             a.cx -= perpX * push;
             a.cy -= perpY * push;
             b.cx += perpX * push;
@@ -137,8 +146,11 @@ export default function CourseFitScatter({ topN = 20, onPlayerClick }: Props) {
       r.cx = Math.max(half + 4, Math.min(W - half - 4, r.cx));
       r.cy = Math.max(half + 4, Math.min(H - half - 4, r.cy));
     }
-    return raw;
+    return { points: raw, ranges: { xLo, xHi, yLo, yHi } };
   }, [topN]);
+
+  // Suppress unused-var warning for the destructured ranges.
+  void ranges;
 
   const renderPoints = useMemo(() => {
     if (!hovered) return points;
@@ -146,9 +158,6 @@ export default function CourseFitScatter({ topN = 20, onPlayerClick }: Props) {
       a.player.player_name === hovered ? 1 : b.player.player_name === hovered ? -1 : 0,
     );
   }, [points, hovered]);
-
-  const minX = points.length ? points[points.length - 1].player.x_score : 0;
-  const maxX = points.length ? points[0].player.x_score : 0;
 
   return (
     <div className="bg-[#0a0a0a] border border-[#22c55e]/30 rounded-xl p-5">
@@ -158,9 +167,10 @@ export default function CourseFitScatter({ topN = 20, onPlayerClick }: Props) {
             Model Favorites &mdash; {currentEvent.course}
           </h3>
           <p className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mt-0.5">
-            Top {points.length} players by X Score, laid out along the diagonal.
-            Bottom-left = lowest X Score in the top {points.length}; top-right =
-            model&rsquo;s strongest pick. Hover any player for the breakdown.
+            Top {points.length} players. Course history on the x-axis, course fit
+            on the y-axis. Players in the upper-right corner are the model&rsquo;s
+            strongest picks at {currentEvent.course}. Diagonal line shows the
+            history + fit trend.
           </p>
         </div>
         <span className="text-[10px] uppercase tracking-wider text-[#22c55e] font-medium font-['Inter',system-ui,sans-serif] bg-[#22c55e]/10 border border-[#22c55e]/30 rounded-full px-2.5 py-0.5">
@@ -199,7 +209,43 @@ export default function CourseFitScatter({ topN = 20, onPlayerClick }: Props) {
           ))}
         </defs>
 
-        {/* The diagonal line itself — visual guide */}
+        {/* Plot area outline */}
+        <rect
+          x={PAD_X}
+          y={PAD_Y}
+          width={W - 2 * PAD_X}
+          height={H - 2 * PAD_Y}
+          fill="#0a0a0a"
+          stroke="#262626"
+          strokeWidth={1}
+          rx={4}
+        />
+
+        {/* Quadrant guides (zero axes — assuming our pad-extended ranges
+            include zero on both axes for typical data) */}
+        <line
+          x1={PAD_X + (W - 2 * PAD_X) / 2}
+          x2={PAD_X + (W - 2 * PAD_X) / 2}
+          y1={PAD_Y}
+          y2={H - PAD_Y}
+          stroke="#22c55e"
+          strokeOpacity={0.08}
+          strokeWidth={1}
+          strokeDasharray="3 5"
+        />
+        <line
+          x1={PAD_X}
+          x2={W - PAD_X}
+          y1={PAD_Y + (H - 2 * PAD_Y) / 2}
+          y2={PAD_Y + (H - 2 * PAD_Y) / 2}
+          stroke="#22c55e"
+          strokeOpacity={0.08}
+          strokeWidth={1}
+          strokeDasharray="3 5"
+        />
+
+        {/* Diagonal trend line — visual guide showing the regression of
+            "good history + good fit → model favorite" */}
         <line
           x1={PAD_X}
           y1={H - PAD_Y}
@@ -208,63 +254,48 @@ export default function CourseFitScatter({ topN = 20, onPlayerClick }: Props) {
           stroke="url(#diagGradient)"
           strokeWidth={2}
           strokeDasharray="6 6"
-          opacity={0.6}
+          opacity={0.7}
         />
 
-        {/* Diagonal axis label — runs along the line */}
+        {/* X axis label — Course History */}
         <text
           x={W / 2}
-          y={H / 2 - 20}
+          y={H - 20}
           textAnchor="middle"
           fill="#a1a1aa"
           fontSize="11"
-          letterSpacing="2"
+          letterSpacing="1.5"
           fontFamily="Inter, system-ui, sans-serif"
-          transform={`rotate(${(Math.atan2(PAD_Y - (H - PAD_Y), (W - PAD_X) - PAD_X) * 180) / Math.PI}, ${W / 2}, ${H / 2 - 20})`}
         >
-          X SCORE →
+          COURSE HISTORY →
         </text>
 
-        {/* End labels: min/max X Score values */}
+        {/* Y axis label — Course Fit (rotated) */}
         <text
-          x={PAD_X - 8}
-          y={H - PAD_Y + 18}
-          textAnchor="end"
-          fill="#737373"
-          fontSize="10"
-          fontFamily="JetBrains Mono, SF Mono, monospace"
-        >
-          {minX.toFixed(2)}
-        </text>
-        <text
-          x={PAD_X - 8}
-          y={H - PAD_Y + 32}
-          textAnchor="end"
-          fill="#737373"
-          fontSize="9"
-          letterSpacing="1"
+          x={22}
+          y={H / 2}
+          textAnchor="middle"
+          fill="#a1a1aa"
+          fontSize="11"
+          letterSpacing="1.5"
           fontFamily="Inter, system-ui, sans-serif"
+          transform={`rotate(-90, 22, ${H / 2})`}
         >
-          LOW
+          COURSE FIT →
         </text>
-        <text
-          x={W - PAD_X + 8}
-          y={PAD_Y - 8}
-          fill="#22c55e"
-          fontSize="10"
-          fontFamily="JetBrains Mono, SF Mono, monospace"
-        >
-          {maxX.toFixed(2)}
+
+        {/* Quadrant labels */}
+        <text x={W - PAD_X - 10} y={PAD_Y + 16} textAnchor="end" fill="#22c55e" fillOpacity={0.55} fontSize="10" letterSpacing="0.8" fontFamily="Inter, system-ui, sans-serif">
+          STRONG HISTORY · STRONG FIT
         </text>
-        <text
-          x={W - PAD_X + 8}
-          y={PAD_Y + 6}
-          fill="#22c55e"
-          fontSize="9"
-          letterSpacing="1"
-          fontFamily="Inter, system-ui, sans-serif"
-        >
-          HIGH
+        <text x={PAD_X + 10} y={PAD_Y + 16} fill="#22c55e" fillOpacity={0.35} fontSize="10" letterSpacing="0.8" fontFamily="Inter, system-ui, sans-serif">
+          WEAK HISTORY · STRONG FIT
+        </text>
+        <text x={W - PAD_X - 10} y={H - PAD_Y - 8} textAnchor="end" fill="#737373" fontSize="10" letterSpacing="0.8" fontFamily="Inter, system-ui, sans-serif">
+          STRONG HISTORY · WEAK FIT
+        </text>
+        <text x={PAD_X + 10} y={H - PAD_Y - 8} fill="#737373" fontSize="10" letterSpacing="0.8" fontFamily="Inter, system-ui, sans-serif">
+          WEAK HISTORY · WEAK FIT
         </text>
 
         {/* Heads */}
@@ -390,10 +421,9 @@ export default function CourseFitScatter({ topN = 20, onPlayerClick }: Props) {
       <p className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] leading-relaxed mt-3">
         X Score combines DataGolf skill + course history + course fit
         {currentEvent.isMajor ? ' + major-championship adjustment' : ''} into a
-        single number that ranks the field. Heads near the top-right are the
-        model&rsquo;s strongest picks at {currentEvent.course}. Heads close
-        together along the diagonal have similar X Scores; the perpendicular
-        offset just keeps them from overlapping visually.
+        single number that ranks the field. Heads near the upper-right hit both
+        venue-fit and historical-performance buckets &mdash; the model&rsquo;s
+        strongest picks at {currentEvent.course}.
       </p>
     </div>
   );

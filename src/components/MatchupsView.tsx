@@ -217,7 +217,7 @@ function PlayerStatPopup({ player, onClose }: { player: PlayerData; onClose: () 
         <button onClick={onClose} className="text-[#a1a1aa] hover:text-white text-xs cursor-pointer">X</button>
       </div>
       <div className="flex items-center gap-2 mb-3">
-        <SignalBadge signal={player.signal} />
+        <SignalBadge signal={player.signal} conflicted={player.purity === 'CONFLICTED'} />
         <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
           {player.purity}
         </span>

@@ -64,7 +64,7 @@ export default function PlayerDetailCard({ player }: PlayerDetailCardProps) {
                 </div>
               </div>
               <div className="mt-3">
-                <SignalBadge signal={player.signal} />
+                <SignalBadge signal={player.signal} conflicted={player.purity === 'CONFLICTED'} />
               </div>
               {/* X Score — block below on desktop */}
               <div className="hidden md:block mt-4">

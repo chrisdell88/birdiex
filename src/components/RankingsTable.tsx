@@ -333,7 +333,7 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
                   </td>
                   <td className="px-3 py-2.5">
                     <div className="flex items-center gap-1.5">
-                      <SignalBadge signal={player.signal} compact />
+                      <SignalBadge signal={player.signal} compact conflicted={player.purity === 'CONFLICTED'} />
                       <PurityIcon player={player} />
                     </div>
                   </td>

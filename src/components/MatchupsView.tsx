@@ -1,13 +1,16 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import type { PlayerData, Matchup, BucketType, MatchupOddsEntry } from '../types';
+import type { PlayerData, Matchup, BucketType, MatchupOddsEntry, DataSet } from '../types';
 import { currentEvent } from '../config/event';
 import SignalBadge from './SignalBadge';
 import PlayerSearch from './PlayerSearch';
 import Avatar from './Avatar';
+import DataSetToggle from './DataSetToggle';
 import { starsForEdge } from '../lib/sizing';
 
 interface MatchupsViewProps {
   data: PlayerData[];
+  dataSet: DataSet;
+  onDataSetChange: (ds: DataSet) => void;
 }
 
 type MatchupSort = 'edge-high' | 'edge-low';
@@ -345,7 +348,7 @@ function MatchupDefinitionsModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-export default function MatchupsView({ data }: MatchupsViewProps) {
+export default function MatchupsView({ data, dataSet, onDataSetChange }: MatchupsViewProps) {
   const [sortBy, setSortBy] = useState<MatchupSort>('edge-high');
   const [showDefinitions, setShowDefinitions] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
@@ -386,6 +389,7 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
 
   return (
     <div>
+      <DataSetToggle dataSet={dataSet} onChange={onDataSetChange} />
       {/* Round picks banner */}
       <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-lg p-5 mb-6">
         <div className="flex items-center gap-3 mb-2">

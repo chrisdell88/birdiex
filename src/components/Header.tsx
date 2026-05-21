@@ -1,11 +1,9 @@
-import type { TabId, DataSet } from '../types';
+import type { TabId } from '../types';
 import { currentEvent } from '../config/event';
 
 interface HeaderProps {
   activeTab: TabId;
   onTabChange: (tab: TabId) => void;
-  dataSet: DataSet;
-  onDataSetChange: (ds: DataSet) => void;
 }
 
 const tabs: { id: TabId; label: string }[] = [
@@ -17,7 +15,7 @@ const tabs: { id: TabId; label: string }[] = [
   { id: 'alerts', label: 'ALERTS' },
 ];
 
-export default function Header({ activeTab, onTabChange, dataSet, onDataSetChange }: HeaderProps) {
+export default function Header({ activeTab, onTabChange }: HeaderProps) {
   return (
     <header className="border-b border-[#262626] bg-[#0a0a0a] sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
@@ -41,30 +39,6 @@ export default function Header({ activeTab, onTabChange, dataSet, onDataSetChang
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Round/Cumulative toggle */}
-            <div className="flex border border-[#22c55e]/50 rounded-full p-0.5">
-              <button
-                onClick={() => onDataSetChange('round')}
-                className={`px-3 py-1 text-[10px] uppercase tracking-wider font-medium rounded-full transition-colors font-['Inter',system-ui,sans-serif] cursor-pointer ${
-                  dataSet === 'round'
-                    ? 'bg-[#22c55e] text-[#0a0a0a]'
-                    : 'text-[#f5f5f5] hover:text-white'
-                }`}
-              >
-                Round
-              </button>
-              <button
-                onClick={() => onDataSetChange('cumulative')}
-                className={`px-3 py-1 text-[10px] uppercase tracking-wider font-medium rounded-full transition-colors font-['Inter',system-ui,sans-serif] cursor-pointer ${
-                  dataSet === 'cumulative'
-                    ? 'bg-[#22c55e] text-[#0a0a0a]'
-                    : 'text-[#f5f5f5] hover:text-white'
-                }`}
-              >
-                Cumulative
-              </button>
-            </div>
-
             {/* Tournament badge — hidden on mobile (no room; the round context
                 is shown on every page's own content). */}
             <div className="hidden sm:block border border-[#22c55e]/50 rounded-full px-3 md:px-4 py-1.5 bg-[#0a0a0a]">

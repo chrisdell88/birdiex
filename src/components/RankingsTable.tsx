@@ -1,15 +1,18 @@
 import { useState, useMemo, Fragment } from 'react';
-import type { PlayerData, SortField, SortDirection, Signal } from '../types';
+import type { PlayerData, SortField, SortDirection, Signal, DataSet } from '../types';
 import SignalBadge from './SignalBadge';
 import PurityIcon from './PurityIcon';
 import SummaryCards from './SummaryCards';
 import PlayerDetailCard from './PlayerDetailCard';
 import PlayerSearch from './PlayerSearch';
 import Avatar from './Avatar';
+import DataSetToggle from './DataSetToggle';
 import { currentEvent } from '../config/event';
 
 interface RankingsTableProps {
   data: PlayerData[];
+  dataSet: DataSet;
+  onDataSetChange: (ds: DataSet) => void;
 }
 
 function formatScore(score: number): string {
@@ -110,7 +113,7 @@ function StatsKeyModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-export default function RankingsTable({ data }: RankingsTableProps) {
+export default function RankingsTable({ data, dataSet, onDataSetChange }: RankingsTableProps) {
   const [sortField, setSortField] = useState<SortField>('rank');
   const [sortDir, setSortDir] = useState<SortDirection>('asc');
   const [search, setSearch] = useState('');
@@ -232,6 +235,7 @@ export default function RankingsTable({ data }: RankingsTableProps) {
 
   return (
     <div>
+      <DataSetToggle dataSet={dataSet} onChange={onDataSetChange} />
       <SummaryCards data={data} activeFilter={signalFilter} onFilterChange={handleCardFilter} />
 
       {showStatsKey && <StatsKeyModal onClose={() => setShowStatsKey(false)} />}

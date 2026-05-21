@@ -1,10 +1,13 @@
 import { useState, useMemo } from 'react';
-import type { PlayerData, MatchupOddsEntry } from '../types';
+import type { PlayerData, MatchupOddsEntry, DataSet } from '../types';
 import { currentEvent } from '../config/event';
 import { starsForEdge } from '../lib/sizing';
+import DataSetToggle from './DataSetToggle';
 
 interface OddsTablePageProps {
   data: PlayerData[];
+  dataSet: DataSet;
+  onDataSetChange: (ds: DataSet) => void;
 }
 
 type OddsSortField = 'edge' | 'pick' | 'opp' | 'tier' | 'bet365' | 'betmgm' | 'betonline' | 'bovada' | 'caesars' | 'draftkings' | 'fanduel' | 'pinnacle' | 'pointsbet' | 'unibet' | 'betcris' | 'best';
@@ -134,7 +137,7 @@ const mono = "font-['JetBrains_Mono','SF_Mono',monospace]";
 const label = "text-[10px] uppercase tracking-wider text-[#a1a1aa] font-medium font-['Inter',system-ui,sans-serif]";
 
 
-export default function OddsTablePage({ data }: OddsTablePageProps) {
+export default function OddsTablePage({ data, dataSet, onDataSetChange }: OddsTablePageProps) {
   const [minEdge, setMinEdge] = useState<number>(0.95);
   const [sortField, setSortField] = useState<OddsSortField>('edge');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
@@ -198,6 +201,7 @@ export default function OddsTablePage({ data }: OddsTablePageProps) {
 
   return (
     <div className="max-w-full mx-auto">
+      <DataSetToggle dataSet={dataSet} onChange={onDataSetChange} />
       {/* Header */}
       <div className="mb-6">
         <h2 className="text-xl font-bold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">

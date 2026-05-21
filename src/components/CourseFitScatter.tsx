@@ -15,6 +15,11 @@ import type { PlayerData } from '../types';
 import { currentEvent } from '../config/event';
 import { headshots } from '../data/headshots';
 
+// All heads render at the same size so users don't read "bigger = something."
+// Signal strength is communicated by ring color + thickness instead.
+const HEAD_SIZE = 44;
+const HEAD_RADIUS = HEAD_SIZE / 2;
+
 interface Props {
   /** How many players (by |X Score|) to plot. Fewer = more breathing room. */
   topN?: number;
@@ -27,6 +32,8 @@ interface Point {
   cx: number;
   cy: number;
   size: number;
+  /** Signal-strength magnitude 0-1 (drives ring thickness + glow). */
+  strength: number;
   isBuy: boolean;
   isFade: boolean;
 }
@@ -52,6 +59,16 @@ function getInitials(name: string): string {
 export default function CourseFitScatter({ topN = 20, onPlayerClick }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
 
+  // Outrights lookup so the hover tooltip can show "TO WIN: +150 fanduel"
+  // alongside the X Score + signal.
+  const outrightsByName = useMemo(() => {
+    const m = new Map<string, { bestOdds: string; bestBook: string }>();
+    for (const o of currentEvent.outrights) {
+      m.set(o.player_name, { bestOdds: o.bestOdds, bestBook: o.bestBook });
+    }
+    return m;
+  }, []);
+
   const points: Point[] = useMemo(() => {
     // Pick the top-N by |x_score| — most signal-relevant players.
     const sorted = [...currentEvent.rankingsRound]
@@ -75,17 +92,15 @@ export default function CourseFitScatter({ topN = 20, onPlayerClick }: Props) {
     // Compute max |x_score| ONCE before the map (not per-row).
     const xRange = Math.max(0.01, ...sorted.map((q) => Math.abs(q.x_score)));
 
-    // Pass 1: compute "true" data positions + sizes.
+    // Pass 1: compute true data positions. All heads render at the SAME
+    // size — signal strength is shown via ring thickness + glow, not size.
     const raw = sorted.map((p) => {
       const cx = PAD + ((p.course_history_l2 - X_LO) / (X_HI - X_LO)) * PLOT_W;
       const cy = PAD + PLOT_H - ((p.fit_plus_category_l3 - Y_LO) / (Y_HI - Y_LO)) * PLOT_H;
-      // Headshot diameter scales with |x_score|. 30–50px so collision
-      // pass has room to nudge without anyone disappearing off-screen.
       const strength = Math.min(1, Math.abs(p.x_score) / xRange);
-      const size = 30 + strength * 20;
       const isBuy = p.signal?.includes('BUY') ?? false;
       const isFade = p.signal?.includes('FADE') || p.signal?.includes('SELL') || false;
-      return { player: p, cx, cy, size, isBuy, isFade };
+      return { player: p, cx, cy, size: HEAD_SIZE, strength, isBuy, isFade };
     });
 
     // Pass 2: iterative collision avoidance. For each overlapping pair,
@@ -145,8 +160,9 @@ export default function CourseFitScatter({ topN = 20, onPlayerClick }: Props) {
             Course Fit &mdash; {currentEvent.course}
           </h3>
           <p className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mt-0.5">
-            Top {points.length} players by X Score signal. Course History on the x-axis,
-            Course Fit on the y-axis. Bigger heads = stronger model signal. Hover any player.
+            Top {points.length} players by X-Score signal. Course history on the x-axis,
+            course fit on the y-axis. Ring color = signal direction (green BUY, red FADE,
+            gray NEUTRAL). Ring thickness = signal strength. Hover for details.
           </p>
         </div>
         <span className="text-[10px] uppercase tracking-wider text-[#22c55e] font-medium font-['Inter',system-ui,sans-serif] bg-[#22c55e]/10 border border-[#22c55e]/30 rounded-full px-2.5 py-0.5">
@@ -219,7 +235,7 @@ export default function CourseFitScatter({ topN = 20, onPlayerClick }: Props) {
 
         {/* Axis titles */}
         <text x={W / 2} y={H - 18} textAnchor="middle" fill="#a1a1aa" fontSize="11" letterSpacing="1.5" fontFamily="Inter, system-ui, sans-serif">
-          COURSE HISTORY (L2) →
+          COURSE HISTORY →
         </text>
         <text
           x={20}
@@ -231,7 +247,7 @@ export default function CourseFitScatter({ topN = 20, onPlayerClick }: Props) {
           fontFamily="Inter, system-ui, sans-serif"
           transform={`rotate(-90, 20, ${H / 2})`}
         >
-          COURSE FIT (L3) →
+          COURSE FIT →
         </text>
 
         {/* Headshot dots */}
@@ -245,10 +261,14 @@ export default function CourseFitScatter({ topN = 20, onPlayerClick }: Props) {
               : p.isFade
                 ? '#ef4444'
                 : '#525252';
-          const ringOpacity = isHovered ? 1 : p.isBuy || p.isFade ? 0.75 : 0.5;
+          const ringOpacity = isHovered ? 1 : p.isBuy || p.isFade ? 0.6 + p.strength * 0.4 : 0.45;
+          // Ring thickness encodes signal strength: NEUTRAL gets 1.5, top-tier
+          // signals get up to 4.5. The eye reads this as "this player matters
+          // more" without conflating size with direction.
+          const ringWidth = isHovered ? 3.5 : 1.5 + p.strength * 3;
           const clipId = `clip-${p.player.player_name.replace(/[^a-z0-9]/gi, '_')}`;
           const r = p.size / 2;
-          const renderSize = isHovered ? r * 1.4 : r;
+          const renderSize = isHovered ? r * 1.25 : r;
 
           return (
             <g
@@ -310,58 +330,73 @@ export default function CourseFitScatter({ topN = 20, onPlayerClick }: Props) {
                 fill="none"
                 stroke={ringColor}
                 strokeOpacity={ringOpacity}
-                strokeWidth={isHovered ? 3 : 2}
+                strokeWidth={ringWidth}
                 style={{ transition: 'all 200ms ease' }}
               />
-
-              {/* Player name on hover */}
-              {isHovered && (
-                <g>
-                  <rect
-                    x={p.cx - 90}
-                    y={p.cy + renderSize + 6}
-                    width={180}
-                    height={40}
-                    rx={6}
-                    fill="#0a0a0a"
-                    stroke="#22c55e"
-                    strokeOpacity={0.6}
-                    strokeWidth={1.5}
-                  />
-                  <text
-                    x={p.cx}
-                    y={p.cy + renderSize + 22}
-                    textAnchor="middle"
-                    fill="#f5f5f5"
-                    fontSize="12"
-                    fontWeight={600}
-                    fontFamily="Inter, system-ui, sans-serif"
-                  >
-                    {p.player.player_name}
-                  </text>
-                  <text
-                    x={p.cx}
-                    y={p.cy + renderSize + 37}
-                    textAnchor="middle"
-                    fill="#22c55e"
-                    fontSize="10"
-                    fontFamily="JetBrains Mono, SF Mono, monospace"
-                  >
-                    X Score: {p.player.x_score > 0 ? '+' : ''}
-                    {p.player.x_score.toFixed(3)} · {p.player.signal}
-                  </text>
-                </g>
-              )}
             </g>
           );
         })}
+
+        {/* Hover tooltip — rendered LAST so it sits above all heads. Uses
+            foreignObject + HTML for proper text wrapping. Position is
+            below the head by default, above if there isn't room. */}
+        {(() => {
+          if (!hovered) return null;
+          const p = points.find((q) => q.player.player_name === hovered);
+          if (!p) return null;
+          const outright = outrightsByName.get(p.player.player_name);
+          const TT_W = 200;
+          const TT_H = 76;
+          // Position: below by default, above if there's not enough room
+          const wantBelow = p.cy + HEAD_RADIUS + 14 + TT_H < PAD + PLOT_H;
+          const tx = Math.max(
+            PAD + 4,
+            Math.min(PAD + PLOT_W - TT_W - 4, p.cx - TT_W / 2),
+          );
+          const ty = wantBelow
+            ? p.cy + HEAD_RADIUS + 10
+            : p.cy - HEAD_RADIUS - 10 - TT_H;
+          return (
+            <foreignObject x={tx} y={ty} width={TT_W} height={TT_H} style={{ pointerEvents: 'none' }}>
+              <div
+                style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+                className="bg-[#0a0a0a] border border-[#22c55e]/60 rounded-md px-3 py-2 shadow-lg shadow-black/40"
+              >
+                <div className="text-[12px] font-semibold text-[#f5f5f5] leading-tight">
+                  {p.player.player_name}
+                </div>
+                <div className="text-[10px] text-[#22c55e] font-mono mt-1 leading-snug">
+                  X SCORE:{' '}
+                  <span className="text-[#f5f5f5]">
+                    {p.player.x_score > 0 ? '+' : ''}
+                    {p.player.x_score.toFixed(3)}
+                  </span>
+                  <span className="opacity-50 mx-1">·</span>
+                  {p.player.signal}
+                </div>
+                <div className="text-[10px] text-[#22c55e] font-mono mt-0.5 leading-snug">
+                  TO WIN:{' '}
+                  {outright ? (
+                    <>
+                      <span className="text-[#f5f5f5]">{outright.bestOdds}</span>
+                      <span className="opacity-50 mx-1">·</span>
+                      <span className="opacity-80">{outright.bestBook}</span>
+                    </>
+                  ) : (
+                    <span className="text-[#737373]">—</span>
+                  )}
+                </div>
+              </div>
+            </foreignObject>
+          );
+        })()}
       </svg>
 
       <p className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] leading-relaxed mt-3">
         Players in the upper-right quadrant fit the course best AND have the strongest history.
-        Lower-left is the opposite. The X Score blends these (plus live SG once R1 begins) into
-        a single number &mdash; what you see on the rankings table. Green ring = BUY signal,
-        red ring = FADE, gray = NEUTRAL.
+        Lower-left is the opposite. The X Score blends both (plus live SG once R1 begins) into
+        a single number &mdash; what you see on the rankings table. Thicker ring = stronger
+        directional signal from the model.
       </p>
     </div>
   );

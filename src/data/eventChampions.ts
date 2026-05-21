@@ -18,9 +18,10 @@ export interface Champion {
 }
 
 export const championsByEvent: Record<string, Champion[]> = {
-  // Byron Nelson at TPC Craig Ranch — venue debuted in 2021.
+  // Byron Nelson at TPC Craig Ranch — venue debuted in 2021. Scheffler's
+  // 2025 win tied the PGA Tour 72-hole scoring record.
   'cj-cup-byron-nelson-2026': [
-    // TODO: Chris, confirm 2025 winner — add as the new top entry.
+    { year: 2025, playerName: 'Scheffler, Scottie', score: '-31 (record)' },
     { year: 2024, playerName: 'Pendrith, Taylor', score: '-23' },
     { year: 2023, playerName: 'Day, Jason', score: '-23' },
     { year: 2022, playerName: 'Lee, K.H.', score: '-26' },

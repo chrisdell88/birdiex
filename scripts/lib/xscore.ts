@@ -108,6 +108,43 @@ export function computeSignal(x_score: number): Signal {
   return 'STRONGEST FADE';
 }
 
+/**
+ * Field-relative (z-score) signal classification — used pre-tournament when
+ * X Score has small spread (Layer 1 = 0). Maps each player's X Score to a
+ * signal based on its z-score relative to the field's mean and stdev.
+ *
+ *   z ≥ +1.65  →  STRONGEST BUY   (top ~5%)
+ *   z ≥ +1.00  →  STRONG BUY      (top ~16%)
+ *   z ≥ +0.50  →  BUY             (top ~31%)
+ *   z ≥ +0.20  →  LEAN BUY
+ *   |z| < 0.20 →  NEUTRAL
+ *   z ≤ -0.20  →  LEAN FADE
+ *   z ≤ -0.50  →  FADE
+ *   z ≤ -1.00  →  STRONG FADE
+ *   z ≤ -1.65  →  STRONGEST FADE
+ *
+ * This gives meaningful direction even when X Score range is tiny. Caller
+ * should pass the full field's X Score array so mean + stdev are correct.
+ */
+export function computeSignalFieldRelative(x_score: number, fieldXScores: number[]): Signal {
+  const n = fieldXScores.length;
+  if (n < 5) return 'NEUTRAL'; // not enough data to be meaningful
+  const mean = fieldXScores.reduce((a, b) => a + b, 0) / n;
+  const variance = fieldXScores.reduce((a, b) => a + (b - mean) ** 2, 0) / n;
+  const stdev = Math.sqrt(variance);
+  if (stdev < 1e-6) return 'NEUTRAL'; // degenerate field
+  const z = (x_score - mean) / stdev;
+  if (z >= 1.65) return 'STRONGEST BUY';
+  if (z >= 1.00) return 'STRONG BUY';
+  if (z >= 0.50) return 'BUY';
+  if (z >= 0.20) return 'LEAN BUY';
+  if (z > -0.20) return 'NEUTRAL';
+  if (z >= -0.50) return 'LEAN FADE';
+  if (z >= -1.00) return 'FADE';
+  if (z >= -1.65) return 'STRONG FADE';
+  return 'STRONGEST FADE';
+}
+
 export type Purity = 'PURE BUY' | 'PURE FADE' | 'CONFLICTED' | 'NEUTRAL';
 
 /**

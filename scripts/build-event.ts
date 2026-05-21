@@ -9,7 +9,7 @@
 import { readFile, writeFile, access } from 'node:fs/promises';
 import { join } from 'node:path';
 import { COURSES, DEFAULT_LOW_PREDICTABILITY_COURSE, computeBlendedWeights } from './lib/courses.js';
-import { computeXScore, computeSignal, computePurity } from './lib/xscore.js';
+import { computeXScore, computeSignal, computeSignalFieldRelative, computePurity } from './lib/xscore.js';
 import type { LiveSG, Decomposition } from './lib/xscore.js';
 
 interface Args {
@@ -151,20 +151,24 @@ async function main() {
 
   if (isPre) {
     console.log('Pre-tournament mode: building from decompositions only (Layer 1 = 0).\n');
-    const preRows = decompPlayers.map((p) => {
+    // Two-pass: first compute every player's X Score, then classify signals
+    // using a field-relative (z-score) rule. The standard absolute thresholds
+    // (0.5 / 1.0 / 1.5) make every tiny positive X Score "LEAN BUY" pre-R1
+    // — meaningless. Z-score classification gives real direction based on
+    // each player's rank within the field.
+    const preBreakdowns = decompPlayers.map((p) => {
       const decomp: Decomposition = {
         total_course_history_adjustment: p.total_course_history_adjustment ?? 0,
         total_fit_adjustment: p.total_fit_adjustment ?? 0,
         strokes_gained_category_adjustment: p.strokes_gained_category_adjustment ?? 0,
         major_adjustment: p.major_adjustment ?? 0,
       };
-      const breakdown = computeXScore(null, decomp, courseProfile);
-      // Pre-tournament: Layer 1 (live SG) is zero, so X Scores cluster near
-      // zero and the standard signal thresholds (0.5 / 1.0 / 1.5) produce
-      // misleading LEAN BUY / NEUTRAL labels for any tiny positive or
-      // negative value. Suppress signals to NEUTRAL until R1 grades and
-      // L1 produces real spread.
-      const signal = 'NEUTRAL' as const;
+      return { p, breakdown: computeXScore(null, decomp, courseProfile) };
+    });
+    const fieldXScores = preBreakdowns.map((row) => row.breakdown.x_score);
+
+    const preRows = preBreakdowns.map(({ p, breakdown }) => {
+      const signal = computeSignalFieldRelative(breakdown.x_score, fieldXScores);
       const purity = computePurity(signal, null);
       return {
         player_name: p.player_name,

@@ -75,20 +75,58 @@ export default function CourseFitScatter({ topN = 20, onPlayerClick }: Props) {
     // Compute max |x_score| ONCE before the map (not per-row).
     const xRange = Math.max(0.01, ...sorted.map((q) => Math.abs(q.x_score)));
 
-    return sorted.map((p) => {
+    // Pass 1: compute "true" data positions + sizes.
+    const raw = sorted.map((p) => {
       const cx = PAD + ((p.course_history_l2 - X_LO) / (X_HI - X_LO)) * PLOT_W;
       const cy = PAD + PLOT_H - ((p.fit_plus_category_l3 - Y_LO) / (Y_HI - Y_LO)) * PLOT_H;
-
-      // Headshot diameter scales with |x_score|. Range 34–56px so heads
-      // remain visible and clickable on first glance.
+      // Headshot diameter scales with |x_score|. 30–50px so collision
+      // pass has room to nudge without anyone disappearing off-screen.
       const strength = Math.min(1, Math.abs(p.x_score) / xRange);
-      const size = 34 + strength * 22;
-
+      const size = 30 + strength * 20;
       const isBuy = p.signal?.includes('BUY') ?? false;
       const isFade = p.signal?.includes('FADE') || p.signal?.includes('SELL') || false;
-
       return { player: p, cx, cy, size, isBuy, isFade };
     });
+
+    // Pass 2: iterative collision avoidance. For each overlapping pair,
+    // push them apart along the connecting vector by half the overlap
+    // each iteration. Heads end up near (but not exactly on) their true
+    // data position — no more stacking.
+    const PADDING = 4; // extra px between heads
+    for (let iter = 0; iter < 80; iter++) {
+      let moved = false;
+      for (let i = 0; i < raw.length; i++) {
+        for (let j = i + 1; j < raw.length; j++) {
+          const a = raw[i];
+          const b = raw[j];
+          const dx = b.cx - a.cx;
+          const dy = b.cy - a.cy;
+          const dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
+          const minDist = a.size / 2 + b.size / 2 + PADDING;
+          if (dist < minDist) {
+            const push = (minDist - dist) / 2;
+            const ux = dx / dist;
+            const uy = dy / dist;
+            a.cx -= ux * push;
+            a.cy -= uy * push;
+            b.cx += ux * push;
+            b.cy += uy * push;
+            moved = true;
+          }
+        }
+      }
+      if (!moved) break;
+    }
+
+    // Pass 3: clamp inside the plot area so collision nudges can't push
+    // a head off the chart edge.
+    for (const r of raw) {
+      const half = r.size / 2;
+      r.cx = Math.max(PAD + half, Math.min(PAD + PLOT_W - half, r.cx));
+      r.cy = Math.max(PAD + half, Math.min(PAD + PLOT_H - half, r.cy));
+    }
+
+    return raw;
   }, [topN]);
 
   // Sort points so hovered renders last (on top).

@@ -28,6 +28,7 @@ export const headshots: Record<string, string> = {
   "Crowe, Trace": "https://a.espncdn.com/i/headshots/golf/players/full/11183.png",
   "Dahmen, Joel": "https://a.espncdn.com/i/headshots/golf/players/full/6196.png",
   "Davis, Cam": "https://a.espncdn.com/i/headshots/golf/players/full/10863.png",
+  "Day, Jason": "https://a.espncdn.com/i/headshots/golf/players/full/1680.png",
   "Dou, Zecheng": "https://a.espncdn.com/i/headshots/golf/players/full/8889.png",
   "Dumont De Chassart, Adrien": "https://a.espncdn.com/i/headshots/golf/players/full/5076011.png",
   "Duncan, Tyler": "https://a.espncdn.com/i/headshots/golf/players/full/9569.png",

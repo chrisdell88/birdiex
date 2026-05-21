@@ -1,4 +1,5 @@
 import { overallRecord, overallUnits, overallROI } from '../data/resultsData';
+import CourseAdaptiveChart from './CourseAdaptiveChart';
 
 interface MethodologyPageProps {
   onNavigateToResults?: () => void;
@@ -171,6 +172,14 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
             </p>
           </div>
         </div>
+      </section>
+
+      {/* Section 3.5: Course-Adaptive Bet Selection */}
+      <section className="mb-12">
+        <h2 className="text-xl font-bold text-[#f5f5f5] mb-4 font-['Inter',system-ui,sans-serif]">
+          Course-Adaptive Bet Selection
+        </h2>
+        <CourseAdaptiveChart />
       </section>
 
       {/* Section 4: Signal System */}

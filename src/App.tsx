@@ -54,16 +54,19 @@ function App() {
       <Ticker />
 
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
-        {activeTab === 'rankings' && <RankingsTable data={activeData} />}
-        {activeTab === 'matchups' && <MatchupsView data={activeData} />}
-        {activeTab === 'odds' && <OddsTablePage data={activeData} />}
-        {activeTab === 'methodology' && <MethodologyPage onNavigateToResults={() => setActiveTab('results')} />}
-        {activeTab === 'results' && <ResultsPage />}
-        {activeTab === 'alerts' && (
-          <Suspense fallback={<div className="text-center text-sm text-[#a1a1aa] py-16">Loading…</div>}>
-            <SignupPage />
-          </Suspense>
-        )}
+        {/* keyed wrapper -> remounts + fades in on every tab switch */}
+        <div key={activeTab} className="fade-in">
+          {activeTab === 'rankings' && <RankingsTable data={activeData} />}
+          {activeTab === 'matchups' && <MatchupsView data={activeData} />}
+          {activeTab === 'odds' && <OddsTablePage data={activeData} />}
+          {activeTab === 'methodology' && <MethodologyPage onNavigateToResults={() => setActiveTab('results')} />}
+          {activeTab === 'results' && <ResultsPage />}
+          {activeTab === 'alerts' && (
+            <Suspense fallback={<div className="text-center text-sm text-[#a1a1aa] py-16">Loading…</div>}>
+              <SignupPage />
+            </Suspense>
+          )}
+        </div>
       </main>
 
       <Footer />

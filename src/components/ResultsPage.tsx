@@ -963,9 +963,11 @@ export default function ResultsPage() {
       </div>
 
       {/* ── View Content ── */}
-      {activeView === 'all-time' && <AllTimeView />}
-      {activeView === 'masters-2026' && <MastersView />}
-      {activeView === 'pga-2026' && <PGAView />}
+      <div key={activeView} className="fade-in">
+        {activeView === 'all-time' && <AllTimeView />}
+        {activeView === 'masters-2026' && <MastersView />}
+        {activeView === 'pga-2026' && <PGAView />}
+      </div>
     </div>
   );
 }

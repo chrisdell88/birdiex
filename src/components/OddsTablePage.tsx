@@ -318,12 +318,17 @@ export default function OddsTablePage({ data }: OddsTablePageProps) {
                       {row.edge.toFixed(2)}
                     </td>
                     <td className="px-3 py-2.5">
-                      <span
-                        className="text-[#22c55e] text-xs tracking-tight"
-                        aria-label={`${starsForEdge(row.edge)} star play`}
-                      >
-                        {'★'.repeat(starsForEdge(row.edge))}
-                      </span>
+                      {(() => {
+                        const stars = starsForEdge(row.edge);
+                        return (
+                          <span
+                            className={`text-[#22c55e] text-xs tracking-tight ${stars === 5 ? 'star-glow' : ''}`}
+                            aria-label={`${stars} star play`}
+                          >
+                            {'★'.repeat(stars)}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-3 py-2.5">
                       {isBuySide(row.pick) && (

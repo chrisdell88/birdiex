@@ -470,7 +470,7 @@ export default function MatchupsView({ data }: MatchupsViewProps) {
                     const stars = starsForEdge(m.matchupScore);
                     return (
                       <span
-                        className="text-[#22c55e] text-sm tracking-tight"
+                        className={`text-[#22c55e] text-sm tracking-tight ${stars === 5 ? 'star-glow' : ''}`}
                         title={`${stars}-star play`}
                         aria-label={`${stars} star play`}
                       >

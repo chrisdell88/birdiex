@@ -142,7 +142,7 @@ export function recommendedFloorForPredictability(predictability: number): numbe
   const raw = 3.05 - 14.62 * predictability;
   const clamped = Math.max(FLOOR_MIN, Math.min(FLOOR_MAX, raw));
   // Snap to nearest tier.
-  let nearest = FLOOR_TIERS[0];
+  let nearest: number = FLOOR_TIERS[0];
   let bestDelta = Math.abs(clamped - nearest);
   for (const t of FLOOR_TIERS) {
     const d = Math.abs(clamped - t);

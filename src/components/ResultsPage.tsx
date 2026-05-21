@@ -4,6 +4,7 @@ import PlayerSearch from './PlayerSearch';
 import RecommendedFloorBadge from './RecommendedFloorBadge';
 import EquityCurve from './EquityCurve';
 import HitRateByTier from './HitRateByTier';
+import TournamentSummaryBanner from './TournamentSummaryBanner';
 import { r2Results, r2Summary as pgaR2SummaryRaw } from '../data/pgaChampR2Results';
 import { r3Results, r3Summary as pgaR3SummaryRaw } from '../data/pgaChampR3Results';
 import { r4Results, r4Summary as pgaR4SummaryRaw } from '../data/pgaChampR4Results';
@@ -488,39 +489,17 @@ function MastersView() {
 
   return (
     <div>
-      {/* Tournament Summary Banner */}
-      <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-lg p-4 mb-6">
-        <div className="flex items-center gap-3 mb-2 flex-wrap">
-          <span className="bg-[#22c55e]/15 text-[#22c55e] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
-            TOURNAMENT COMPLETE
-          </span>
-          <span className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">The Masters 2026 — Final Results</span>
-          <RecommendedFloorBadge
-            threshold={mastersFloor.floor}
-            course={mastersFloor.course}
-          />
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
-          <div>
-            <div className={label}>Total Record</div>
-            <div className={`text-lg font-bold ${mono} text-[#f5f5f5]`}>
-              {overallRecord.wins}-{overallRecord.losses}-{overallRecord.pushes}
-            </div>
-          </div>
-          <div>
-            <div className={label}>Total Units</div>
-            <div className={`text-lg font-bold ${mono} text-[#22c55e]`}>+{overallUnits}u</div>
-          </div>
-          <div>
-            <div className={label}>ROI</div>
-            <div className={`text-lg font-bold ${mono} text-[#22c55e]`}>+{overallROI}%</div>
-          </div>
-          <div>
-            <div className={label}>Total Bets</div>
-            <div className={`text-lg font-bold ${mono} text-[#f5f5f5]`}>{betLog.length}</div>
-          </div>
-        </div>
-      </div>
+      <TournamentSummaryBanner
+        status="COMPLETE"
+        eventName="The Masters 2026"
+        course={mastersFloor.course}
+        threshold={mastersFloor.floor}
+        record={{ wins: overallRecord.wins, losses: overallRecord.losses, pushes: overallRecord.pushes }}
+        units={overallUnits}
+        roi={overallROI}
+        bets={mastersSummary.bets}
+        recordLabel="Total Record"
+      />
 
       {/* Summary Dashboard */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -845,20 +824,17 @@ function PGAView() {
 
   return (
     <div>
-      {/* Tournament header */}
-      <div className="bg-[#0a0a0a] border border-[#a1a1aa]/20 rounded-lg p-4 mb-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="bg-[#22c55e]/15 text-[#22c55e] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
-            COMPLETE
-          </span>
-          <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">PGA Championship 2026</span>
-          <span className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">Aronimink Golf Club</span>
-          <RecommendedFloorBadge
-            threshold={pgaFloor.floor}
-            course={pgaFloor.course}
-          />
-        </div>
-      </div>
+      <TournamentSummaryBanner
+        status="COMPLETE"
+        eventName="PGA Championship 2026"
+        course={pgaFloor.course}
+        threshold={pgaFloor.floor}
+        record={{ wins: pgaSummary.wins, losses: pgaSummary.losses, pushes: pgaSummary.pushes }}
+        units={pgaSummary.units}
+        roi={pgaSummary.roi}
+        bets={pgaSummary.bets}
+        recordLabel="Total Record"
+      />
 
       {/* Player search — filters bet logs */}
       <div className="mb-5">

@@ -277,7 +277,7 @@ function AllTimeView() {
                 </span>
                 <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">{t.name}</span>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <div className={label}>Record</div>
                   <div className={`text-base font-bold ${mono} text-[#f5f5f5]`}>
@@ -294,12 +294,6 @@ function AllTimeView() {
                   <div className={label}>ROI</div>
                   <div className={`text-base font-bold ${mono} ${unitColor(t.roi)}`}>
                     {formatROI(t.roi)}
-                  </div>
-                </div>
-                <div>
-                  <div className={label}>Bets</div>
-                  <div className={`text-base font-bold ${mono} text-[#f5f5f5]`}>
-                    {t.wins + t.losses + t.pushes}
                   </div>
                 </div>
               </div>

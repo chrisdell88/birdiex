@@ -22,15 +22,21 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
         {/* Top row */}
         <div className="flex items-center justify-between py-4">
           <div className="flex items-center gap-4">
-            {/* Logo */}
-            <div className="flex items-baseline">
+            {/* Logo — clicking returns to Rankings (home). Treated as a true
+                home link so it works once we split tabs into separate routes. */}
+            <button
+              type="button"
+              onClick={() => onTabChange('rankings')}
+              aria-label="BirdieX — go to home / Rankings"
+              className="flex items-baseline cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0a0a] rounded-sm transition-opacity hover:opacity-80"
+            >
               <span className="text-2xl md:text-3xl font-extrabold tracking-tight text-white font-['Inter',system-ui,sans-serif]">
                 BIRDIE
               </span>
               <span className="text-2xl md:text-3xl font-extrabold tracking-tight text-[#22c55e] font-['Inter',system-ui,sans-serif]">
                 X
               </span>
-            </div>
+            </button>
             <div className="hidden sm:block">
               <span className="text-[10px] uppercase tracking-[0.2em] text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
                 Putting Regression Model

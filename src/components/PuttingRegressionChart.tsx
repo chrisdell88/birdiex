@@ -1,12 +1,17 @@
 /**
- * PuttingRegressionChart — real PGA Tour data showing why our model is built
- * the way it is. Two side-by-side scatterplots from the 2026 PGA Championship:
+ * PuttingRegressionChart — real PGA Tour data showing the full
+ * strokes-gained persistence hierarchy. 2×2 grid of scatterplots, each
+ * comparing R1 → R2 strokes-gained for one SG category at the 2026 PGA
+ * Championship (156 players in the field).
  *
- *   LEFT  — Round 1 SG Putting vs Round 2 SG Putting. R² ≈ 0.04. Random cloud.
- *   RIGHT — Round 1 SG OTT vs Round 2 SG OTT. R² ≈ 0.13 (~3.5x stronger).
+ *   TOP LEFT  — OTT (Off-the-Tee).      R² ≈ 0.13 — the only real signal.
+ *   TOP RIGHT — APP (Approach).         R² ≈ 0.04 — mostly random round-to-round.
+ *   BOT LEFT  — ARG (Around the Green). R² ≈ 0.01 — basically random.
+ *   BOT RIGHT — PUTT (Putting).         R² ≈ 0.04 — basically random.
  *
- * The visual sells the thesis: putting regresses to the mean far faster than
- * ball-striking. The model subtracts putting and weights OTT/APP heavily.
+ * The visual proves the thesis: OTT carries forward. Everything else is
+ * mostly noise round-to-round. The X Score subtracts putting and weights
+ * OTT/APP heavily because of exactly this.
  *
  * Data computed at import time from pgaChampR1Data + pgaChampR2Data.
  */
@@ -14,19 +19,20 @@ import { roundOnlyData as r1 } from '../data/pgaChampR1Data';
 import { roundOnlyData as r2 } from '../data/pgaChampR2Data';
 
 interface Pair { x: number; y: number; }
+type SgKey = 'sg_ott' | 'sg_app' | 'sg_arg' | 'sg_putt';
 
 const r1Map = new Map(r1.map((p) => [p.player_name, p]));
 
-const puttPairs: Pair[] = [];
-const ottPairs: Pair[] = [];
-for (const p2 of r2) {
-  const p1 = r1Map.get(p2.player_name);
-  if (!p1) continue;
-  puttPairs.push({ x: p1.sg_putt, y: p2.sg_putt });
-  ottPairs.push({ x: p1.sg_ott, y: p2.sg_ott });
+function pairsFor(key: SgKey): Pair[] {
+  const out: Pair[] = [];
+  for (const p2 of r2) {
+    const p1 = r1Map.get(p2.player_name);
+    if (!p1) continue;
+    out.push({ x: p1[key], y: p2[key] });
+  }
+  return out;
 }
 
-/** Compute Pearson r and least-squares fit y = m·x + b for a set of points. */
 function fit(pairs: Pair[]) {
   const n = pairs.length;
   let sx = 0, sy = 0, sxy = 0, sxx = 0, syy = 0;
@@ -43,94 +49,118 @@ function fit(pairs: Pair[]) {
   return { r, r2: r * r, m, b };
 }
 
-const puttFit = fit(puttPairs);
-const ottFit = fit(ottPairs);
+interface Category {
+  key: SgKey;
+  title: string;
+  subtitle: string;
+  isSustained: boolean;
+  pairs: Pair[];
+}
 
-// Plot bounds — same on both axes, both panels, for fair comparison.
+// Each panel: OTT (sustained) at top-left, then APP, ARG, PUTT in order
+// of decreasing persistence. The eye reads "stickiest" → "most random".
+const categories: Category[] = [
+  {
+    key: 'sg_ott',
+    title: 'Off-the-Tee',
+    subtitle: 'THE ONE THAT STICKS',
+    isSustained: true,
+    pairs: pairsFor('sg_ott'),
+  },
+  {
+    key: 'sg_app',
+    title: 'Approach',
+    subtitle: 'SOMEWHAT SUSTAINED · BUT VARIANCE-HEAVY',
+    isSustained: false,
+    pairs: pairsFor('sg_app'),
+  },
+  {
+    key: 'sg_arg',
+    title: 'Around the Green',
+    subtitle: 'NEAR-RANDOM ROUND-TO-ROUND',
+    isSustained: false,
+    pairs: pairsFor('sg_arg'),
+  },
+  {
+    key: 'sg_putt',
+    title: 'Putting',
+    subtitle: 'A FRESH ROLL OF THE DICE EVERY ROUND',
+    isSustained: false,
+    pairs: pairsFor('sg_putt'),
+  },
+];
+
+const fits = categories.map((c) => fit(c.pairs));
+const ottR2 = fits[0].r2;
+const puttR2 = fits[3].r2;
+
+// Plot bounds — same for all 4 panels for fair comparison.
 const AXIS_MIN = -3;
 const AXIS_MAX = 3;
 
+// Panel grid: 2 cols × 2 rows. Each panel uses a 320×240 cell.
+const CELL_W = 320;
+const CELL_H = 250;
+const PLOT_W = 240;
+const PLOT_H = 180;
+const PLOT_OFFSET_X = 60;
+const PLOT_OFFSET_Y = 45;
+const SVG_W = CELL_W * 2;
+const SVG_H = CELL_H * 2;
+
 interface PanelProps {
-  title: string;
-  subtitle: string;
-  pairs: Pair[];
-  rSquared: number;
-  m: number;
-  b: number;
-  isRandom: boolean;
-  xOffset: number;
+  category: Category;
+  fitted: ReturnType<typeof fit>;
+  row: number;
+  col: number;
 }
 
-function Panel({ title, subtitle, pairs, rSquared, m, b, isRandom, xOffset }: PanelProps) {
-  // Panel-local plot area: 240 wide × 220 tall, sitting at (xOffset+50, 50).
-  const W = 240;
-  const H = 220;
-  const PX = xOffset + 50; // plot origin x (left edge of plot area)
-  const PY = 50;           // plot origin y (top edge of plot area)
+function Panel({ category, fitted, row, col }: PanelProps) {
+  const PX = col * CELL_W + PLOT_OFFSET_X;
+  const PY = row * CELL_H + PLOT_OFFSET_Y;
 
-  const xScale = (v: number) => PX + ((v - AXIS_MIN) / (AXIS_MAX - AXIS_MIN)) * W;
-  const yScale = (v: number) => PY + H - ((v - AXIS_MIN) / (AXIS_MAX - AXIS_MIN)) * H;
+  const xScale = (v: number) => PX + ((v - AXIS_MIN) / (AXIS_MAX - AXIS_MIN)) * PLOT_W;
+  const yScale = (v: number) => PY + PLOT_H - ((v - AXIS_MIN) / (AXIS_MAX - AXIS_MIN)) * PLOT_H;
 
-  // Trendline endpoints clipped to plot area.
-  const trendY1 = m * AXIS_MIN + b;
-  const trendY2 = m * AXIS_MAX + b;
+  const trendY1 = fitted.m * AXIS_MIN + fitted.b;
+  const trendY2 = fitted.m * AXIS_MAX + fitted.b;
+
+  const accent = category.isSustained ? '#22c55e' : '#525252';
+  const dotFill = category.isSustained ? '#22c55e' : '#737373';
+  const dotOpacity = category.isSustained ? 0.55 : 0.6;
 
   return (
     <g>
       {/* Title */}
       <text
-        x={PX + W / 2}
-        y={PY - 28}
+        x={PX + PLOT_W / 2}
+        y={PY - 22}
         textAnchor="middle"
         fill="#f5f5f5"
         fontSize="13"
         fontWeight={600}
         fontFamily="Inter, system-ui, sans-serif"
       >
-        {title}
+        {category.title}
       </text>
       <text
-        x={PX + W / 2}
-        y={PY - 13}
+        x={PX + PLOT_W / 2}
+        y={PY - 8}
         textAnchor="middle"
         fill="#a1a1aa"
-        fontSize="10"
+        fontSize="9"
         letterSpacing="1"
         fontFamily="Inter, system-ui, sans-serif"
       >
-        {subtitle}
+        {category.subtitle}
       </text>
 
       {/* Plot background */}
-      <rect
-        x={PX}
-        y={PY}
-        width={W}
-        height={H}
-        fill="#0a0a0a"
-        stroke="#262626"
-        strokeWidth={1}
-      />
+      <rect x={PX} y={PY} width={PLOT_W} height={PLOT_H} fill="#0a0a0a" stroke="#262626" strokeWidth={1} />
 
       {/* Origin crosshair (SG = 0) */}
-      <line
-        x1={xScale(0)}
-        x2={xScale(0)}
-        y1={PY}
-        y2={PY + H}
-        stroke="#262626"
-        strokeWidth={1}
-        strokeDasharray="2 3"
-      />
-      <line
-        x1={PX}
-        x2={PX + W}
-        y1={yScale(0)}
-        y2={yScale(0)}
-        stroke="#262626"
-        strokeWidth={1}
-        strokeDasharray="2 3"
-      />
+      <line x1={xScale(0)} x2={xScale(0)} y1={PY} y2={PY + PLOT_H} stroke="#262626" strokeWidth={1} strokeDasharray="2 3" />
+      <line x1={PX} x2={PX + PLOT_W} y1={yScale(0)} y2={yScale(0)} stroke="#262626" strokeWidth={1} strokeDasharray="2 3" />
 
       {/* Trendline */}
       <line
@@ -138,83 +168,76 @@ function Panel({ title, subtitle, pairs, rSquared, m, b, isRandom, xOffset }: Pa
         x2={xScale(AXIS_MAX)}
         y1={yScale(trendY1)}
         y2={yScale(trendY2)}
-        stroke={isRandom ? '#525252' : '#22c55e'}
-        strokeWidth={isRandom ? 1.5 : 2.5}
-        strokeDasharray={isRandom ? '4 4' : undefined}
-        opacity={isRandom ? 0.6 : 0.9}
+        stroke={accent}
+        strokeWidth={category.isSustained ? 2.5 : 1.5}
+        strokeDasharray={category.isSustained ? undefined : '4 4'}
+        opacity={category.isSustained ? 0.9 : 0.6}
       />
 
       {/* Data points */}
-      {pairs.map((p, i) => (
+      {category.pairs.map((p, i) => (
         <circle
           key={i}
           cx={xScale(p.x)}
           cy={yScale(p.y)}
-          r={2.5}
-          fill={isRandom ? '#737373' : '#22c55e'}
-          fillOpacity={isRandom ? 0.65 : 0.55}
+          r={2.3}
+          fill={dotFill}
+          fillOpacity={dotOpacity}
         />
       ))}
 
       {/* R² badge */}
-      <g transform={`translate(${PX + W - 8}, ${PY + 8})`}>
+      <g transform={`translate(${PX + PLOT_W - 8}, ${PY + 8})`}>
         <rect
-          x={-68}
+          x={-62}
           y={0}
-          width={68}
-          height={26}
+          width={62}
+          height={24}
           rx={4}
           fill="#0a0a0a"
-          stroke={isRandom ? '#525252' : '#22c55e'}
+          stroke={accent}
           strokeOpacity={0.6}
           strokeWidth={1}
         />
-        <text
-          x={-58}
-          y={11}
-          fill="#a1a1aa"
-          fontSize="9"
-          letterSpacing="1"
-          fontFamily="Inter, system-ui, sans-serif"
-        >
+        <text x={-54} y={10} fill="#a1a1aa" fontSize="9" letterSpacing="1" fontFamily="Inter, system-ui, sans-serif">
           R²
         </text>
         <text
           x={-6}
-          y={19}
+          y={18}
           textAnchor="end"
-          fill={isRandom ? '#a1a1aa' : '#22c55e'}
-          fontSize="13"
+          fill={category.isSustained ? '#22c55e' : '#a1a1aa'}
+          fontSize="12"
           fontWeight={700}
           fontFamily="JetBrains Mono, SF Mono, monospace"
         >
-          {rSquared.toFixed(3)}
+          {fitted.r2.toFixed(3)}
         </text>
       </g>
 
       {/* Axis labels */}
       <text
-        x={PX + W / 2}
-        y={PY + H + 22}
+        x={PX + PLOT_W / 2}
+        y={PY + PLOT_H + 20}
         textAnchor="middle"
         fill="#999"
-        fontSize="10"
+        fontSize="9"
         letterSpacing="1"
         fontFamily="Inter, system-ui, sans-serif"
       >
-        ROUND 1 SG ({title.split(' ')[0]})
+        R1 SG →
       </text>
       <text
         x={PX - 14}
-        y={PY + H / 2}
+        y={PY + PLOT_H / 2}
         textAnchor="middle"
         fill="#999"
-        fontSize="10"
+        fontSize="9"
         letterSpacing="1"
         fontFamily="Inter, system-ui, sans-serif"
-        transform={`rotate(-90, ${PX - 14}, ${PY + H / 2})`}
+        transform={`rotate(-90, ${PX - 14}, ${PY + PLOT_H / 2})`}
       >
-        ROUND 2 SG ({title.split(' ')[0]})
+        R2 SG →
       </text>
     </g>
   );
@@ -226,11 +249,12 @@ export default function PuttingRegressionChart() {
       <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
         <div>
           <h3 className="text-base font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
-            Putting regresses. Ball-striking sustains.
+            One skill sticks. The other three regress.
           </h3>
           <p className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mt-0.5">
-            Each dot = one PGA Championship 2026 golfer ({puttPairs.length} players).
-            R1 strokes-gained on the x-axis, R2 strokes-gained on the y-axis.
+            Each dot = one PGA Championship 2026 golfer ({categories[0].pairs.length} players).
+            R1 strokes-gained on the x-axis, R2 strokes-gained on the y-axis. All 4 SG
+            categories on the same scale.
           </p>
         </div>
         <span className="text-[10px] uppercase tracking-wider text-[#22c55e] font-medium font-['Inter',system-ui,sans-serif] bg-[#22c55e]/10 border border-[#22c55e]/30 rounded-full px-2.5 py-0.5">
@@ -238,38 +262,27 @@ export default function PuttingRegressionChart() {
         </span>
       </div>
 
-      <svg viewBox="0 0 640 320" className="w-full h-auto" role="img" aria-label="Side-by-side scatterplots showing PUTT R-squared 0.038 versus OTT R-squared 0.134">
-        <Panel
-          title="Putting"
-          subtitle="A FRESH ROLL OF THE DICE EVERY ROUND"
-          pairs={puttPairs}
-          rSquared={puttFit.r2}
-          m={puttFit.m}
-          b={puttFit.b}
-          isRandom={true}
-          xOffset={0}
-        />
-        <Panel
-          title="Off-the-Tee"
-          subtitle="A SKILL THAT STICKS"
-          pairs={ottPairs}
-          rSquared={ottFit.r2}
-          m={ottFit.m}
-          b={ottFit.b}
-          isRandom={false}
-          xOffset={320}
-        />
+      <svg
+        viewBox={`0 0 ${SVG_W} ${SVG_H}`}
+        className="w-full h-auto"
+        role="img"
+        aria-label="Four scatterplots comparing R1 to R2 strokes-gained across OTT, APP, ARG, and PUTT"
+      >
+        <Panel category={categories[0]} fitted={fits[0]} row={0} col={0} />
+        <Panel category={categories[1]} fitted={fits[1]} row={0} col={1} />
+        <Panel category={categories[2]} fitted={fits[2]} row={1} col={0} />
+        <Panel category={categories[3]} fitted={fits[3]} row={1} col={1} />
       </svg>
 
       <p className="text-xs text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed mt-4">
-        On the left, putting from Round 1 barely predicts putting in Round 2 &mdash; the cloud is
-        diffuse and the trendline is nearly flat. On the right, off-the-tee performance carries
-        forward roughly{' '}
+        Only Off-the-Tee shows real persistence round-to-round. Approach, Around-the-Green,
+        and Putting all sit at near-random R² values. OTT carries forward roughly{' '}
         <span className="text-[#22c55e] font-semibold font-['JetBrains_Mono','SF_Mono',monospace]">
-          {(ottFit.r2 / puttFit.r2).toFixed(1)}x
+          {(ottR2 / puttR2).toFixed(1)}x
         </span>
-        {' '}better. This is the thesis behind the X Score: the market treats both as
-        &ldquo;strokes gained,&rdquo; but only one is a repeatable skill.
+        {' '}stronger than putting. This is the thesis behind the X Score: the market treats
+        all four as &ldquo;strokes gained,&rdquo; but only one is a repeatable skill at the
+        round level.
       </p>
     </div>
   );

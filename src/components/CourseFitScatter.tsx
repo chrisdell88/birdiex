@@ -16,8 +16,10 @@ import { currentEvent } from '../config/event';
 import { headshots } from '../data/headshots';
 
 interface Props {
-  /** How many players (by |X Score|) to plot. */
+  /** How many players (by |X Score|) to plot. Fewer = more breathing room. */
   topN?: number;
+  /** Called when a head is clicked. Receives the player. */
+  onPlayerClick?: (player: PlayerData) => void;
 }
 
 interface Point {
@@ -29,16 +31,12 @@ interface Point {
   isFade: boolean;
 }
 
-// SVG layout.
-const W = 800;
-const H = 480;
-const PAD = 60;
+// SVG layout — bigger plot area so heads have room to breathe.
+const W = 900;
+const H = 560;
+const PAD = 70;
 const PLOT_W = W - PAD * 2;
 const PLOT_H = H - PAD * 2;
-
-// Plot scale: symmetric around 0 so the regression diagonal is visible.
-const X_RANGE = 0.5; // course_history_l2 typically -0.06 to +0.12; pad to ±0.5 for clarity
-const Y_RANGE = 0.5; // fit_plus_category_l3 typically -0.4 to +0.3
 
 function getInitials(name: string): string {
   const parts = name.split(',').map((s) => s.trim());
@@ -51,7 +49,7 @@ function getInitials(name: string): string {
   return words.slice(0, 2).map((w) => w[0] ?? '').join('').toUpperCase();
 }
 
-export default function CourseFitScatter({ topN = 30 }: Props) {
+export default function CourseFitScatter({ topN = 20, onPlayerClick }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
 
   const points: Point[] = useMemo(() => {
@@ -61,16 +59,28 @@ export default function CourseFitScatter({ topN = 30 }: Props) {
       .sort((a, b) => Math.abs(b.x_score) - Math.abs(a.x_score))
       .slice(0, topN);
 
-    return sorted.map((p) => {
-      // X = course_history_l2 mapped to plot x.
-      // Y = fit_plus_category_l3 mapped to plot y (inverted so positive is UP).
-      const cx = PAD + ((p.course_history_l2 + X_RANGE) / (2 * X_RANGE)) * PLOT_W;
-      const cy = PAD + PLOT_H - ((p.fit_plus_category_l3 + Y_RANGE) / (2 * Y_RANGE)) * PLOT_H;
+    // Compute actual data range with padding so the chart zooms to the
+    // real distribution instead of always showing ±0.5. "Staying true to
+    // the data" — Chris.
+    const xs = sorted.map((p) => p.course_history_l2);
+    const ys = sorted.map((p) => p.fit_plus_category_l3);
+    const xMin = Math.min(...xs), xMax = Math.max(...xs);
+    const yMin = Math.min(...ys), yMax = Math.max(...ys);
+    // 18% padding on each side so the largest heads sit inside the plot area.
+    const xPad = Math.max(0.02, (xMax - xMin) * 0.18);
+    const yPad = Math.max(0.02, (yMax - yMin) * 0.18);
+    const X_LO = xMin - xPad, X_HI = xMax + xPad;
+    const Y_LO = yMin - yPad, Y_HI = yMax + yPad;
 
-      // Headshot diameter scales with |x_score| so stronger signals draw the eye.
-      // Range roughly 28px (weak) → 52px (strong).
-      const strength = Math.min(1, Math.abs(p.x_score) / 0.5);
-      const size = 28 + strength * 24;
+    return sorted.map((p) => {
+      const cx = PAD + ((p.course_history_l2 - X_LO) / (X_HI - X_LO)) * PLOT_W;
+      const cy = PAD + PLOT_H - ((p.fit_plus_category_l3 - Y_LO) / (Y_HI - Y_LO)) * PLOT_H;
+
+      // Headshot diameter scales with |x_score|. Range 34–56px so heads
+      // remain visible and clickable on first glance.
+      const xRange = Math.max(0.01, Math.max(...sorted.map((q) => Math.abs(q.x_score))));
+      const strength = Math.min(1, Math.abs(p.x_score) / xRange);
+      const size = 34 + strength * 22;
 
       const isBuy = p.signal?.includes('BUY') ?? false;
       const isFade = p.signal?.includes('FADE') || p.signal?.includes('SELL') || false;
@@ -205,7 +215,8 @@ export default function CourseFitScatter({ topN = 30 }: Props) {
               key={p.player.player_name}
               onMouseEnter={() => setHovered(p.player.player_name)}
               onMouseLeave={() => setHovered((h) => (h === p.player.player_name ? null : h))}
-              style={{ cursor: 'pointer', transition: 'all 200ms ease' }}
+              onClick={() => onPlayerClick?.(p.player)}
+              style={{ cursor: onPlayerClick ? 'pointer' : 'default', transition: 'all 200ms ease' }}
             >
               {/* Glow ring on hover */}
               {isHovered && (

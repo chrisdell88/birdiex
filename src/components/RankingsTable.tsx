@@ -239,9 +239,22 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
     <div>
       <DataSetToggle dataSet={dataSet} onChange={onDataSetChange} />
 
-      {/* Marquee chart: heads-as-dots course fit scatter. */}
+      {/* Marquee chart: heads-as-dots course fit scatter.
+          Clicking a head scrolls to that player's row in the table and
+          expands the detail card. */}
       <div className="mb-6">
-        <CourseFitScatter />
+        <CourseFitScatter
+          onPlayerClick={(p) => {
+            setSelectedPlayer(p.player_name);
+            setExpandedPlayer(p.player_name);
+            setSearch('');
+            // After state updates render, scroll to the row.
+            requestAnimationFrame(() => {
+              const el = document.getElementById(`player-row-${p.player_name.replace(/[^a-z0-9]/gi, '-')}`);
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+          }}
+        />
       </div>
 
       <SummaryCards data={data} activeFilter={signalFilter} onFilterChange={handleCardFilter} />
@@ -321,6 +334,7 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
             {filtered.map((player) => (
               <Fragment key={player.player_name}>
                 <tr
+                  id={`player-row-${player.player_name.replace(/[^a-z0-9]/gi, '-')}`}
                   onClick={() =>
                     setExpandedPlayer(
                       expandedPlayer === player.player_name ? null : player.player_name

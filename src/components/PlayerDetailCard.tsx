@@ -18,11 +18,16 @@ export default function PlayerDetailCard({ player, colSpan = 14 }: PlayerDetailC
     { label: 'PUTT', value: player.sg_putt },
   ];
 
+  // Layer 1 label changes pre- vs post-R1 to reflect what's feeding it.
+  // Major (L4) only renders on actual majors.
+  const isPreTournament = currentEvent.picksRound <= 1;
   const layers = [
-    { label: 'SG Score (L1)', value: player.sg_score_l1 },
+    { label: isPreTournament ? 'DG Skill (L1)' : 'SG Score (L1)', value: player.sg_score_l1 },
     { label: 'History (L2)', value: player.course_history_l2 },
     { label: 'Fit (L3)', value: player.fit_plus_category_l3 },
-    { label: 'Major (L4)', value: player.major_adj_l4 },
+    ...(currentEvent.isMajor
+      ? [{ label: 'Major (L4)', value: player.major_adj_l4 }]
+      : []),
   ];
 
   const xScoreColor =
@@ -65,9 +70,11 @@ export default function PlayerDetailCard({ player, colSpan = 14 }: PlayerDetailC
                   </div>
                 </div>
               </div>
-              <div className="mt-3">
-                <SignalBadge signal={player.signal} conflicted={player.purity === 'CONFLICTED'} />
-              </div>
+              {currentEvent.picksRound > 1 && (
+                <div className="mt-3">
+                  <SignalBadge signal={player.signal} conflicted={player.purity === 'CONFLICTED'} />
+                </div>
+              )}
               {/* X Score — block below on desktop */}
               <div className="hidden md:block mt-4">
                 <span className="text-[#d4d4d4] text-xs uppercase tracking-wider font-['Inter',system-ui,sans-serif]">

@@ -142,7 +142,7 @@ const label = "text-[10px] uppercase tracking-wider text-[#a1a1aa] font-medium f
 type OddsTab = 'matchups' | 'outrights';
 
 export default function OddsTablePage({ data, dataSet, onDataSetChange }: OddsTablePageProps) {
-  const [activeTab, setActiveTab] = useState<OddsTab>('matchups');
+  const [activeTab, setActiveTab] = useState<OddsTab>('outrights');
   // Default Min Edge = the venue's recommended floor. Users can lower it
   // to see internally-graded picks below the recommended floor.
   const [minEdge, setMinEdge] = useState<number>(currentEvent.recommendedFloor);
@@ -208,12 +208,6 @@ export default function OddsTablePage({ data, dataSet, onDataSetChange }: OddsTa
 
   return (
     <div className="max-w-full mx-auto">
-      {/* Round / Cumulative toggle — only meaningful for the H2H matchup
-          view since outright winner odds are tournament-wide. */}
-      {activeTab === 'matchups' && (
-        <DataSetToggle dataSet={dataSet} onChange={onDataSetChange} />
-      )}
-
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -227,26 +221,17 @@ export default function OddsTablePage({ data, dataSet, onDataSetChange }: OddsTa
                 : 'Outright winner odds across all 11 sportsbooks. Reference only — model targets H2H matchups, not outrights.'}
             </p>
           </div>
-          <RecommendedFloorBadge
-            threshold={currentEvent.recommendedFloor}
-            course={currentEvent.course}
-          />
+          {activeTab === 'matchups' && (
+            <RecommendedFloorBadge
+              threshold={currentEvent.recommendedFloor}
+              course={currentEvent.course}
+            />
+          )}
         </div>
 
         {/* H2H / Outrights toggle */}
         <div className="flex items-center gap-2 mt-4">
           <div className="flex border border-[#22c55e]/50 rounded-full p-0.5">
-            <button
-              type="button"
-              onClick={() => setActiveTab('matchups')}
-              className={`px-4 py-1.5 text-xs uppercase tracking-wider font-medium rounded-full font-['Inter',system-ui,sans-serif] cursor-pointer transition-colors ${
-                activeTab === 'matchups'
-                  ? 'bg-[#22c55e] text-[#0a0a0a]'
-                  : 'text-[#d4d4d4] hover:text-white'
-              }`}
-            >
-              H2H Matchups
-            </button>
             <button
               type="button"
               onClick={() => setActiveTab('outrights')}
@@ -258,8 +243,28 @@ export default function OddsTablePage({ data, dataSet, onDataSetChange }: OddsTa
             >
               Outrights
             </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('matchups')}
+              className={`px-4 py-1.5 text-xs uppercase tracking-wider font-medium rounded-full font-['Inter',system-ui,sans-serif] cursor-pointer transition-colors ${
+                activeTab === 'matchups'
+                  ? 'bg-[#22c55e] text-[#0a0a0a]'
+                  : 'text-[#d4d4d4] hover:text-white'
+              }`}
+            >
+              H2H Matchups
+            </button>
           </div>
         </div>
+
+        {/* Cumulative vs Round toggle — only meaningful for the H2H matchup
+            view since outright winner odds are tournament-wide. Sits BELOW
+            the H2H/Outrights toggle so the visual hierarchy flows top-down. */}
+        {activeTab === 'matchups' && currentEvent.picksRound > 1 && (
+          <div className="mt-3">
+            <DataSetToggle dataSet={dataSet} onChange={onDataSetChange} />
+          </div>
+        )}
       </div>
 
       {/* ───────── H2H Matchups tab ───────── */}

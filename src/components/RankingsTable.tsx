@@ -264,8 +264,8 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
   }, [data, search, selectedPlayer, signalFilter, sortField, sortDir, outrightsByName]);
 
   // Pre-tournament has no live SG / score / position data yet — hide those
-  // columns until R1 grades. Layer-1 column heading also changes to reflect
-  // what's feeding it (DG skill estimate pre-R1; live SG post-R1).
+  // columns until R1 grades. Signal is also hidden pre-R1 (X Score + To Win
+  // already convey direction). Major column only renders on majors.
   const isPreTournament = currentEvent.picksRound <= 1;
 
   const liveOnlyColumns: { field: SortField; label: string }[] = isPreTournament
@@ -282,18 +282,26 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
     { field: 'rank', label: '#' },
     { field: 'player_name', label: 'Player' },
     { field: 'x_score', label: 'X Score' },
-    { field: 'signal', label: 'Signal' },
+    // Signal column suppressed pre-R1 — at that stage X Score + To Win
+    // already convey direction, and the BUY/FADE labels are calibrated to
+    // post-R1 spreads.
+    ...(isPreTournament ? [] : [{ field: 'signal' as SortField, label: 'Signal' }]),
     { field: 'outright_odds', label: 'To Win' },
     ...liveOnlyColumns,
     { field: 'sg_score_l1', label: isPreTournament ? 'DG Skill' : 'SG Score' },
     { field: 'course_history_l2', label: 'History' },
     { field: 'fit_plus_category_l3', label: 'Fit' },
-    { field: 'major_adj_l4', label: 'Major' },
+    // Major column only on actual majors.
+    ...(currentEvent.isMajor ? [{ field: 'major_adj_l4' as SortField, label: 'Major' }] : []),
   ];
 
   return (
     <div>
-      <DataSetToggle dataSet={dataSet} onChange={onDataSetChange} />
+      {/* Pre-R1: nothing to toggle (only one data set exists). Suppress
+          the toggle entirely until R1 grades. */}
+      {!isPreTournament && (
+        <DataSetToggle dataSet={dataSet} onChange={onDataSetChange} />
+      )}
 
       {/* Past champions at this venue — small horizontal strip up top. */}
       <PastChampions />
@@ -419,12 +427,14 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
                       {player.x_score > 0 ? '+' : ''}{player.x_score.toFixed(2)}
                     </span>
                   </td>
-                  <td className="px-3 py-2.5">
-                    <div className="flex items-center gap-1.5">
-                      <SignalBadge signal={player.signal} compact conflicted={player.purity === 'CONFLICTED'} />
-                      <PurityIcon player={player} />
-                    </div>
-                  </td>
+                  {!isPreTournament && (
+                    <td className="px-3 py-2.5">
+                      <div className="flex items-center gap-1.5">
+                        <SignalBadge signal={player.signal} compact conflicted={player.purity === 'CONFLICTED'} />
+                        <PurityIcon player={player} />
+                      </div>
+                    </td>
+                  )}
                   <td className="px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs whitespace-nowrap">
                     {(() => {
                       const o = outrightsByName.get(player.player_name);
@@ -478,9 +488,11 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
                   <td className="px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs text-[#d4d4d4]">
                     {player.fit_plus_category_l3.toFixed(2)}
                   </td>
-                  <td className="px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs text-[#d4d4d4]">
-                    {player.major_adj_l4.toFixed(2)}
-                  </td>
+                  {currentEvent.isMajor && (
+                    <td className="px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs text-[#d4d4d4]">
+                      {player.major_adj_l4.toFixed(2)}
+                    </td>
+                  )}
                 </tr>
                 {expandedPlayer === player.player_name && (
                   <PlayerDetailCard player={player} colSpan={columns.length} />

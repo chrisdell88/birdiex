@@ -356,7 +356,10 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
   // Default view: TRACKED only (matchups at or above the venue threshold).
   // Toggle to "all" exposes the full model output below the threshold for
   // research / transparency.
-  const [showAll, setShowAll] = useState(false);
+  // PRE-R1: we don't track anything, so default to showing all and hide the
+  // toggle entirely — no decision needed from the user.
+  const isPreTournament = currentEvent.picksRound <= 1;
+  const [showAll, setShowAll] = useState<boolean>(isPreTournament);
 
   const rawMatchups = useMemo(() => generateMatchups(data, currentEvent.matchups), [data]);
 
@@ -400,31 +403,32 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
 
   return (
     <div>
-      <DataSetToggle dataSet={dataSet} onChange={onDataSetChange} />
+      {/* Cumulative vs Round-Only toggle: only meaningful from R2 onward
+          (pre-R1 there's only one dataset). */}
+      {!isPreTournament && (
+        <DataSetToggle dataSet={dataSet} onChange={onDataSetChange} />
+      )}
       {/* Round picks banner */}
       <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-lg p-5 mb-6">
-        <div className="flex items-center gap-3 mb-2 flex-wrap">
+        <div className="flex items-center gap-3 flex-wrap">
           <span className="bg-[#22c55e]/15 text-[#22c55e] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
-            {currentEvent.picksRound <= 1
-              ? 'ROUND 1 MATCHUP SCORES'
-              : `ROUND ${currentEvent.picksRound} PICKS`}
+            ROUND {currentEvent.picksRound}
           </span>
           <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
             {currentEvent.name} · {currentEvent.course}
           </span>
-          <RecommendedFloorBadge
-            threshold={currentEvent.recommendedFloor}
-            course={currentEvent.course}
-          />
+          {currentEvent.picksRound > 1 && (
+            <RecommendedFloorBadge
+              threshold={currentEvent.recommendedFloor}
+              course={currentEvent.course}
+            />
+          )}
+          {currentEvent.picksRound <= 1 && (
+            <span className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
+              BirdieX model starts tracking at R2.
+            </span>
+          )}
         </div>
-        {currentEvent.picksRound <= 1 && (
-          <p className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] leading-relaxed mt-1">
-            Pre-tournament matchup scores driven by DataGolf skill + venue
-            adjustments. <span className="text-[#f5f5f5] font-semibold">Not formal
-            recommendations</span> &mdash; we publish tracked recommendations once
-            Round 1 grades and live SG data feeds the model. Browse for context.
-          </p>
-        )}
       </div>
 
       {showDefinitions && <MatchupDefinitionsModal onClose={() => setShowDefinitions(false)} />}
@@ -452,24 +456,14 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
         <div className="flex items-center gap-2">
           <div>
             <h2 className="text-xl font-bold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
-              {currentEvent.picksRound <= 1
-                ? 'R1 Matchup Scores'
-                : `R${currentEvent.picksRound} Matchup Recommendations`}
+              R{currentEvent.picksRound} Matchups
             </h2>
             <p className="text-sm text-[#d4d4d4] mt-1 font-['Inter',system-ui,sans-serif]">
               {currentEvent.picksRound <= 1 ? (
-                <>
-                  Model output for context, not tracked recommendations.
-                  Matchup score threshold for tracked bets at {currentEvent.course}:{' '}
-                  <span className="font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">
-                    ≥ {currentEvent.recommendedFloor.toFixed(2)}
-                  </span>{' '}
-                  (applied starting R2 onward).
-                </>
+                <>Browse for context &mdash; R1 picks are not tracked.</>
               ) : (
                 <>
-                  Picks ranked by X Score edge -- model floor 0.95.
-                  Tracked / recommended threshold: matchup score{' '}
+                  Tracked threshold:{' '}
                   <span className="font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">
                     ≥ {currentEvent.recommendedFloor.toFixed(2)}
                   </span>{' '}
@@ -486,29 +480,32 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
           </button>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          {/* Tracked / Show All toggle */}
-          <div className="flex border border-[#22c55e]/50 rounded-full p-0.5">
-            <button
-              type="button"
-              onClick={() => setShowAll(false)}
-              className={`px-3 py-1 text-[10px] uppercase tracking-wider font-medium rounded-full font-['Inter',system-ui,sans-serif] cursor-pointer transition-colors ${
-                !showAll ? 'bg-[#22c55e] text-[#0a0a0a]' : 'text-[#d4d4d4] hover:text-white'
-              }`}
-              title={`Show only matchups at or above the venue threshold (≥ ${currentEvent.recommendedFloor.toFixed(2)})`}
-            >
-              Tracked Only
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowAll(true)}
-              className={`px-3 py-1 text-[10px] uppercase tracking-wider font-medium rounded-full font-['Inter',system-ui,sans-serif] cursor-pointer transition-colors ${
-                showAll ? 'bg-[#22c55e] text-[#0a0a0a]' : 'text-[#d4d4d4] hover:text-white'
-              }`}
-              title="Show all model picks (edge ≥ 0.95) — includes below-threshold picks for full transparency"
-            >
-              Show All
-            </button>
-          </div>
+          {/* Tracked / Show All toggle — hidden pre-R1 since we don't track
+              anything there; default is "show all" then. */}
+          {!isPreTournament && (
+            <div className="flex border border-[#22c55e]/50 rounded-full p-0.5">
+              <button
+                type="button"
+                onClick={() => setShowAll(false)}
+                className={`px-3 py-1 text-[10px] uppercase tracking-wider font-medium rounded-full font-['Inter',system-ui,sans-serif] cursor-pointer transition-colors ${
+                  !showAll ? 'bg-[#22c55e] text-[#0a0a0a]' : 'text-[#d4d4d4] hover:text-white'
+                }`}
+                title={`Show only matchups at or above the venue threshold (≥ ${currentEvent.recommendedFloor.toFixed(2)})`}
+              >
+                Tracked Only
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAll(true)}
+                className={`px-3 py-1 text-[10px] uppercase tracking-wider font-medium rounded-full font-['Inter',system-ui,sans-serif] cursor-pointer transition-colors ${
+                  showAll ? 'bg-[#22c55e] text-[#0a0a0a]' : 'text-[#d4d4d4] hover:text-white'
+                }`}
+                title="Show all model picks (edge ≥ 0.95) — includes below-threshold picks for full transparency"
+              >
+                Show All
+              </button>
+            </div>
+          )}
 
           <select
             value={sortBy}
@@ -531,23 +528,16 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
             {matchups.length}
           </span>
         </div>
-        <div className="flex flex-col gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {matchups.length === 0 && (
-            <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-6 text-center">
+            <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-6 text-center md:col-span-2">
               <div className="text-[10px] uppercase tracking-wider text-[#22c55e] font-medium font-['Inter',system-ui,sans-serif] mb-2">
-                No picks at the recommended floor yet
+                No matchups to show
               </div>
               <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed max-w-md mx-auto">
-                Pre-tournament X Scores are intentionally small (Layer 1 strokes-gained
-                contribution is zero until live round data exists). Once Round 1
-                completes, the model produces actionable edges and matchups will
-                populate here.
-              </p>
-              <p className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mt-3">
-                Tracked threshold at {currentEvent.course}: matchup score{' '}
-                <span className="font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">
-                  ≥ {currentEvent.recommendedFloor.toFixed(2)}
-                </span>
+                Either the field hasn&rsquo;t been pulled yet, or all picks
+                fall below the current filter. Try toggling to &ldquo;Show
+                All&rdquo; if you&rsquo;re post-R1.
               </p>
             </div>
           )}

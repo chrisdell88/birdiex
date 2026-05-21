@@ -19,6 +19,9 @@ export interface CurrentEvent {
   name: string;
   /** Venue, e.g. "Aronimink". */
   course: string;
+  /** Whether this event is a major championship. Drives UI elements like
+   *  the "Major" column on the Rankings table and the Layer-4 weighting. */
+  isMajor: boolean;
   /** Venue predictability (0–~0.15). Drives the recommended-floor formula. */
   predictability: number;
   /** Edge floor at which we publicly recommend bets (predictability-aware). */
@@ -48,6 +51,7 @@ const CRAIG_RANCH_PREDICTABILITY = 0.0373;
 export const currentEvent: CurrentEvent = {
   name: 'CJ Cup Byron Nelson',
   course: 'TPC Craig Ranch',
+  isMajor: false,
   predictability: CRAIG_RANCH_PREDICTABILITY,
   recommendedFloor: recommendedFloorForPredictability(CRAIG_RANCH_PREDICTABILITY),
   recommendedFloorLabel: floorTierLabel(recommendedFloorForPredictability(CRAIG_RANCH_PREDICTABILITY)),

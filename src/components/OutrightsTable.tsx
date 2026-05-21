@@ -6,6 +6,7 @@
  * Data: currentEvent.outrights (built from DataGolf's /betting-tools/outrights
  * win market for the current event). Sorted favorites-first by best odds.
  */
+import { useState } from 'react';
 import type { OutrightEntry } from '../types';
 
 const REAL_BOOKS = [
@@ -48,14 +49,53 @@ interface Props {
   outrights: OutrightEntry[];
 }
 
+type SortKey = 'player' | 'best' | typeof REAL_BOOKS[number];
+type SortDir = 'asc' | 'desc';
+
 export default function OutrightsTable({ outrights }: Props) {
+  // Sortable table. Default = by best implied payout, ascending (favorites
+  // first — shortest odds at top).
+  const [sortKey, setSortKey] = useState<SortKey>('best');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+
   if (!outrights.length) return null;
 
-  // Use the top ~30 by best implied payout (skip super-long-shots) to keep
-  // the table readable.
-  const display = [...outrights]
-    .sort((a, b) => oddsToPayout(a.bestOdds) - oddsToPayout(b.bestOdds))
-    .slice(0, 30);
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir(key === 'player' ? 'asc' : 'asc');
+    }
+  };
+
+  const sortArrow = (key: SortKey) => {
+    if (sortKey !== key) return '';
+    return sortDir === 'asc' ? ' ▲' : ' ▼';
+  };
+
+  // Sort, then slice to top 30 favorites by best (the most-common entry
+  // point) so we don't drown the user in 147 longshots.
+  const sorted = [...outrights].sort((a, b) => {
+    let av: number | string;
+    let bv: number | string;
+    if (sortKey === 'player') {
+      av = a.player_name;
+      bv = b.player_name;
+    } else if (sortKey === 'best') {
+      av = oddsToPayout(a.bestOdds);
+      bv = oddsToPayout(b.bestOdds);
+    } else {
+      av = oddsToPayout(a.allBooks[sortKey] ?? '0');
+      bv = oddsToPayout(b.allBooks[sortKey] ?? '0');
+    }
+    if (typeof av === 'string' && typeof bv === 'string') {
+      return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+    }
+    return sortDir === 'asc' ? (av as number) - (bv as number) : (bv as number) - (av as number);
+  });
+  // Show the top 30 favorites in whatever sort is active.
+  const display = sorted.slice(0, 30);
 
   return (
     <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg overflow-hidden mb-8">
@@ -71,18 +111,31 @@ export default function OutrightsTable({ outrights }: Props) {
         <table className="w-full text-left">
           <thead>
             <tr className="border-b border-[#262626]">
-              <th className="px-3 py-3 text-[10px] uppercase tracking-wider text-[#a1a1aa] font-medium font-['Inter',system-ui,sans-serif] whitespace-nowrap sticky left-0 bg-[#0a0a0a] z-10">
-                Player
+              <th
+                onClick={() => handleSort('player')}
+                className={`px-3 py-3 text-[10px] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif] whitespace-nowrap sticky left-0 bg-[#0a0a0a] z-10 cursor-pointer hover:text-[#22c55e] transition-colors select-none ${
+                  sortKey === 'player' ? 'text-[#22c55e]' : 'text-[#a1a1aa]'
+                }`}
+              >
+                Player{sortArrow('player')}
               </th>
-              <th className="px-3 py-3 text-[10px] uppercase tracking-wider text-[#22c55e] font-semibold font-['Inter',system-ui,sans-serif] whitespace-nowrap">
-                Best
+              <th
+                onClick={() => handleSort('best')}
+                className={`px-3 py-3 text-[10px] uppercase tracking-wider font-semibold font-['Inter',system-ui,sans-serif] whitespace-nowrap cursor-pointer hover:text-[#4ade80] transition-colors select-none ${
+                  sortKey === 'best' ? 'text-[#4ade80]' : 'text-[#22c55e]'
+                }`}
+              >
+                Best{sortArrow('best')}
               </th>
               {REAL_BOOKS.map((b) => (
                 <th
                   key={b}
-                  className="px-3 py-3 text-[10px] uppercase tracking-wider text-[#a1a1aa] font-medium font-['Inter',system-ui,sans-serif] whitespace-nowrap"
+                  onClick={() => handleSort(b)}
+                  className={`px-3 py-3 text-[10px] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif] whitespace-nowrap cursor-pointer hover:text-[#22c55e] transition-colors select-none ${
+                    sortKey === b ? 'text-[#22c55e]' : 'text-[#a1a1aa]'
+                  }`}
                 >
-                  {b}
+                  {b}{sortArrow(b)}
                 </th>
               ))}
             </tr>

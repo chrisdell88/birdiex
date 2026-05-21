@@ -69,6 +69,17 @@ function randn(): number {
 /**
  * Join a player roster with DataGolf skill estimates into the simulator input
  * shape. Filter out players without skill data (rare — but defensive).
+ *
+ * IMPORTANT: `adjusted_sg = x_score` directly. X Score IS the venue-adjusted
+ * expected strokes-gained per round:
+ *   • Pre-R1: x_score = dg_skill (Layer 1) + L2 + L3 + L4
+ *   • Post-R1: x_score = measured course-weighted SG (Layer 1) + L2 + L3 + L4
+ * Both are already complete skill+venue estimates. Adding dg_skill on top
+ * would double-count pre-R1 (the bug that gave Scheffler 87% win rate) and
+ * mix tour-wide skill with venue-specific signal post-R1.
+ *
+ * dg_skill_estimate is kept on the input object for display purposes only
+ * (the comparison columns show DataGolf's published projections).
  */
 export function buildSimInputs(
   players: PlayerData[],
@@ -82,11 +93,11 @@ export function buildSimInputs(
     const dgSkill = skillByName.get(p.player_name);
     if (dgSkill == null) continue;
     inputs.push({
-      dg_id: 0, // not used by sim
+      dg_id: 0,
       player_name: p.player_name,
       dg_skill_estimate: dgSkill,
       x_score: p.x_score,
-      adjusted_sg: dgSkill + p.x_score,
+      adjusted_sg: p.x_score,
     });
   }
   return inputs;

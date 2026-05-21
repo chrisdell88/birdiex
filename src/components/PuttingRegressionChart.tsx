@@ -249,12 +249,15 @@ export default function PuttingRegressionChart() {
       <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
         <div>
           <h3 className="text-base font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
-            One skill sticks. The other three regress.
+            Round-to-Round: One Skill Sticks
           </h3>
           <p className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mt-0.5">
-            Each dot = one PGA Championship 2026 golfer ({categories[0].pairs.length} players).
-            R1 strokes-gained on the x-axis, R2 strokes-gained on the y-axis. All 4 SG
-            categories on the same scale.
+            Same data, different timescale &mdash; PGA Championship 2026 R1
+            vs. R2 strokes-gained ({categories[0].pairs.length} players). Within a single
+            tournament, only OTT shows real round-to-round persistence. Approach + Around-Green +
+            Putting are all near-random R&sup2; values here, dominated by per-round conditions
+            and pin placements. The year-over-year chart above shows the broader thesis &mdash;
+            APP is genuinely sticky over a season, just not within a tournament weekend.
           </p>
         </div>
         <span className="text-[10px] uppercase tracking-wider text-[#22c55e] font-medium font-['Inter',system-ui,sans-serif] bg-[#22c55e]/10 border border-[#22c55e]/30 rounded-full px-2.5 py-0.5">

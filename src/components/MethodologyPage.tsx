@@ -2,9 +2,9 @@ import { allTimeStats } from '../lib/allTimeStats';
 import CourseAdaptiveChart from './CourseAdaptiveChart';
 import Glossary from './Glossary';
 import PuttingRegressionChart from './PuttingRegressionChart';
+import SgPersistenceChart from './SgPersistenceChart';
 import PredictabilityBarChart from './PredictabilityBarChart';
 import EdgeDistributionChart from './EdgeDistributionChart';
-import PredictabilityVsROI from './PredictabilityVsROI';
 
 interface MethodologyPageProps {
   onNavigateToResults?: () => void;
@@ -109,7 +109,13 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
           </div>
         </div>
 
-        {/* Real-data scatterplot: PUTT R²≈0.04 vs OTT R²≈0.13. */}
+        {/* Two-chart pairing: year-over-year persistence (the thesis-scale
+            relationship) + R1→R2 round-to-round persistence (the single-
+            tournament noise floor). Both honest about timescale. */}
+        <div className="mt-5">
+          <SgPersistenceChart />
+        </div>
+
         <div className="mt-5">
           <PuttingRegressionChart />
         </div>
@@ -285,11 +291,22 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
               never the historical bet data.
             </p>
           </div>
+
+          <div className="mt-3 pt-3 border-t border-[#262626]">
+            <h4 className="text-[11px] uppercase tracking-wider text-[#22c55e] font-semibold font-['Inter',system-ui,sans-serif] mb-2">
+              Pre-Round-1 X Score
+            </h4>
+            <p className="text-xs text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
+              When no rounds have been played yet, Layer 1 uses DataGolf&rsquo;s tour-wide skill
+              estimate (strokes-gained per round vs. field) as the baseline. The X Score is then
+              this baseline plus the same venue-specific adjustments (history, fit, major) used
+              post-round. Once Round 1 grades, Layer 1 switches to the measured course-weighted
+              strokes-gained signal &mdash; the locked formula that has reproduced every historical
+              X Score row exactly.
+            </p>
+          </div>
         </div>
 
-        <div className="mt-5">
-          <PredictabilityVsROI />
-        </div>
       </section>
 
       {/* Section 4: Signal System */}

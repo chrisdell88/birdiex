@@ -654,6 +654,7 @@ function AggregateView({
                 const url = headshots[r.player_name];
                 const maxWin = liveTop10[0]?.win_prob || 1;
                 const barWidth = (r.win_prob / maxWin) * 100;
+                const winsSoFar = Math.round(r.win_prob * chunksDone * CHUNK_SIZE);
                 return (
                   <div
                     key={r.player_name}
@@ -684,11 +685,19 @@ function AggregateView({
                     <span className="text-xs font-bold font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e] w-14 text-right shrink-0 tabular-nums" style={{ transition: 'color 200ms ease' }}>
                       {fmtPct(r.win_prob)}
                     </span>
+                    <span className="text-[10px] font-['JetBrains_Mono','SF_Mono',monospace] text-[#737373] w-20 text-right shrink-0 tabular-nums hidden md:inline">
+                      {winsSoFar.toLocaleString()} wins
+                    </span>
                   </div>
                 );
               })
             )}
           </div>
+          <p className="text-[10px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] leading-relaxed mt-3">
+            Each row shows how many simulated tournaments that player has won
+            so far. Win % = wins ÷ sims complete. Bars are sized relative to
+            the current leader.
+          </p>
         </div>
         <style>{`@media (prefers-reduced-motion: reduce) { [style*="transition"] { transition: none !important; } }`}</style>
       </div>
@@ -770,13 +779,20 @@ function AggregateView({
           tr[style*="simRowIn"] { animation: none !important; opacity: 1 !important; }
         }
       `}</style>
-      <div className="px-4 py-3 border-t border-[#262626] text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] leading-relaxed">
-        BirdieX Model uses each player&rsquo;s DataGolf skill estimate plus
-        the BirdieX X-Score adjustment as a per-round expected
-        strokes-gained, then runs 10,000 Monte Carlo tournaments. Each
-        round draws from a normal distribution with σ = 2.7 strokes (PGA
-        Tour empirical). Differences vs the DataGolf columns reflect our
-        X-Score tilt (course history + fit + major adjustments).
+      <div className="px-4 py-3 border-t border-[#262626] text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] leading-relaxed space-y-1">
+        <p>
+          <span className="text-[#f5f5f5] font-medium">How to read this:</span>{' '}
+          a 30% WIN value means the player won 3,000 of the 10,000 simulated
+          tournaments &mdash; not that they win every time. The most-likely
+          winner sits at #1 because they have the highest win frequency
+          across the long run; they still lose more sims than they win.
+        </p>
+        <p>
+          BirdieX Model uses each player&rsquo;s X-Score (DataGolf skill
+          estimate or measured SG once R1 grades, plus venue adjustments)
+          as the per-round expected strokes-gained, then runs 10,000 Monte
+          Carlo tournaments with σ = 2.7 strokes per round.
+        </p>
       </div>
     </div>
   );

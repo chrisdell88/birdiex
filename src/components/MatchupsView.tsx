@@ -353,6 +353,10 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
   const [sortBy, setSortBy] = useState<MatchupSort>('edge-high');
   const [showDefinitions, setShowDefinitions] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
+  // Default view: TRACKED only (matchups at or above the venue threshold).
+  // Toggle to "all" exposes the full model output below the threshold for
+  // research / transparency.
+  const [showAll, setShowAll] = useState(false);
 
   const rawMatchups = useMemo(() => generateMatchups(data, currentEvent.matchups), [data]);
 
@@ -367,7 +371,13 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
   }, [rawMatchups]);
 
   const matchups = useMemo(() => {
-    const sorted = [...rawMatchups];
+    let sorted = [...rawMatchups];
+    // Tracked-only filter: drop matchups below the venue threshold by
+    // default. "Show all" toggle exposes everything 0.95+ for research /
+    // transparency.
+    if (!showAll) {
+      sorted = sorted.filter((m) => m.matchupScore >= currentEvent.recommendedFloor);
+    }
     switch (sortBy) {
       case 'edge-high':
         sorted.sort((a, b) => b.matchupScore - a.matchupScore);
@@ -384,7 +394,7 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
       );
     }
     return sorted;
-  }, [rawMatchups, sortBy, selectedPlayer]);
+  }, [rawMatchups, sortBy, selectedPlayer, showAll]);
 
   const fmtXScore = (v: number) => (v > 0 ? `+${v.toFixed(2)}` : v.toFixed(2));
 
@@ -395,7 +405,9 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
       <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-lg p-5 mb-6">
         <div className="flex items-center gap-3 mb-2 flex-wrap">
           <span className="bg-[#22c55e]/15 text-[#22c55e] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
-            ROUND {currentEvent.picksRound} PICKS
+            {currentEvent.picksRound <= 1
+              ? 'ROUND 1 MATCHUP SCORES'
+              : `ROUND ${currentEvent.picksRound} PICKS`}
           </span>
           <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
             {currentEvent.name} · {currentEvent.course}
@@ -405,6 +417,14 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
             course={currentEvent.course}
           />
         </div>
+        {currentEvent.picksRound <= 1 && (
+          <p className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] leading-relaxed mt-1">
+            Pre-tournament matchup scores driven by DataGolf skill + venue
+            adjustments. <span className="text-[#f5f5f5] font-semibold">Not formal
+            recommendations</span> &mdash; we publish tracked recommendations once
+            Round 1 grades and live SG data feeds the model. Browse for context.
+          </p>
+        )}
       </div>
 
       {showDefinitions && <MatchupDefinitionsModal onClose={() => setShowDefinitions(false)} />}
@@ -432,15 +452,30 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
         <div className="flex items-center gap-2">
           <div>
             <h2 className="text-xl font-bold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
-              R{currentEvent.picksRound} Matchup Recommendations
+              {currentEvent.picksRound <= 1
+                ? 'R1 Matchup Scores'
+                : `R${currentEvent.picksRound} Matchup Recommendations`}
             </h2>
             <p className="text-sm text-[#d4d4d4] mt-1 font-['Inter',system-ui,sans-serif]">
-              Picks ranked by X Score edge -- model floor 0.95.
-              Tracked / recommended threshold: matchup score{' '}
-              <span className="font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">
-                ≥ {currentEvent.recommendedFloor.toFixed(2)}
-              </span>{' '}
-              at {currentEvent.course}.
+              {currentEvent.picksRound <= 1 ? (
+                <>
+                  Model output for context, not tracked recommendations.
+                  Matchup score threshold for tracked bets at {currentEvent.course}:{' '}
+                  <span className="font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">
+                    ≥ {currentEvent.recommendedFloor.toFixed(2)}
+                  </span>{' '}
+                  (applied starting R2 onward).
+                </>
+              ) : (
+                <>
+                  Picks ranked by X Score edge -- model floor 0.95.
+                  Tracked / recommended threshold: matchup score{' '}
+                  <span className="font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">
+                    ≥ {currentEvent.recommendedFloor.toFixed(2)}
+                  </span>{' '}
+                  at {currentEvent.course}.
+                </>
+              )}
             </p>
           </div>
           <button
@@ -450,7 +485,31 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
             ?
           </button>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Tracked / Show All toggle */}
+          <div className="flex border border-[#22c55e]/50 rounded-full p-0.5">
+            <button
+              type="button"
+              onClick={() => setShowAll(false)}
+              className={`px-3 py-1 text-[10px] uppercase tracking-wider font-medium rounded-full font-['Inter',system-ui,sans-serif] cursor-pointer transition-colors ${
+                !showAll ? 'bg-[#22c55e] text-[#0a0a0a]' : 'text-[#d4d4d4] hover:text-white'
+              }`}
+              title={`Show only matchups at or above the venue threshold (≥ ${currentEvent.recommendedFloor.toFixed(2)})`}
+            >
+              Tracked Only
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowAll(true)}
+              className={`px-3 py-1 text-[10px] uppercase tracking-wider font-medium rounded-full font-['Inter',system-ui,sans-serif] cursor-pointer transition-colors ${
+                showAll ? 'bg-[#22c55e] text-[#0a0a0a]' : 'text-[#d4d4d4] hover:text-white'
+              }`}
+              title="Show all model picks (edge ≥ 0.95) — includes below-threshold picks for full transparency"
+            >
+              Show All
+            </button>
+          </div>
+
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as MatchupSort)}

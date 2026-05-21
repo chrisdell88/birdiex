@@ -71,10 +71,13 @@ export default function CourseFitScatter({ topN = 20, onPlayerClick }: Props) {
   }, []);
 
   const points: Point[] = useMemo(() => {
-    // Pick the top-N by |x_score| — most signal-relevant players.
+    // Top-N by X Score (descending — most bullish picks first). Was previously
+    // sorted by |x_score| which biased toward whichever tail was longer in
+    // the field; the home-page chart is meant to surface the model's
+    // strongest BUY opinions, so we sort by raw X Score now.
     const sorted = [...currentEvent.rankingsRound]
       .filter((p) => p.x_score != null)
-      .sort((a, b) => Math.abs(b.x_score) - Math.abs(a.x_score))
+      .sort((a, b) => b.x_score - a.x_score)
       .slice(0, topN);
 
     // Compute actual data range with padding so the chart zooms to the

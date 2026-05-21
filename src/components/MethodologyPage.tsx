@@ -3,6 +3,8 @@ import CourseAdaptiveChart from './CourseAdaptiveChart';
 import Glossary from './Glossary';
 import PuttingRegressionChart from './PuttingRegressionChart';
 import PredictabilityBarChart from './PredictabilityBarChart';
+import EdgeDistributionChart from './EdgeDistributionChart';
+import PredictabilityVsROI from './PredictabilityVsROI';
 
 interface MethodologyPageProps {
   onNavigateToResults?: () => void;
@@ -233,6 +235,10 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
           <PredictabilityBarChart />
         </div>
 
+        <div className="mt-5">
+          <EdgeDistributionChart />
+        </div>
+
         <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-5 mt-5 space-y-4">
           <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
             Not every model pick becomes a recommended bet. Each venue gets its own{' '}
@@ -279,6 +285,10 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
               never the historical bet data.
             </p>
           </div>
+        </div>
+
+        <div className="mt-5">
+          <PredictabilityVsROI />
         </div>
       </section>
 

@@ -3,6 +3,7 @@ import type { BetRecord, TierType, ResultsSortField, SortDirection, Sportsbook }
 import PlayerSearch from './PlayerSearch';
 import RecommendedFloorBadge from './RecommendedFloorBadge';
 import EquityCurve from './EquityCurve';
+import HitRateByTier from './HitRateByTier';
 import { r2Results, r2Summary as pgaR2SummaryRaw } from '../data/pgaChampR2Results';
 import { r3Results, r3Summary as pgaR3SummaryRaw } from '../data/pgaChampR3Results';
 import { r4Results, r4Summary as pgaR4SummaryRaw } from '../data/pgaChampR4Results';
@@ -345,6 +346,11 @@ function AllTimeView() {
       {/* Equity curve — every tracked bet, in order. */}
       <div className="mb-6">
         <EquityCurve />
+      </div>
+
+      {/* Hit rate by star tier */}
+      <div className="mb-6">
+        <HitRateByTier />
       </div>
 
       <StarBreakdown bets={ALL_TIME_BETS} heading="By Star Rating — All-Time (tracked bets)" />

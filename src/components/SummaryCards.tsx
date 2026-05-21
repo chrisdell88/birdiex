@@ -22,22 +22,34 @@ export default function SummaryCards({ data, activeFilter = 'ALL', onFilterChang
 
   return (
     <div className="grid grid-cols-3 gap-3 mb-6">
-      {cards.map((card) => (
-        <button
-          key={card.label}
-          onClick={() => onFilterChange?.(card.filterValue)}
-          className={`bg-[#0a0a0a] border ${card.borderColor} rounded-lg p-4 text-center cursor-pointer transition-all hover:bg-[#111111] ${
-            activeFilter === card.filterValue ? 'ring-1 ring-[#22c55e]/50' : ''
-          }`}
-        >
-          <div className={`text-2xl md:text-3xl font-bold font-['JetBrains_Mono','SF_Mono',monospace] ${card.color}`}>
-            {card.value}
-          </div>
-          <div className="text-[10px] md:text-xs text-[#d4d4d4] uppercase tracking-widest mt-1 font-['Inter',system-ui,sans-serif]">
-            {card.label}
-          </div>
-        </button>
-      ))}
+      {cards.map((card) => {
+        // Don't allow clicking BUYS/SELLS when count is 0 — would route
+        // to an empty filtered view. PLAYERS card always stays clickable
+        // (it's the "reset filter" button).
+        const isEmpty = card.value === 0 && card.filterValue !== 'ALL';
+        return (
+          <button
+            key={card.label}
+            type="button"
+            onClick={isEmpty ? undefined : () => onFilterChange?.(card.filterValue)}
+            disabled={isEmpty}
+            aria-disabled={isEmpty}
+            title={isEmpty ? `No ${card.label.toLowerCase()} right now` : undefined}
+            className={`bg-[#0a0a0a] border ${card.borderColor} rounded-lg p-4 text-center transition-all ${
+              isEmpty
+                ? 'opacity-50 cursor-not-allowed'
+                : 'cursor-pointer hover:bg-[#111111]'
+            } ${activeFilter === card.filterValue ? 'ring-1 ring-[#22c55e]/50' : ''}`}
+          >
+            <div className={`text-2xl md:text-3xl font-bold font-['JetBrains_Mono','SF_Mono',monospace] ${card.color}`}>
+              {card.value}
+            </div>
+            <div className="text-[10px] md:text-xs text-[#d4d4d4] uppercase tracking-widest mt-1 font-['Inter',system-ui,sans-serif]">
+              {card.label}
+            </div>
+          </button>
+        );
+      })}
     </div>
   );
 }

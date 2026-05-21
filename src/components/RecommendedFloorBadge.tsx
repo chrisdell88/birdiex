@@ -43,7 +43,7 @@ export default function RecommendedFloorBadge({
         className={`inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-[#22c55e] font-medium font-['Inter',system-ui,sans-serif] bg-[#22c55e]/10 border border-[#22c55e]/30 rounded-full px-2.5 py-0.5 ${className}`}
         title={titleText}
       >
-        <span className="opacity-70">Matchup Score ≥</span>
+        <span className="opacity-70">Matchup Score Threshold ≥</span>
         <span className="font-semibold font-['JetBrains_Mono','SF_Mono',monospace]">
           {thresholdLabel}
         </span>

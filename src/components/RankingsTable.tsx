@@ -314,7 +314,7 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
             Last Updated: {formatUpdated(currentEvent.dataUpdatedAt)} —{' '}
             {currentEvent.picksRound > 1
               ? `RD${currentEvent.picksRound - 1} Results Below`
-              : 'Pre-Tournament Projections Below'}
+              : 'Pre-Tournament Rankings Below'}
           </span>
           <button
             onClick={() => setShowStatsKey(true)}

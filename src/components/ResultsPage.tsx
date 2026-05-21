@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import type { BetRecord, TierType, ResultsSortField, SortDirection, Sportsbook } from '../types';
 import PlayerSearch from './PlayerSearch';
 import RecommendedFloorBadge from './RecommendedFloorBadge';
+import EquityCurve from './EquityCurve';
 import { r2Results, r2Summary as pgaR2SummaryRaw } from '../data/pgaChampR2Results';
 import { r3Results, r3Summary as pgaR3SummaryRaw } from '../data/pgaChampR3Results';
 import { r4Results, r4Summary as pgaR4SummaryRaw } from '../data/pgaChampR4Results';
@@ -340,6 +341,12 @@ function AllTimeView() {
         bet floor — see each tournament card for that event&rsquo;s recommended floor. Lower-tier
         bets are scored internally for backtesting but not surfaced as recommendations.
       </p>
+
+      {/* Equity curve — every tracked bet, in order. */}
+      <div className="mb-6">
+        <EquityCurve />
+      </div>
+
       <StarBreakdown bets={ALL_TIME_BETS} heading="By Star Rating — All-Time (tracked bets)" />
       <div className="grid grid-cols-1 gap-3">
         {tournaments.map(t => {

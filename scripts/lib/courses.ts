@@ -83,13 +83,16 @@ export const COURSES: Record<string, CourseProfile> = {
   // CJ Cup Byron Nelson — TPC Craig Ranch, McKinney TX. Par 71, ~7,569 yards.
   // Predictability computed 2026-05-20 from DataGolf player-decompositions
   // (mean |total_course_history_adjustment| over 147-player field).
-  // Coefficients PLACEHOLDER (near-equal weights) — replace once Chris pulls
-  // the values from DataGolf's Course Fit Tool web app.
+  // Coefficients pulled from DataGolf's Course Fit Tool web app 2026-05-21
+  // (Relative Importance OFF). Radar axes:
+  //   DrivingDistance 0.80, DrivingAccuracy 0.50,
+  //   Approach 0.70, AroundGreen 0.40, Putting 0.50.
+  // ott = higher of DrivingDistance (0.80) and DrivingAccuracy (0.50) = 0.80.
   'tpc-craig-ranch': {
     name: 'TPC Craig Ranch',
     predictability: 0.0373,
-    coefficients: { ott: 1.0, app: 1.0, arg: 1.0, putt: 1.0 },
-    source_date: '2026-05-20',
+    coefficients: { ott: 0.80, app: 0.70, arg: 0.40, putt: 0.50 },
+    source_date: '2026-05-21',
     is_major: false,
   },
 };

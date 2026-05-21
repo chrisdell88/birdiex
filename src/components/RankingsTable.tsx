@@ -8,6 +8,7 @@ import PlayerSearch from './PlayerSearch';
 import Avatar from './Avatar';
 import DataSetToggle from './DataSetToggle';
 import RecommendedFloorBadge from './RecommendedFloorBadge';
+import CourseFitScatter from './CourseFitScatter';
 import { currentEvent } from '../config/event';
 
 interface RankingsTableProps {
@@ -237,6 +238,12 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
   return (
     <div>
       <DataSetToggle dataSet={dataSet} onChange={onDataSetChange} />
+
+      {/* Marquee chart: heads-as-dots course fit scatter. */}
+      <div className="mb-6">
+        <CourseFitScatter />
+      </div>
+
       <SummaryCards data={data} activeFilter={signalFilter} onFilterChange={handleCardFilter} />
 
       {showStatsKey && <StatsKeyModal onClose={() => setShowStatsKey(false)} />}

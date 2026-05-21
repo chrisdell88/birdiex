@@ -1,14 +1,14 @@
 /**
- * PredictabilityBarChart — bar chart ranking the PGA Tour venues we've
- * tracked, by course predictability. DataGolf publishes a similar ranking
- * across all ~60 PGA Tour venues; ours is differentiated by overlaying
- * the matchup score threshold per event — i.e., tying predictability
- * directly to the cutoff we use to recommend bets.
+ * PredictabilityBarChart — bar chart of the PGA Tour venues we've tracked,
+ * with the matchup score threshold we use at each. The predictability
+ * numbers themselves are computed from DataGolf's player-decompositions
+ * data (`/preds/player-decompositions`), one source: the mean absolute
+ * value of `total_course_history_adjustment` across the field.
  *
- * Predictability = mean |total_course_history_adjustment| over the field.
- * The higher the bar, the more a player's prior performance at that venue
- * predicts their future results — and the lower our matchup score
- * threshold drops, because we trust the model more.
+ * What this chart is for on our site: showing how OUR threshold formula
+ * lands across the venues we've sampled. The underlying predictability
+ * ranking is a DataGolf metric — they publish a similar chart across all
+ * ~60 PGA venues. Ours is the per-event slice with our threshold pinned.
  *
  * Bars colour-coded by tier:
  *   • Augusta (0.144) — full green, the gold-standard predictability
@@ -223,10 +223,11 @@ export default function PredictabilityBarChart() {
         the matchup score threshold so only high-edge bets become tracked recommendations.
       </p>
       <p className="text-[10px] text-[#737373] font-['Inter',system-ui,sans-serif] leading-relaxed mt-2">
-        Predictability values pulled from DataGolf player decompositions. The ranking concept
-        appears on DataGolf&rsquo;s Course History tool across all PGA Tour venues; the
-        threshold overlay (right column) is our addition &mdash; we use that number to decide
-        which picks become tracked bets.
+        Predictability computed from DataGolf player decompositions (mean absolute
+        course-history adjustment over the field). DataGolf publishes the same ranking
+        across the full PGA schedule on their Course History tool; this chart shows the
+        slice of venues we&rsquo;ve tracked, with the matchup score threshold we apply at
+        each one.
       </p>
     </div>
   );

@@ -1,10 +1,10 @@
 /**
- * RecommendedFloorBadge — venue-specific bet floor disclaimer.
+ * RecommendedFloorBadge — venue-specific matchup-score threshold disclaimer.
  *
- * Shows the PRECISE matchup-score threshold (e.g. 2.45) as the primary
- * value, with the star tier as a secondary hint. This avoids the
- * misleading reading where "★★+ floor" sounds like "any 2-star bet" when
- * the actual cutoff may be stricter (mid-tier).
+ * Shows the PRECISE matchup-score threshold (e.g. 2.45) as the headline.
+ * NO stars — stars are a separate concept (they encode the unit size of
+ * an individual bet, not a quality tier). Mixing them on the threshold
+ * badge was misleading; we keep them strictly separate now.
  *
  * Used on:
  *   • Results page tournament cards + per-event headers
@@ -15,8 +15,6 @@
 interface Props {
   /** Numeric edge cutoff, e.g. 0.95, 2.45, 2.95. */
   threshold: number;
-  /** Star-tier hint, e.g. "★+", "★★+", "★★★+". */
-  tierHint: string;
   /** Venue name. */
   course?: string;
   /** Optional predictability number — only shown in full variant. */
@@ -29,7 +27,6 @@ interface Props {
 
 export default function RecommendedFloorBadge({
   threshold,
-  tierHint,
   course,
   predictability,
   variant = 'compact',
@@ -37,7 +34,7 @@ export default function RecommendedFloorBadge({
 }: Props) {
   const thresholdLabel = threshold.toFixed(2);
   const titleText = course
-    ? `${course}: only matchups with X-Score edge ≥ ${thresholdLabel} are tracked / recommended (${tierHint} territory). See the Glossary on the Methodology page for the exact distinction.`
+    ? `${course}: only matchups with X-Score edge ≥ ${thresholdLabel} are tracked as recommendations. Stars on each bet show its unit size (a separate concept) — see the Glossary on the Methodology page.`
     : `Only matchups with X-Score edge ≥ ${thresholdLabel} are tracked.`;
 
   if (variant === 'compact') {
@@ -46,12 +43,10 @@ export default function RecommendedFloorBadge({
         className={`inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-[#22c55e] font-medium font-['Inter',system-ui,sans-serif] bg-[#22c55e]/10 border border-[#22c55e]/30 rounded-full px-2.5 py-0.5 ${className}`}
         title={titleText}
       >
-        <span className="opacity-70">Min Edge</span>
+        <span className="opacity-70">Matchup Score ≥</span>
         <span className="font-semibold font-['JetBrains_Mono','SF_Mono',monospace]">
           {thresholdLabel}
         </span>
-        <span className="opacity-40">·</span>
-        <span className="opacity-80">{tierHint}+</span>
         {course && (
           <>
             <span className="opacity-40">·</span>
@@ -62,7 +57,7 @@ export default function RecommendedFloorBadge({
     );
   }
 
-  // full variant — a small card with the floor + a one-line explanation
+  // full variant — a small card with the threshold + a one-line explanation
   return (
     <div className={`bg-[#0a0a0a] border border-[#22c55e]/30 rounded-lg p-3 ${className}`}>
       <div className="flex items-center gap-2 flex-wrap">
@@ -70,10 +65,7 @@ export default function RecommendedFloorBadge({
           Matchup Score Threshold
         </span>
         <span className="text-sm font-bold text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace]">
-          {thresholdLabel}
-        </span>
-        <span className="text-[11px] text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">
-          ({tierHint}+ territory)
+          ≥ {thresholdLabel}
         </span>
         {course && (
           <span className="text-[11px] text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">
@@ -88,8 +80,9 @@ export default function RecommendedFloorBadge({
       </div>
       <p className="text-[11px] text-[#999] font-['Inter',system-ui,sans-serif] leading-relaxed mt-1.5">
         Only matchups at this threshold or above are tracked as recommendations.
-        Lower picks are scored internally for backtesting. The star rating on a
-        bet is a separate concept &mdash; see the Glossary on the Methodology page.
+        Lower picks are scored internally for backtesting. The stars on each bet
+        show its unit size (separate concept) &mdash; see the Glossary on the
+        Methodology page.
       </p>
     </div>
   );

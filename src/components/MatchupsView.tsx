@@ -402,7 +402,6 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
           </span>
           <RecommendedFloorBadge
             threshold={currentEvent.recommendedFloor}
-            tierHint={currentEvent.recommendedFloorLabel}
             course={currentEvent.course}
           />
         </div>
@@ -437,8 +436,11 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
             </h2>
             <p className="text-sm text-[#d4d4d4] mt-1 font-['Inter',system-ui,sans-serif]">
               Picks ranked by X Score edge -- model floor 0.95.
-              Tracked / recommended threshold: <span className="font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">{currentEvent.recommendedFloor.toFixed(2)}</span>
-              {' '}({currentEvent.recommendedFloorLabel}+ tier) at {currentEvent.course}.
+              Tracked / recommended threshold: matchup score{' '}
+              <span className="font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">
+                ≥ {currentEvent.recommendedFloor.toFixed(2)}
+              </span>{' '}
+              at {currentEvent.course}.
             </p>
           </div>
           <button
@@ -483,11 +485,10 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
                 populate here.
               </p>
               <p className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mt-3">
-                Tracked threshold at {currentEvent.course}: edge ≥{' '}
+                Tracked threshold at {currentEvent.course}: matchup score{' '}
                 <span className="font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">
-                  {currentEvent.recommendedFloor.toFixed(2)}
+                  ≥ {currentEvent.recommendedFloor.toFixed(2)}
                 </span>
-                {' '}({currentEvent.recommendedFloorLabel}+ tier)
               </p>
             </div>
           )}

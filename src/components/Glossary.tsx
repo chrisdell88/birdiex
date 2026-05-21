@@ -23,15 +23,15 @@ const terms: Term[] = [
   },
   {
     term: 'Star Rating (★ to ★★★★★)',
-    short: 'A property of an individual bet, based on its edge.',
+    short: 'Bet size. Nothing else.',
     detail:
-      'A bet’s star rating reflects how big its edge is, in fixed bands. ★ = edge 0.95–1.94, ★★ = edge 1.95–2.94, ★★★ = edge 2.95–3.94, etc. The star rating ALSO determines the size of the bet (★ → 0.5–1u, ★★ → 1.5–2u, ★★★ → 2.5–3u, etc.). It is a property of the bet itself — it does not change based on the venue.',
+      'The stars on a bet tell you the unit size we sized the bet to win. ★ = 0.5–1u, ★★ = 1.5–2u, ★★★ = 2.5–3u, ★★★★ = 3.5–4u, ★★★★★ = 4.5–5u. The star count is driven by the bet’s edge (bigger edge → bigger size), but it is NOT a "quality tier" or a recommendation cutoff. Two bets with the same star count are the same SIZE, not the same threshold of recommendation.',
   },
   {
     term: 'Matchup Score Threshold',
-    short: 'Our venue-specific cutoff for what counts as a "recommended" bet.',
+    short: 'A numeric edge cutoff. No stars involved.',
     detail:
-      'The threshold is the minimum X-Score Edge we require before treating a matchup as a tracked/recommended bet. It IS venue-specific: a less-predictable course gets a higher threshold. The threshold may sit MID-tier (e.g. 2.45 sits inside the ★★ band) — meaning some ★★ bets pass the threshold and others don’t. Lower picks are still scored internally for backtesting.',
+      'The threshold is the minimum X-Score Edge we require before treating a matchup as a tracked/recommended bet. It is a number (e.g. 2.45 at Aronimink, 2.95 at TPC Craig Ranch, 0.95 at Augusta). It is venue-specific: a less-predictable course gets a higher threshold. Picks below the threshold are still scored internally for backtesting, but are not surfaced as recommendations. Star ratings are unrelated to this — a ★★ bet may or may not clear a given threshold, depending on the venue.',
   },
   {
     term: 'Course Predictability',
@@ -63,12 +63,12 @@ export default function Glossary() {
       </div>
 
       <p className="text-xs text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed mb-5">
-        A bet&rsquo;s <span className="text-[#22c55e] font-semibold">star rating</span> and our
-        venue <span className="text-[#22c55e] font-semibold">matchup score threshold</span> are
-        two different things. The star rating is a property of an individual bet (based on its
-        edge). The threshold is the cutoff we use to decide which matchups become tracked
-        recommendations. These can diverge &mdash; some &#9733;&#9733; bets clear the threshold,
-        others don&rsquo;t.
+        <span className="text-[#22c55e] font-semibold">Stars are a bet&rsquo;s unit size</span>{' '}
+        &mdash; how many units we sized the bet to win. The{' '}
+        <span className="text-[#22c55e] font-semibold">matchup score threshold</span> is a
+        numeric edge cutoff &mdash; whether we recommend the bet at all. They&rsquo;re separate
+        concepts. A &#9733;&#9733; bet at one venue is the same SIZE as a &#9733;&#9733; bet at
+        another, but only some venues recommend it depending on the threshold.
       </p>
 
       <div className="space-y-4">

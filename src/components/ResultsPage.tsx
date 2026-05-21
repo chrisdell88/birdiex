@@ -107,8 +107,6 @@ interface EventEntry {
   roi: number;
   /** Numeric matchup-score threshold (edge cutoff) at this venue. */
   threshold: number;
-  /** Star-tier hint for the threshold. */
-  tierHint: string;
   /** Course name. */
   course: string;
   /** Course predictability score. */
@@ -126,7 +124,6 @@ const EVENT_REGISTRY: EventEntry[] = [
     units: mastersSummary.units,
     roi: mastersSummary.roi,
     threshold: mastersFloor.floor,
-    tierHint: mastersFloor.label,
     course: mastersFloor.course,
     predictability: mastersFloor.predictability,
   },
@@ -140,7 +137,6 @@ const EVENT_REGISTRY: EventEntry[] = [
     units: pgaSummary.units,
     roi: pgaSummary.roi,
     threshold: pgaFloor.floor,
-    tierHint: pgaFloor.label,
     course: pgaFloor.course,
     predictability: pgaFloor.predictability,
   },
@@ -154,7 +150,6 @@ const EVENT_REGISTRY: EventEntry[] = [
     units: 0,
     roi: 0,
     threshold: cjCupFloor.floor,
-    tierHint: cjCupFloor.label,
     course: cjCupFloor.course,
     predictability: cjCupFloor.predictability,
   },
@@ -365,7 +360,6 @@ function AllTimeView() {
                 <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">{t.name}</span>
                 <RecommendedFloorBadge
                   threshold={t.threshold}
-                  tierHint={t.tierHint}
                   course={t.course}
                 />
               </div>
@@ -490,7 +484,6 @@ function MastersView() {
           <span className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">The Masters 2026 — Final Results</span>
           <RecommendedFloorBadge
             threshold={mastersFloor.floor}
-            tierHint={mastersFloor.label}
             course={mastersFloor.course}
           />
         </div>
@@ -849,7 +842,6 @@ function PGAView() {
           <span className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">Aronimink Golf Club</span>
           <RecommendedFloorBadge
             threshold={pgaFloor.floor}
-            tierHint={pgaFloor.label}
             course={pgaFloor.course}
           />
         </div>
@@ -994,7 +986,6 @@ function CJCupView() {
           </span>
           <RecommendedFloorBadge
             threshold={cjCupFloor.floor}
-            tierHint={cjCupFloor.label}
             course={cjCupFloor.course}
           />
         </div>
@@ -1012,12 +1003,12 @@ function CJCupView() {
         </p>
         <p className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif] leading-relaxed mt-4 max-w-md mx-auto">
           At TPC Craig Ranch&rsquo;s low predictability ({cjCupFloor.predictability.toFixed(3)}),
-          the tracked matchup-score threshold is edge{' '}
+          the tracked matchup-score threshold is{' '}
           <span className="text-[#22c55e] font-semibold font-['JetBrains_Mono','SF_Mono',monospace]">
             ≥ {cjCupFloor.floor.toFixed(2)}
           </span>
-          {' '}({cjCupFloor.label}+ tier). Tracked bets and graded results will appear
-          here as the weekend unfolds.
+          . Tracked bets and graded results will appear here as the weekend
+          unfolds.
         </p>
         <p className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mt-5">
           Check the <span className="text-[#22c55e]">Matchups</span> or{' '}

@@ -4,7 +4,7 @@ import PlayerSearch from './PlayerSearch';
 import { r2Results, r2Summary as pgaR2Summary } from '../data/pgaChampR2Results';
 import { r3Results, r3Summary as pgaR3Summary } from '../data/pgaChampR3Results';
 import { r4Results, r4Summary as pgaR4Summary } from '../data/pgaChampR4Results';
-import { starsForEdge } from '../lib/sizing';
+import { starsForEdge, unitsForEdge, stakeToWin1 } from '../lib/sizing';
 import {
   overallRecord,
   overallUnits,
@@ -14,21 +14,18 @@ import {
   r3CumulativeSummary,
   r4RoundOnlySummary,
   r4CumulativeSummary,
-  totalTierBreakdowns,
   totalBucketBreakdowns,
-  r2TierBreakdowns,
   r2BucketBreakdowns,
-  r3ROTierBreakdowns,
   r3ROBucketBreakdowns,
-  r3CumTierBreakdowns,
   r3CumBucketBreakdowns,
-  r4ROTierBreakdowns,
   r4ROBucketBreakdowns,
-  r4CumTierBreakdowns,
   r4CumBucketBreakdowns,
   dataSetComparison,
   betLog,
 } from '../data/resultsData';
+
+// Stable reference for the all-time bet log (imports are static).
+const ALL_TIME_BETS = [...betLog, ...r2Results, ...r3Results, ...r4Results];
 
 // --- All-time totals (computed from raw data, not hardcoded) ---
 // All-time = Masters + PGA Championship, on a consistent stake-to-win-1 basis.
@@ -148,6 +145,62 @@ type TournamentView = 'all-time' | 'masters-2026' | 'pga-2026';
 const mono = "font-['JetBrains_Mono','SF_Mono',monospace]";
 const label = "text-[10px] uppercase tracking-wider text-[#a1a1aa] font-medium font-['Inter',system-ui,sans-serif]";
 
+// --- Per-star breakdown card row ---
+function StarBreakdown({ bets, heading }: { bets: BetRecord[]; heading?: string }) {
+  const rows = useMemo(() => {
+    const out: { stars: number; n: number; w: number; l: number; p: number; units: number; roi: number }[] = [];
+    for (let s = 1; s <= 5; s++) {
+      const sub = bets.filter((b) => starsForEdge(b.edge) === s);
+      if (!sub.length) continue;
+      const w = sub.filter((b) => b.result === 'W').length;
+      const l = sub.filter((b) => b.result === 'L').length;
+      const p = sub.filter((b) => b.result === 'P').length;
+      const units = +sub.reduce((u, b) => u + b.units, 0).toFixed(2);
+      let staked = 0;
+      for (const b of sub) {
+        if (b.result === 'P') continue;
+        staked += unitsForEdge(b.edge) * stakeToWin1(b.bestOdds);
+      }
+      const roi = staked > 0 ? +((units / staked) * 100).toFixed(1) : 0;
+      out.push({ stars: s, n: sub.length, w, l, p, units, roi });
+    }
+    return out;
+  }, [bets]);
+
+  if (!rows.length) return null;
+  return (
+    <div className="mb-5">
+      {heading && (
+        <h4 className={label + ' mb-3'}>{heading}</h4>
+      )}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+        {rows.map((r) => (
+          <div
+            key={r.stars}
+            className={`bg-[#0a0a0a] border ${borderColor(r.units)} rounded-lg p-3.5 flex flex-col gap-1`}
+          >
+            <div className="text-[#22c55e] text-base tracking-tight leading-none">
+              {'★'.repeat(r.stars)}
+            </div>
+            <div className={`text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]`}>
+              {r.n} {r.n === 1 ? 'bet' : 'bets'}
+            </div>
+            <div className={`text-base font-bold ${mono} text-[#f5f5f5] mt-0.5`}>
+              {r.w}-{r.l}{r.p > 0 ? `-${r.p}` : ''}
+            </div>
+            <div className={`text-sm font-bold ${mono} ${unitColor(r.units)}`}>
+              {formatUnits(r.units)}u
+            </div>
+            <div className={`text-xs ${mono} ${unitColor(r.roi)}`}>
+              {formatROI(r.roi)}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────
 // SUB-VIEWS
 // ─────────────────────────────────────────────────────────────────
@@ -181,6 +234,7 @@ function AllTimeView() {
       <p className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mb-5">
         Combined record across all tracked tournaments. Each event uses best available odds across real sportsbooks.
       </p>
+      <StarBreakdown bets={ALL_TIME_BETS} heading="By Star Rating — All-Time" />
       <div className="grid grid-cols-1 gap-3">
         {tournaments.map(t => {
           const isComplete = t.status === 'COMPLETE';
@@ -285,13 +339,6 @@ function MastersView() {
     return { wins: overallRecord.wins, losses: overallRecord.losses, pushes: overallRecord.pushes, units: overallUnits, roi: overallROI };
   }, [roundFilter, dataSetFilter]);
 
-  const activeTierBreakdowns = useMemo(() => {
-    if (roundFilter === 'All Rounds') return totalTierBreakdowns;
-    if (roundFilter === 'Round 2') return r2TierBreakdowns;
-    if (roundFilter === 'Round 3') return dataSetFilter === 'cumulative' ? r3CumTierBreakdowns : r3ROTierBreakdowns;
-    if (roundFilter === 'Round 4') return dataSetFilter === 'cumulative' ? r4CumTierBreakdowns : r4ROTierBreakdowns;
-    return totalTierBreakdowns;
-  }, [roundFilter, dataSetFilter]);
 
   const activeBucketBreakdowns = useMemo(() => {
     if (roundFilter === 'All Rounds') return totalBucketBreakdowns;
@@ -392,25 +439,8 @@ function MastersView() {
         </div>
       </div>
 
-      {/* Tier Breakdowns */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        {activeTierBreakdowns.map(t => (
-          <div key={t.tier} className={`bg-[#0a0a0a] border ${borderColor(t.units)} rounded-lg p-5`}>
-            <div className={label + ' mb-3'}>
-              {t.tier === 'BEST BET' && <span className="text-[#22c55e]">Edge 1.95+</span>}
-              {t.tier === 'STRONG PLAY' && <span className="text-emerald-400">Edge 1.45–1.95</span>}
-              {t.tier === 'LEAN' && <span className="text-[#a1a1aa]">Edge 0.95–1.45</span>}
-            </div>
-            <div className={`text-lg font-bold ${mono} text-[#f5f5f5]`}>
-              {t.wins}-{t.losses}{t.pushes > 0 ? `-${t.pushes}` : ''}
-            </div>
-            <div className="flex gap-4 mt-2">
-              <span className={`text-xs ${mono} ${unitColor(t.units)}`}>{formatUnits(t.units)}u</span>
-              <span className={`text-xs ${mono} ${unitColor(t.roi)}`}>{formatROI(t.roi)}</span>
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* By Star Rating — respects the round/dataset filter via filteredBets */}
+      <StarBreakdown bets={filteredBets} heading="By Star Rating" />
 
       {/* Bucket Breakdowns */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
@@ -719,6 +749,8 @@ function PGAView() {
           </p>
         )}
       </div>
+
+      <StarBreakdown bets={[...sortedR2, ...sortedR3, ...sortedR4]} heading="By Star Rating" />
 
       {rounds.map(({ round, summary, bets }) => (
         <div key={round} className="mb-8">

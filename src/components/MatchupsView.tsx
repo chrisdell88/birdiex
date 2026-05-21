@@ -5,6 +5,7 @@ import SignalBadge from './SignalBadge';
 import PlayerSearch from './PlayerSearch';
 import Avatar from './Avatar';
 import DataSetToggle from './DataSetToggle';
+import RecommendedFloorBadge from './RecommendedFloorBadge';
 import { starsForEdge } from '../lib/sizing';
 
 interface MatchupsViewProps {
@@ -392,13 +393,17 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
       <DataSetToggle dataSet={dataSet} onChange={onDataSetChange} />
       {/* Round picks banner */}
       <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-lg p-5 mb-6">
-        <div className="flex items-center gap-3 mb-2">
+        <div className="flex items-center gap-3 mb-2 flex-wrap">
           <span className="bg-[#22c55e]/15 text-[#22c55e] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
             ROUND {currentEvent.picksRound} PICKS
           </span>
           <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
             {currentEvent.name} · {currentEvent.course}
           </span>
+          <RecommendedFloorBadge
+            floorLabel={currentEvent.recommendedFloorLabel}
+            course={currentEvent.course}
+          />
         </div>
       </div>
 
@@ -430,7 +435,8 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
               R{currentEvent.picksRound} Matchup Recommendations
             </h2>
             <p className="text-sm text-[#d4d4d4] mt-1 font-['Inter',system-ui,sans-serif]">
-              Picks ranked by X Score edge -- Min edge: 0.95
+              Picks ranked by X Score edge -- Min edge: 0.95.
+              Tracked/recommended floor: {currentEvent.recommendedFloorLabel} (at {currentEvent.course}).
             </p>
           </div>
           <button

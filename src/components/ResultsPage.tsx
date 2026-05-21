@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react';
 import type { BetRecord, TierType, ResultsSortField, SortDirection, Sportsbook } from '../types';
 import PlayerSearch from './PlayerSearch';
-import { r2Results, r2Summary as pgaR2Summary } from '../data/pgaChampR2Results';
-import { r3Results, r3Summary as pgaR3Summary } from '../data/pgaChampR3Results';
-import { r4Results, r4Summary as pgaR4Summary } from '../data/pgaChampR4Results';
-import { starsForEdge, unitsForEdge, stakeToWin1 } from '../lib/sizing';
+import RecommendedFloorBadge from './RecommendedFloorBadge';
+import { r2Results, r2Summary as pgaR2SummaryRaw } from '../data/pgaChampR2Results';
+import { r3Results, r3Summary as pgaR3SummaryRaw } from '../data/pgaChampR3Results';
+import { r4Results, r4Summary as pgaR4SummaryRaw } from '../data/pgaChampR4Results';
+import { starsForEdge, unitsForEdge, stakeToWin1, isTrackedBet } from '../lib/sizing';
+import { floorForEvent } from '../config/venues';
 import {
   overallRecord,
   overallUnits,
@@ -24,8 +26,65 @@ import {
   betLog,
 } from '../data/resultsData';
 
-// Stable reference for the all-time bet log (imports are static).
-const ALL_TIME_BETS = [...betLog, ...r2Results, ...r3Results, ...r4Results];
+// ─────────────────────────────────────────────────────────────────
+// VENUE-AWARE RECOMMENDED-FLOOR FILTERING
+// ─────────────────────────────────────────────────────────────────
+// Every event has a venue-specific floor (see src/config/venues.ts). The
+// public/displayed record is the subset of graded bets at or above that
+// floor — the "tracked" or "recommended" bets. The raw bet arrays still
+// contain every bet from 0.95+ (kept for internal backtesting).
+
+const mastersFloor = floorForEvent('masters-2026');
+const pgaFloor = floorForEvent('pga-2026');
+
+/** Filter a bet array down to the tracked bets at this venue's floor. */
+function trackedAt(bets: BetRecord[], floor: number): BetRecord[] {
+  return bets.filter((b) => isTrackedBet(b.edge, floor));
+}
+
+/** Re-summarise a filtered bet array (record + units + ROI + staked). */
+function summarise(bets: BetRecord[]) {
+  let wins = 0, losses = 0, pushes = 0, units = 0, staked = 0;
+  for (const b of bets) {
+    if (b.result === 'W') wins++;
+    else if (b.result === 'L') losses++;
+    else pushes++;
+    units += b.units;
+    if (b.result !== 'P') staked += unitsForEdge(b.edge) * stakeToWin1(b.bestOdds);
+  }
+  return {
+    wins,
+    losses,
+    pushes,
+    bets: bets.length,
+    record: `${wins}-${losses}${pushes > 0 ? `-${pushes}` : ''}`,
+    units: +units.toFixed(2),
+    staked: +staked.toFixed(2),
+    roi: staked > 0 ? +((units / staked) * 100).toFixed(1) : 0,
+  };
+}
+
+// Tracked-bet subsets per event.
+const mastersTracked = trackedAt(betLog, mastersFloor.floor);
+const pgaR2Tracked = trackedAt(r2Results, pgaFloor.floor);
+const pgaR3Tracked = trackedAt(r3Results, pgaFloor.floor);
+const pgaR4Tracked = trackedAt(r4Results, pgaFloor.floor);
+const pgaTracked = [...pgaR2Tracked, ...pgaR3Tracked, ...pgaR4Tracked];
+
+// Venue-aware summaries (replace the raw imports for display purposes).
+const mastersSummary = summarise(mastersTracked);
+const pgaR2Summary = summarise(pgaR2Tracked);
+const pgaR3Summary = summarise(pgaR3Tracked);
+const pgaR4Summary = summarise(pgaR4Tracked);
+const pgaSummary = summarise(pgaTracked);
+
+// All-time = Masters (tracked) + PGA (tracked).
+const ALL_TIME_BETS = [...mastersTracked, ...pgaTracked];
+
+// Silence unused-import warnings — these raw summaries are kept for
+// reference / backtesting comparisons; the venue-aware values above
+// are what's actually rendered.
+void pgaR2SummaryRaw; void pgaR3SummaryRaw; void pgaR4SummaryRaw;
 
 // ─────────────────────────────────────────────────────────────────
 // EVENT REGISTRY — single source of truth for the tournaments shown
@@ -45,6 +104,12 @@ interface EventEntry {
   pushes: number;
   units: number;
   roi: number;
+  /** Tier label for the recommended-bet floor at this venue. */
+  floorLabel: string;
+  /** Course name. */
+  course: string;
+  /** Course predictability score. */
+  predictability: number;
 }
 
 const EVENT_REGISTRY: EventEntry[] = [
@@ -52,35 +117,36 @@ const EVENT_REGISTRY: EventEntry[] = [
     id: 'masters-2026',
     name: 'Masters 2026',
     status: 'COMPLETE',
-    wins: overallRecord.wins,
-    losses: overallRecord.losses,
-    pushes: overallRecord.pushes,
-    units: overallUnits,
-    roi: overallROI,
+    wins: mastersSummary.wins,
+    losses: mastersSummary.losses,
+    pushes: mastersSummary.pushes,
+    units: mastersSummary.units,
+    roi: mastersSummary.roi,
+    floorLabel: mastersFloor.label,
+    course: mastersFloor.course,
+    predictability: mastersFloor.predictability,
   },
   {
     id: 'pga-2026',
     name: 'PGA Championship 2026',
     status: 'COMPLETE',
-    wins: pgaR2Summary.wins + pgaR3Summary.wins + pgaR4Summary.wins,
-    losses: pgaR2Summary.losses + pgaR3Summary.losses + pgaR4Summary.losses,
-    pushes: pgaR2Summary.pushes + pgaR3Summary.pushes + pgaR4Summary.pushes,
-    units: +(pgaR2Summary.units + pgaR3Summary.units + pgaR4Summary.units).toFixed(2),
-    roi: +(((pgaR2Summary.units + pgaR3Summary.units + pgaR4Summary.units) /
-      (pgaR2Summary.staked + pgaR3Summary.staked + pgaR4Summary.staked)) * 100).toFixed(1),
+    wins: pgaSummary.wins,
+    losses: pgaSummary.losses,
+    pushes: pgaSummary.pushes,
+    units: pgaSummary.units,
+    roi: pgaSummary.roi,
+    floorLabel: pgaFloor.label,
+    course: pgaFloor.course,
+    predictability: pgaFloor.predictability,
   },
 ];
 
-// --- All-time totals (computed from raw data, not hardcoded) ---
-// All-time = Masters + PGA Championship, on a consistent stake-to-win-1 basis.
-const allTimeWins = overallRecord.wins + pgaR2Summary.wins + pgaR3Summary.wins + pgaR4Summary.wins;
-const allTimeLosses = overallRecord.losses + pgaR2Summary.losses + pgaR3Summary.losses + pgaR4Summary.losses;
-const allTimePushes = overallRecord.pushes + pgaR2Summary.pushes + pgaR3Summary.pushes + pgaR4Summary.pushes;
-const allTimeUnits = +(overallUnits + pgaR2Summary.units + pgaR3Summary.units + pgaR4Summary.units).toFixed(2);
-// ROI = net units / total staked. The Masters' staked is derived from its own
-// published units + ROI, so the Masters slice always reconciles to its own ROI.
-const mastersStaked = overallUnits / (overallROI / 100);
-const allTimeStaked = mastersStaked + pgaR2Summary.staked + pgaR3Summary.staked + pgaR4Summary.staked;
+// --- All-time totals (sum of venue-tracked records) ---
+const allTimeWins = mastersSummary.wins + pgaSummary.wins;
+const allTimeLosses = mastersSummary.losses + pgaSummary.losses;
+const allTimePushes = mastersSummary.pushes + pgaSummary.pushes;
+const allTimeUnits = +(mastersSummary.units + pgaSummary.units).toFixed(2);
+const allTimeStaked = mastersSummary.staked + pgaSummary.staked;
 const allTimeROI = +((allTimeUnits / allTimeStaked) * 100).toFixed(1);
 const allTimeBets = allTimeWins + allTimeLosses + allTimePushes;
 
@@ -256,9 +322,11 @@ function AllTimeView() {
   return (
     <div>
       <p className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mb-5">
-        Combined record across all tracked tournaments. Each event uses best available odds across real sportsbooks.
+        Combined record across all tracked tournaments. Each event uses its own venue-specific
+        bet floor — see each tournament card for that event&rsquo;s recommended floor. Lower-tier
+        bets are scored internally for backtesting but not surfaced as recommendations.
       </p>
-      <StarBreakdown bets={ALL_TIME_BETS} heading="By Star Rating — All-Time" />
+      <StarBreakdown bets={ALL_TIME_BETS} heading="By Star Rating — All-Time (tracked bets)" />
       <div className="grid grid-cols-1 gap-3">
         {tournaments.map(t => {
           const isComplete = t.status === 'COMPLETE';
@@ -276,6 +344,7 @@ function AllTimeView() {
                   {t.status}
                 </span>
                 <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">{t.name}</span>
+                <RecommendedFloorBadge floorLabel={t.floorLabel} course={t.course} />
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
@@ -391,11 +460,15 @@ function MastersView() {
     <div>
       {/* Tournament Summary Banner */}
       <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-lg p-4 mb-6">
-        <div className="flex items-center gap-3 mb-2">
+        <div className="flex items-center gap-3 mb-2 flex-wrap">
           <span className="bg-[#22c55e]/15 text-[#22c55e] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
             TOURNAMENT COMPLETE
           </span>
           <span className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">The Masters 2026 — Final Results</span>
+          <RecommendedFloorBadge
+            floorLabel={mastersFloor.label}
+            course={mastersFloor.course}
+          />
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
           <div>
@@ -714,6 +787,9 @@ function PGAView() {
   };
 
   const { sortedR2, sortedR3, sortedR4 } = useMemo(() => {
+    // Tables show TRACKED bets only — bets that pass the venue floor and
+    // would actually have been recommended. The full graded set lives in
+    // the raw data files and the backtest sweep (docs/THRESHOLD_SWEEP.md).
     const view = (raw: BetRecord[]) => {
       let bets = [...raw];
       if (selectedPlayer) {
@@ -724,9 +800,9 @@ function PGAView() {
       return bets.sort((a, b) => compareValues(a, b, sortField, sortDir));
     };
     return {
-      sortedR2: view(r2Results),
-      sortedR3: view(r3Results),
-      sortedR4: view(r4Results),
+      sortedR2: view(pgaR2Tracked),
+      sortedR3: view(pgaR3Tracked),
+      sortedR4: view(pgaR4Tracked),
     };
   }, [sortField, sortDir, selectedPlayer]);
   const filteredCount = sortedR2.length + sortedR3.length + sortedR4.length;
@@ -747,6 +823,7 @@ function PGAView() {
           </span>
           <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">PGA Championship 2026</span>
           <span className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">Aronimink Golf Club</span>
+          <RecommendedFloorBadge floorLabel={pgaFloor.label} course={pgaFloor.course} />
         </div>
       </div>
 

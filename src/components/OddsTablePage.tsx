@@ -3,6 +3,7 @@ import type { PlayerData, MatchupOddsEntry, DataSet } from '../types';
 import { currentEvent } from '../config/event';
 import { starsForEdge } from '../lib/sizing';
 import DataSetToggle from './DataSetToggle';
+import RecommendedFloorBadge from './RecommendedFloorBadge';
 
 interface OddsTablePageProps {
   data: PlayerData[];
@@ -138,7 +139,9 @@ const label = "text-[10px] uppercase tracking-wider text-[#a1a1aa] font-medium f
 
 
 export default function OddsTablePage({ data, dataSet, onDataSetChange }: OddsTablePageProps) {
-  const [minEdge, setMinEdge] = useState<number>(0.95);
+  // Default Min Edge = the venue's recommended floor. Users can lower it
+  // to see internally-graded picks below the recommended floor.
+  const [minEdge, setMinEdge] = useState<number>(currentEvent.recommendedFloor);
   const [sortField, setSortField] = useState<OddsSortField>('edge');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
 
@@ -204,12 +207,20 @@ export default function OddsTablePage({ data, dataSet, onDataSetChange }: OddsTa
       <DataSetToggle dataSet={dataSet} onChange={onDataSetChange} />
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-xl font-bold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
-          Odds Comparison Table
-        </h2>
-        <p className="text-sm text-[#d4d4d4] mt-1 font-['Inter',system-ui,sans-serif]">
-          Recommended bets with odds from all 11 sportsbooks
-        </p>
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="text-xl font-bold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
+              Odds Comparison Table
+            </h2>
+            <p className="text-sm text-[#d4d4d4] mt-1 font-['Inter',system-ui,sans-serif]">
+              Recommended bets with odds from all 11 sportsbooks
+            </p>
+          </div>
+          <RecommendedFloorBadge
+            floorLabel={currentEvent.recommendedFloorLabel}
+            course={currentEvent.course}
+          />
+        </div>
       </div>
 
       {/* Filter Controls */}

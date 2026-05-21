@@ -7,6 +7,7 @@ import PlayerDetailCard from './PlayerDetailCard';
 import PlayerSearch from './PlayerSearch';
 import Avatar from './Avatar';
 import DataSetToggle from './DataSetToggle';
+import RecommendedFloorBadge from './RecommendedFloorBadge';
 import { currentEvent } from '../config/event';
 
 interface RankingsTableProps {
@@ -242,7 +243,7 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
 
       {/* Last updated + filters */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-[11px] text-[#d4d4d4] uppercase tracking-wider font-['Inter',system-ui,sans-serif]">
             Last Updated: {formatUpdated(currentEvent.dataUpdatedAt)} — RD{currentEvent.picksRound - 1} Results Below
           </span>
@@ -252,6 +253,10 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
           >
             ?
           </button>
+          <RecommendedFloorBadge
+            floorLabel={currentEvent.recommendedFloorLabel}
+            course={currentEvent.course}
+          />
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           <PlayerSearch

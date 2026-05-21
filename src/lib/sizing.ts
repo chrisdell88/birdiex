@@ -79,3 +79,62 @@ export function betStake(result: BetResult, bestOdds: string, edge: number): num
   if (result === 'P') return 0;
   return Math.round(unitsForEdge(edge) * stakeToWin1(bestOdds) * 100) / 100;
 }
+
+// ============================================================================
+// Course-adaptive recommended floor
+// ============================================================================
+//
+// The model produces every bet with edge ≥ 0.95 (the hard pick floor). But for
+// the public "recommended / tracked bets" record we use a higher floor on
+// less-predictable venues, because backtests show low-predictability courses
+// (e.g., Aronimink, predictability 0.0413) lose money at the 0.95 floor and
+// only break even from ~2.45 upward.
+//
+// Two anchors so far:
+//   Augusta National (pred 0.1439)  →  floor 0.95  (every ★+ recommended)
+//   Aronimink         (pred 0.0413) →  floor 2.45  (★★+ only)
+//
+// Linear fit through the two anchors: floor = 3.05 − 14.62 × predictability.
+// Then SNAP UP to the next tier boundary in {0.95, 1.45, 1.95, 2.45, 2.95}.
+//
+// Source-of-truth doc: docs/THRESHOLD_SWEEP.md.
+
+/** The legal recommended-floor tier boundaries (star-tier breakpoints). */
+const FLOOR_TIERS = [0.95, 1.45, 1.95, 2.45, 2.95] as const;
+
+/**
+ * Recommended bet floor (edge) for a venue, derived from its predictability.
+ *
+ * Formula: `raw = 3.05 − 14.62 × predictability`, then snap UP to the next
+ * tier boundary in {0.95, 1.45, 1.95, 2.45, 2.95}. Clamped so the floor never
+ * sits below 0.95 (the model's hard pick floor) or above 2.95 (above that
+ * the tracked sample collapses to noise).
+ *
+ * Sanity checks:
+ *   predictability 0.1439 (Augusta)   → raw 0.946 → tier 0.95  ✓
+ *   predictability 0.0413 (Aronimink) → raw 2.446 → tier 2.45  ✓
+ */
+export function recommendedFloorForPredictability(predictability: number): number {
+  const raw = 3.05 - 14.62 * predictability;
+  // Snap UP to the next legal tier boundary.
+  for (const t of FLOOR_TIERS) if (raw <= t + 1e-9) return t;
+  return FLOOR_TIERS[FLOOR_TIERS.length - 1]; // cap at 2.95
+}
+
+/**
+ * Star tier label for a recommended-floor edge (e.g., 0.95 → "★+", 2.45 → "★★+",
+ * 2.95 → "★★★+"). Uses the same star mapping as starsForEdge() so the floor
+ * label matches what the user sees on individual bet cards.
+ */
+export function floorTierLabel(floor: number): string {
+  const stars = Math.max(1, starsForEdge(floor));
+  return '★'.repeat(Math.min(5, stars)) + '+';
+}
+
+/**
+ * Is this bet "tracked" (i.e., would we have recommended it under the
+ * venue-aware floor)? `floor` is the recommended floor for the course.
+ */
+export function isTrackedBet(edge: number, floor: number): boolean {
+  return Math.round(edge * 10000) >= Math.round(floor * 10000);
+}

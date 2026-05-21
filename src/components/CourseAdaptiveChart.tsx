@@ -1,39 +1,28 @@
 /**
  * CourseAdaptiveChart — methodology-page visual that explains the thesis:
- * "Bet selectivity adapts to course predictability."
+ * "More predictable courses get more recommended bets."
  *
- * The chart shows a green curve descending from upper-left (low predictability →
- * higher selectivity required) to lower-right (high predictability → all-star
- * floor is fine). Two labeled anchor points: Augusta (high pred) and Aronimink
- * (low pred). No edge numbers, no formula — just course names + tier badges.
+ * The chart shows a green curve ascending from lower-left (low predictability,
+ * fewer recommendations) to upper-right (high predictability, broader
+ * recommendation set). Two labeled anchor points: Aronimink (low pred) and
+ * Augusta (high pred). No edge numbers, no formula — just course names + tier
+ * badges.
  *
  * Pure SVG, no chart library, fully responsive via viewBox.
  */
 export default function CourseAdaptiveChart() {
   // SVG viewBox: 600 wide × 360 tall.
-  // Plot area: x in [70, 560], y in [40, 290].
-
-  // Curve path: smooth descent from upper-left to lower-right.
-  // Two real anchors:
-  //   Aronimink at predictability 0.0413  →  high selectivity (★★+ only)
-  //   Augusta at predictability 0.1439   →  low selectivity (every ★+ fine)
+  // Plot area: x in [70, 560], y in [60, 270].
   //
-  // Plot mapping:
-  //   x: predictability 0 → 0.18 maps to plot x 70 → 560
-  //   y: selectivity high → low maps to plot y 60 → 270
-  //
-  // Aronimink: x = 70 + (0.0413/0.18)*(560-70) = 70 + 112.4 = 182
-  //            y = 95 (upper area)
-  // Augusta:   x = 70 + (0.1439/0.18)*(560-70) = 70 + 391.6 = 462
-  //            y = 245 (lower area)
-  //
-  // Cubic curve, slight S-shape for organic feel.
+  // Anchors (mirrored from previous "descending" layout so curve ascends):
+  //   Aronimink (predictability 0.0413) → lower-left  → (x=182, y=245)
+  //   Augusta   (predictability 0.1439) → upper-right → (x=462, y=120)
 
   return (
     <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-5">
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <h3 className="text-base font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
-          Bet Selectivity Adapts to the Course
+          More Predictable Courses, More Recommended Bets
         </h3>
         <span className="text-[10px] uppercase tracking-wider text-[#22c55e] font-medium font-['Inter',system-ui,sans-serif] bg-[#22c55e]/10 border border-[#22c55e]/30 rounded-full px-2.5 py-0.5">
           Course-Aware
@@ -44,7 +33,7 @@ export default function CourseAdaptiveChart() {
         viewBox="0 0 600 360"
         className="w-full h-auto"
         role="img"
-        aria-label="Chart showing bet selectivity decreasing as course predictability increases. Aronimink, a low-predictability venue, requires a higher minimum bet tier. Augusta National, a high-predictability venue, lets us recommend every bet from the lowest tier up."
+        aria-label="Chart showing the number of bets we recommend rising as course predictability rises. Aronimink, a low-predictability venue, lands at the lower-left — we recommend only higher-tier bets. Augusta National, a high-predictability venue, lands at the upper-right — we recommend every star-tier bet the model produces."
       >
         <defs>
           {/* Subtle green glow for the curve */}
@@ -56,9 +45,10 @@ export default function CourseAdaptiveChart() {
             </feMerge>
           </filter>
 
-          {/* Gradient under the curve for emphasis */}
+          {/* Gradient under the curve for emphasis (fades from green at the
+              curve down to transparent at the x-axis) */}
           <linearGradient id="curveFade" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#22c55e" stopOpacity="0.18" />
+            <stop offset="0%" stopColor="#22c55e" stopOpacity="0.22" />
             <stop offset="100%" stopColor="#22c55e" stopOpacity="0" />
           </linearGradient>
 
@@ -124,7 +114,7 @@ export default function CourseAdaptiveChart() {
           letterSpacing="1.5"
           transform="rotate(-90, 20, 165)"
         >
-          BET SELECTIVITY →
+          BETS RECOMMENDED →
         </text>
 
         {/* X axis ticks: Low / High */}
@@ -150,7 +140,7 @@ export default function CourseAdaptiveChart() {
           HIGH
         </text>
 
-        {/* Y axis labels: tier badges */}
+        {/* Y axis labels: MORE at top, FEWER at bottom */}
         <text
           x={62}
           y={75}
@@ -160,7 +150,7 @@ export default function CourseAdaptiveChart() {
           fontFamily="Inter, system-ui, sans-serif"
           letterSpacing="1"
         >
-          HIGHER
+          MORE
         </text>
         <text
           x={62}
@@ -171,18 +161,19 @@ export default function CourseAdaptiveChart() {
           fontFamily="Inter, system-ui, sans-serif"
           letterSpacing="1"
         >
-          LOWER
+          FEWER
         </text>
 
-        {/* === Fill under the curve === */}
+        {/* === Fill under the curve (mirrors the descending curve into an
+            ascending one and fills DOWN to the x-axis) === */}
         <path
-          d="M 70 95 C 130 100, 200 110, 260 145 S 400 235, 560 265 L 560 270 L 70 270 Z"
+          d="M 70 265 C 130 260, 200 250, 260 215 S 400 125, 560 95 L 560 270 L 70 270 Z"
           fill="url(#curveFade)"
         />
 
-        {/* === Main curve === */}
+        {/* === Main curve (ascending, lower-left → upper-right) === */}
         <path
-          d="M 70 95 C 130 100, 200 110, 260 145 S 400 235, 560 265"
+          d="M 70 265 C 130 260, 200 250, 260 215 S 400 125, 560 95"
           fill="none"
           stroke="#22c55e"
           strokeWidth={3}
@@ -190,25 +181,27 @@ export default function CourseAdaptiveChart() {
           filter="url(#curveGlow)"
         />
 
-        {/* === Anchor point: Aronimink (low pred → high selectivity) === */}
+        {/* === Anchor point: Aronimink (low pred → fewer bets recommended,
+            lower-left of chart) === */}
         {/* Halo */}
-        <circle cx={182} cy={120} r={18} fill="url(#dotHalo)" />
+        <circle cx={182} cy={245} r={18} fill="url(#dotHalo)" />
         {/* Dot */}
         <circle
           cx={182}
-          cy={120}
+          cy={245}
           r={6}
           fill="#f5f5f5"
           stroke="#22c55e"
           strokeWidth={2}
         />
-        {/* Label box */}
-        <g transform="translate(182, 120)">
+        {/* Label box — UP-RIGHT of the dot so it doesn't run off the left
+            edge or block the curve */}
+        <g transform="translate(182, 245)">
           <rect
             x={14}
-            y={-32}
+            y={-50}
             width={148}
-            height={28}
+            height={36}
             rx={6}
             fill="#0a0a0a"
             stroke="#22c55e"
@@ -217,7 +210,7 @@ export default function CourseAdaptiveChart() {
           />
           <text
             x={88}
-            y={-18}
+            y={-34}
             textAnchor="middle"
             fill="#f5f5f5"
             fontSize="11"
@@ -228,7 +221,7 @@ export default function CourseAdaptiveChart() {
           </text>
           <text
             x={88}
-            y={-6}
+            y={-20}
             textAnchor="middle"
             fill="#22c55e"
             fontSize="10"
@@ -239,25 +232,27 @@ export default function CourseAdaptiveChart() {
           </text>
         </g>
 
-        {/* === Anchor point: Augusta (high pred → low selectivity) === */}
+        {/* === Anchor point: Augusta (high pred → broader recommendation set,
+            upper-right of chart) === */}
         {/* Halo */}
-        <circle cx={462} cy={245} r={18} fill="url(#dotHalo)" />
+        <circle cx={462} cy={120} r={18} fill="url(#dotHalo)" />
         {/* Dot */}
         <circle
           cx={462}
-          cy={245}
+          cy={120}
           r={6}
           fill="#f5f5f5"
           stroke="#22c55e"
           strokeWidth={2}
         />
-        {/* Label box (above-left of the dot so it stays in frame) */}
-        <g transform="translate(462, 245)">
+        {/* Label box — DOWN-LEFT of the dot so it doesn't run off the top
+            edge or block the curve */}
+        <g transform="translate(462, 120)">
           <rect
             x={-180}
-            y={-44}
+            y={14}
             width={170}
-            height={28}
+            height={36}
             rx={6}
             fill="#0a0a0a"
             stroke="#22c55e"
@@ -266,7 +261,7 @@ export default function CourseAdaptiveChart() {
           />
           <text
             x={-95}
-            y={-30}
+            y={30}
             textAnchor="middle"
             fill="#f5f5f5"
             fontSize="11"
@@ -277,7 +272,7 @@ export default function CourseAdaptiveChart() {
           </text>
           <text
             x={-95}
-            y={-18}
+            y={44}
             textAnchor="middle"
             fill="#22c55e"
             fontSize="10"
@@ -292,9 +287,9 @@ export default function CourseAdaptiveChart() {
       {/* Caption */}
       <p className="text-xs text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed mt-4">
         Not every PGA Tour venue carries the same signal. Augusta National has the highest course
-        predictability on Tour — historical performance is genuinely indicative of future results,
-        so we trust the model's full ★+ recommendation set. At a low-predictability venue like
-        Aronimink, the signal-to-noise is lower — we raise the floor and only recommend higher-tier
+        predictability on Tour — historical performance there is genuinely indicative of future
+        results, so we trust the full ★+ recommendation set. At a low-predictability venue like
+        Aronimink, signal-to-noise drops — we raise the floor and only recommend higher-tier
         plays. Every event gets a venue-specific floor that reflects how much we trust the data
         there.
       </p>

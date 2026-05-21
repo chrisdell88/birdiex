@@ -146,6 +146,22 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
     [data]
   );
 
+  // Outright winner odds keyed by player_name for fast lookup per row.
+  const outrightsByName = useMemo(() => {
+    const m = new Map<string, { bestOdds: string; bestBook: string }>();
+    for (const o of currentEvent.outrights) {
+      m.set(o.player_name, { bestOdds: o.bestOdds, bestBook: o.bestBook });
+    }
+    return m;
+  }, []);
+
+  // American odds → payout multiplier (larger = longer shot, used for sort).
+  const oddsToPayout = (odds: string): number => {
+    const n = parseInt(odds, 10);
+    if (!Number.isFinite(n) || n === 0) return Infinity;
+    return n < 0 ? 100 / Math.abs(n) : n / 100;
+  };
+
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -229,18 +245,28 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
         case 'signal':
           cmp = signalOrder[a.signal] - signalOrder[b.signal];
           break;
+        case 'outright_odds': {
+          const aOdds = outrightsByName.get(a.player_name)?.bestOdds;
+          const bOdds = outrightsByName.get(b.player_name)?.bestOdds;
+          // payoutMultiplier: bigger = longer shot. asc = favorites first.
+          const aP = aOdds ? oddsToPayout(aOdds) : Infinity;
+          const bP = bOdds ? oddsToPayout(bOdds) : Infinity;
+          cmp = aP - bP;
+          break;
+        }
       }
       return sortDir === 'asc' ? cmp : -cmp;
     });
 
     return result;
-  }, [data, search, selectedPlayer, signalFilter, sortField, sortDir]);
+  }, [data, search, selectedPlayer, signalFilter, sortField, sortDir, outrightsByName]);
 
   const columns: { field: SortField; label: string }[] = [
     { field: 'rank', label: '#' },
     { field: 'player_name', label: 'Player' },
     { field: 'x_score', label: 'X Score' },
     { field: 'signal', label: 'Signal' },
+    { field: 'outright_odds', label: 'To Win' },
     { field: 'position', label: 'POS' },
     { field: 'score_to_par', label: 'SCORE' },
     { field: 'sg_putt', label: 'SG_PUTT' },
@@ -385,6 +411,21 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
                       <SignalBadge signal={player.signal} compact conflicted={player.purity === 'CONFLICTED'} />
                       <PurityIcon player={player} />
                     </div>
+                  </td>
+                  <td className="px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs whitespace-nowrap">
+                    {(() => {
+                      const o = outrightsByName.get(player.player_name);
+                      if (!o) return <span className="text-[#525252]">—</span>;
+                      return (
+                        <span
+                          className="text-[#22c55e]"
+                          title={`Best winner odds: ${o.bestOdds} at ${o.bestBook}`}
+                        >
+                          {o.bestOdds}
+                          <span className="text-[#737373] ml-1 text-[10px]">{o.bestBook}</span>
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="px-3 py-2.5 text-[#d4d4d4] font-['JetBrains_Mono','SF_Mono',monospace] text-xs">
                     {player.position}

@@ -4,6 +4,7 @@ import { currentEvent } from '../config/event';
 import { starsForEdge } from '../lib/sizing';
 import DataSetToggle from './DataSetToggle';
 import RecommendedFloorBadge from './RecommendedFloorBadge';
+import OutrightsTable from './OutrightsTable';
 
 interface OddsTablePageProps {
   data: PlayerData[];
@@ -386,6 +387,9 @@ export default function OddsTablePage({ data, dataSet, onDataSetChange }: OddsTa
             </table>
           </div>
         </div>
+
+      {/* Outright winner odds — reference table, not a recommendation. */}
+      <OutrightsTable outrights={currentEvent.outrights} />
     </div>
   );
 }

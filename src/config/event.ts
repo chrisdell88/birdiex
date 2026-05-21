@@ -7,9 +7,10 @@
  * imports, `picksRound`, `headerBanner`, and `lastUpdated`. No component
  * edits needed.
  */
-import type { PlayerData, MatchupOddsEntry } from '../types';
+import type { PlayerData, MatchupOddsEntry, OutrightEntry } from '../types';
 import { roundOnlyData, cumulativeData, generatedAt } from '../data/cjCupPreData';
 import { r1MatchupOddsData } from '../data/cjCupR1Matchups';
+import { r1OutrightsData } from '../data/cjCupR1Outrights';
 import { recommendedFloorForPredictability, floorTierLabel } from '../lib/sizing';
 
 export interface CurrentEvent {
@@ -35,6 +36,8 @@ export interface CurrentEvent {
   rankingsCumulative: PlayerData[];
   /** H2H matchup odds for the upcoming round. */
   matchups: MatchupOddsEntry[];
+  /** Outright winner odds across real sportsbooks. */
+  outrights: OutrightEntry[];
 }
 
 const CRAIG_RANCH_PREDICTABILITY = 0.0373;
@@ -51,4 +54,5 @@ export const currentEvent: CurrentEvent = {
   rankingsRound: roundOnlyData,
   rankingsCumulative: cumulativeData,
   matchups: r1MatchupOddsData,
+  outrights: r1OutrightsData,
 };

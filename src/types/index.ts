@@ -54,7 +54,8 @@ export type SortField =
   | 'fit_plus_category_l3'
   | 'major_adj_l4'
   | 'x_score'
-  | 'signal';
+  | 'signal'
+  | 'outright_odds';
 
 export type SortDirection = 'asc' | 'desc';
 
@@ -148,3 +149,16 @@ export type ResultsSortField =
   | 'oppScore'
   | 'result'
   | 'units';
+
+export interface OutrightEntry {
+  player_name: string;
+  dg_id: number;
+  /** Best American odds across real sportsbooks (e.g., "+150", "-120"). */
+  bestOdds: string;
+  /** Book that posted the best odds. */
+  bestBook: string;
+  /** DataGolf model odds (baseline_history_fit) for reference. Nullable. */
+  dgOdds: string | null;
+  /** All real-book odds keyed by book name. */
+  allBooks: Record<string, string>;
+}

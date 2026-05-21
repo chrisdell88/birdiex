@@ -4,9 +4,13 @@
  * same thing as the venue MATCHUP SCORE THRESHOLD. The star rating is
  * a property of the bet's edge; the threshold is our cutoff.
  *
+ * Includes the canonical BetSizingLadder so the bands are visually
+ * unambiguous.
+ *
  * Rendered prominently at the top of the Methodology page. Linked from
  * every RecommendedFloorBadge tooltip + the Matchups disclaimer copy.
  */
+import BetSizingLadder from './BetSizingLadder';
 
 interface Term {
   term: string;
@@ -72,20 +76,27 @@ export default function Glossary() {
       </p>
 
       <div className="space-y-4">
-        {terms.map((t) => (
-          <div
-            key={t.term}
-            className="border-l-2 border-[#22c55e]/40 pl-4"
-          >
-            <div className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
-              {t.term}
+        {terms.map((t, i) => (
+          <div key={t.term}>
+            <div className="border-l-2 border-[#22c55e]/40 pl-4">
+              <div className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
+                {t.term}
+              </div>
+              <div className="text-[11px] uppercase tracking-wider text-[#22c55e] font-['Inter',system-ui,sans-serif] mt-0.5">
+                {t.short}
+              </div>
+              <p className="text-xs text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed mt-1.5">
+                {t.detail}
+              </p>
             </div>
-            <div className="text-[11px] uppercase tracking-wider text-[#22c55e] font-['Inter',system-ui,sans-serif] mt-0.5">
-              {t.short}
-            </div>
-            <p className="text-xs text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed mt-1.5">
-              {t.detail}
-            </p>
+
+            {/* Drop the sizing ladder under the Star Rating term so the
+                edge → star → unit-size mapping is unambiguous and visible. */}
+            {i === 1 && (
+              <div className="mt-4 ml-4">
+                <BetSizingLadder />
+              </div>
+            )}
           </div>
         ))}
       </div>

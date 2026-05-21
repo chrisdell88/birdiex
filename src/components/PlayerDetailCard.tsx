@@ -6,9 +6,11 @@ import { currentEvent } from '../config/event';
 
 interface PlayerDetailCardProps {
   player: PlayerData;
+  /** Number of columns this detail row should span (matches parent table). */
+  colSpan?: number;
 }
 
-export default function PlayerDetailCard({ player }: PlayerDetailCardProps) {
+export default function PlayerDetailCard({ player, colSpan = 14 }: PlayerDetailCardProps) {
   const stats = [
     { label: 'OTT', value: player.sg_ott },
     { label: 'APP', value: player.sg_app },
@@ -29,7 +31,7 @@ export default function PlayerDetailCard({ player }: PlayerDetailCardProps) {
 
   return (
     <tr>
-      <td colSpan={14} className="px-0 py-0">
+      <td colSpan={colSpan} className="px-0 py-0">
         <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg mx-3 sm:mx-4 my-2 p-4">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-[10px] uppercase tracking-wider text-[#22c55e] font-medium font-['Inter',system-ui,sans-serif] bg-[#22c55e]/10 border border-[#22c55e]/30 rounded-full px-2.5 py-0.5">

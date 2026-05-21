@@ -59,12 +59,13 @@ function getInitials(name: string): string {
 export default function CourseFitScatter({ topN = 20, onPlayerClick }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
 
-  // Outrights lookup so the hover tooltip can show "TO WIN: +150 fanduel"
-  // alongside the X Score + signal.
+  // Outrights lookup. Use DataGolf's modeled odds so every player is on the
+  // same apples-to-apples basis (best-of-book varies per player and creates
+  // visual noise in the comparison).
   const outrightsByName = useMemo(() => {
-    const m = new Map<string, { bestOdds: string; bestBook: string }>();
+    const m = new Map<string, { odds: string }>();
     for (const o of currentEvent.outrights) {
-      m.set(o.player_name, { bestOdds: o.bestOdds, bestBook: o.bestBook });
+      if (o.dgOdds) m.set(o.player_name, { odds: o.dgOdds });
     }
     return m;
   }, []);
@@ -378,9 +379,9 @@ export default function CourseFitScatter({ topN = 20, onPlayerClick }: Props) {
                   TO WIN:{' '}
                   {outright ? (
                     <>
-                      <span className="text-[#f5f5f5]">{outright.bestOdds}</span>
+                      <span className="text-[#f5f5f5]">{outright.odds}</span>
                       <span className="opacity-50 mx-1">·</span>
-                      <span className="opacity-80">{outright.bestBook}</span>
+                      <span className="opacity-80">datagolf</span>
                     </>
                   ) : (
                     <span className="text-[#737373]">—</span>

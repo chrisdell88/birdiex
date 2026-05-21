@@ -150,12 +150,34 @@ async function main() {
   let finalCumulative = cumulativeRows;
 
   if (isPre) {
-    console.log('Pre-tournament mode: building from decompositions only (Layer 1 = 0).\n');
+    console.log('Pre-tournament mode: Layer 1 = DataGolf skill estimate (no live SG yet).\n');
+
+    // Load DataGolf skill estimates so Layer 1 is meaningful pre-R1. Without
+    // this, every X Score collapses to L2+L3+L4 only (course history + fit +
+    // major), which buries top-skill players like Scheffler if they don't
+    // have unusual venue-specific upside. With the baseline, the rankings
+    // reflect overall skill PLUS our model's tilt.
+    const dgRankings = await loadJson<{ rankings: Array<{ dg_id: number; player_name: string; dg_skill_estimate: number }> }>(
+      slug,
+      phase,
+      'dg-rankings',
+    );
+    const skillById = new Map<number, number>();
+    const skillByName = new Map<string, number>();
+    if (dgRankings?.rankings) {
+      for (const r of dgRankings.rankings) {
+        if (typeof r.dg_skill_estimate === 'number') {
+          if (r.dg_id) skillById.set(r.dg_id, r.dg_skill_estimate);
+          if (r.player_name) skillByName.set(normalizeName(r.player_name), r.dg_skill_estimate);
+        }
+      }
+      console.log(`Loaded ${skillById.size} DG skill estimates for Layer 1 baseline.\n`);
+    } else {
+      console.warn('⚠️  No dg-rankings.json found — pre-tournament Layer 1 will be 0.\n');
+    }
+
     // Two-pass: first compute every player's X Score, then classify signals
-    // using a field-relative (z-score) rule. The standard absolute thresholds
-    // (0.5 / 1.0 / 1.5) make every tiny positive X Score "LEAN BUY" pre-R1
-    // — meaningless. Z-score classification gives real direction based on
-    // each player's rank within the field.
+    // using a field-relative (z-score) rule.
     const preBreakdowns = decompPlayers.map((p) => {
       const decomp: Decomposition = {
         total_course_history_adjustment: p.total_course_history_adjustment ?? 0,
@@ -163,7 +185,11 @@ async function main() {
         strokes_gained_category_adjustment: p.strokes_gained_category_adjustment ?? 0,
         major_adjustment: p.major_adjustment ?? 0,
       };
-      return { p, breakdown: computeXScore(null, decomp, courseProfile) };
+      const baselineSkill =
+        (p.dg_id != null ? skillById.get(p.dg_id) : undefined) ??
+        (p.player_name ? skillByName.get(normalizeName(p.player_name)) : undefined) ??
+        null;
+      return { p, breakdown: computeXScore(null, decomp, courseProfile, baselineSkill) };
     });
     const fieldXScores = preBreakdowns.map((row) => row.breakdown.x_score);
 

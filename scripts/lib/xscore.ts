@@ -60,14 +60,25 @@ export function computeLayer1(sg: LiveSG, course: CourseProfile): number {
 /**
  * Compute full X Score breakdown given live SG, decomposition, and course profile.
  *
- * For pre-tournament / no-live-data state, pass `null` for sg — Layer 1 returns 0.
+ * For pre-tournament / no-live-data state, pass `null` for sg AND optionally
+ * pass `baselineSkill` (DataGolf skill estimate in strokes-gained per round)
+ * to serve as Layer 1 in lieu of measured SG. This keeps Scheffler-tier
+ * players ranked near the top pre-R1; without it L1=0 collapses the X Score
+ * to just course history + fit, which buries top-skill players who don't
+ * have unusual course-specific upside.
+ *
+ * Post-tournament the formula is unchanged from the locked specification
+ * (still 145/145 Masters R1 verified): L1 = computeLayer1(sg, course).
  */
 export function computeXScore(
   sg: LiveSG | null,
   decomp: Decomposition,
-  course: CourseProfile
+  course: CourseProfile,
+  baselineSkill: number | null = null
 ): XScoreBreakdown {
-  const sg_score_l1 = sg ? computeLayer1(sg, course) : 0;
+  const sg_score_l1 = sg
+    ? computeLayer1(sg, course)
+    : (baselineSkill ?? 0);
   const course_history_l2 = decomp.total_course_history_adjustment ?? 0;
   const fit_adjustment = decomp.total_fit_adjustment ?? 0;
   const sg_category_adj = decomp.strokes_gained_category_adjustment ?? 0;

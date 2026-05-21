@@ -147,10 +147,13 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
   );
 
   // Outright winner odds keyed by player_name for fast lookup per row.
+  // We display DataGolf's modeled `baseline_history_fit` odds so every player
+  // is on an apples-to-apples basis. Best-of-book odds vary per player which
+  // makes column-wide comparison confusing.
   const outrightsByName = useMemo(() => {
-    const m = new Map<string, { bestOdds: string; bestBook: string }>();
+    const m = new Map<string, { odds: string; source: string }>();
     for (const o of currentEvent.outrights) {
-      m.set(o.player_name, { bestOdds: o.bestOdds, bestBook: o.bestBook });
+      if (o.dgOdds) m.set(o.player_name, { odds: o.dgOdds, source: 'datagolf' });
     }
     return m;
   }, []);
@@ -246,9 +249,8 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
           cmp = signalOrder[a.signal] - signalOrder[b.signal];
           break;
         case 'outright_odds': {
-          const aOdds = outrightsByName.get(a.player_name)?.bestOdds;
-          const bOdds = outrightsByName.get(b.player_name)?.bestOdds;
-          // payoutMultiplier: bigger = longer shot. asc = favorites first.
+          const aOdds = outrightsByName.get(a.player_name)?.odds;
+          const bOdds = outrightsByName.get(b.player_name)?.odds;
           const aP = aOdds ? oddsToPayout(aOdds) : Infinity;
           const bP = bOdds ? oddsToPayout(bOdds) : Infinity;
           cmp = aP - bP;
@@ -261,18 +263,29 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
     return result;
   }, [data, search, selectedPlayer, signalFilter, sortField, sortDir, outrightsByName]);
 
+  // Pre-tournament has no live SG / score / position data yet — hide those
+  // columns until R1 grades. Layer-1 column heading also changes to reflect
+  // what's feeding it (DG skill estimate pre-R1; live SG post-R1).
+  const isPreTournament = currentEvent.picksRound <= 1;
+
+  const liveOnlyColumns: { field: SortField; label: string }[] = isPreTournament
+    ? []
+    : [
+        { field: 'position', label: 'POS' },
+        { field: 'score_to_par', label: 'SCORE' },
+        { field: 'sg_putt', label: 'SG_PUTT' },
+        { field: 'sg_app', label: 'SG_APP' },
+        { field: 'sg_ott', label: 'SG_OTT' },
+      ];
+
   const columns: { field: SortField; label: string }[] = [
     { field: 'rank', label: '#' },
     { field: 'player_name', label: 'Player' },
     { field: 'x_score', label: 'X Score' },
     { field: 'signal', label: 'Signal' },
     { field: 'outright_odds', label: 'To Win' },
-    { field: 'position', label: 'POS' },
-    { field: 'score_to_par', label: 'SCORE' },
-    { field: 'sg_putt', label: 'SG_PUTT' },
-    { field: 'sg_app', label: 'SG_APP' },
-    { field: 'sg_ott', label: 'SG_OTT' },
-    { field: 'sg_score_l1', label: 'SG Score' },
+    ...liveOnlyColumns,
+    { field: 'sg_score_l1', label: isPreTournament ? 'DG Skill' : 'SG Score' },
     { field: 'course_history_l2', label: 'History' },
     { field: 'fit_plus_category_l3', label: 'Fit' },
     { field: 'major_adj_l4', label: 'Major' },
@@ -419,39 +432,43 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
                       return (
                         <span
                           className="text-[#22c55e]"
-                          title={`Best winner odds: ${o.bestOdds} at ${o.bestBook}`}
+                          title={`DataGolf modeled winner odds (baseline + history + fit)`}
                         >
-                          {o.bestOdds}
-                          <span className="text-[#737373] ml-1 text-[10px]">{o.bestBook}</span>
+                          {o.odds}
+                          <span className="text-[#737373] ml-1 text-[10px]">dg</span>
                         </span>
                       );
                     })()}
                   </td>
-                  <td className="px-3 py-2.5 text-[#d4d4d4] font-['JetBrains_Mono','SF_Mono',monospace] text-xs">
-                    {player.position}
-                  </td>
-                  <td className="px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs">
-                    <span className={
-                      player.score_to_par < 0 ? 'text-[#22c55e]' : player.score_to_par > 0 ? 'text-red-400' : 'text-[#d4d4d4]'
-                    }>
-                      {formatScore(player.score_to_par)}
-                    </span>
-                  </td>
-                  <td className={`px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs ${
-                    player.sg_putt >= 0 ? 'text-[#22c55e]' : 'text-red-400'
-                  }`}>
-                    {formatSG(player.sg_putt)}
-                  </td>
-                  <td className={`px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs ${
-                    player.sg_app >= 0 ? 'text-[#22c55e]' : 'text-red-400'
-                  }`}>
-                    {formatSG(player.sg_app)}
-                  </td>
-                  <td className={`px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs ${
-                    player.sg_ott >= 0 ? 'text-[#22c55e]' : 'text-red-400'
-                  }`}>
-                    {formatSG(player.sg_ott)}
-                  </td>
+                  {!isPreTournament && (
+                    <>
+                      <td className="px-3 py-2.5 text-[#d4d4d4] font-['JetBrains_Mono','SF_Mono',monospace] text-xs">
+                        {player.position}
+                      </td>
+                      <td className="px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs">
+                        <span className={
+                          player.score_to_par < 0 ? 'text-[#22c55e]' : player.score_to_par > 0 ? 'text-red-400' : 'text-[#d4d4d4]'
+                        }>
+                          {formatScore(player.score_to_par)}
+                        </span>
+                      </td>
+                      <td className={`px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs ${
+                        player.sg_putt >= 0 ? 'text-[#22c55e]' : 'text-red-400'
+                      }`}>
+                        {formatSG(player.sg_putt)}
+                      </td>
+                      <td className={`px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs ${
+                        player.sg_app >= 0 ? 'text-[#22c55e]' : 'text-red-400'
+                      }`}>
+                        {formatSG(player.sg_app)}
+                      </td>
+                      <td className={`px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs ${
+                        player.sg_ott >= 0 ? 'text-[#22c55e]' : 'text-red-400'
+                      }`}>
+                        {formatSG(player.sg_ott)}
+                      </td>
+                    </>
+                  )}
                   <td className="px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs text-[#d4d4d4]">
                     {player.sg_score_l1.toFixed(2)}
                   </td>
@@ -466,7 +483,7 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
                   </td>
                 </tr>
                 {expandedPlayer === player.player_name && (
-                  <PlayerDetailCard player={player} />
+                  <PlayerDetailCard player={player} colSpan={columns.length} />
                 )}
               </Fragment>
             ))}

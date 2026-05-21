@@ -93,6 +93,84 @@ export function buildSimInputs(
 }
 
 /**
+ * Per-player result from a SINGLE simulated tournament. Used to show "this
+ * is one possible weekend" rather than aggregate probabilities — gives the
+ * user visible variance run-to-run (Scheffler doesn't win every click).
+ */
+export interface SingleTournamentResult {
+  player_name: string;
+  dg_skill_estimate: number;
+  x_score: number;
+  adjusted_sg: number;
+  r1_score: number;
+  r2_score: number;
+  r3_score: number | null; // null = cut
+  r4_score: number | null;
+  total: number;
+  made_cut: boolean;
+  finish: number; // 1 = winner
+}
+
+/**
+ * Run a SINGLE simulated tournament. Each player gets 4 round scores
+ * (R3/R4 only if they make the cut). Returns the full field sorted by
+ * finish position. Different every call — that's the point.
+ */
+export function simulateOneTournament(inputs: SimulationInput[]): SingleTournamentResult[] {
+  const n = inputs.length;
+  const r1Score = new Array<number>(n);
+  const r2Score = new Array<number>(n);
+  const r3Score = new Array<number | null>(n).fill(null);
+  const r4Score = new Array<number | null>(n).fill(null);
+  const totalAfterR2 = new Array<number>(n);
+
+  for (let i = 0; i < n; i++) {
+    r1Score[i] = -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
+    r2Score[i] = -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
+    totalAfterR2[i] = r1Score[i] + r2Score[i];
+  }
+
+  // Determine cut.
+  const r2Indices = Array.from({ length: n }, (_, i) => i).sort(
+    (a, b) => totalAfterR2[a] - totalAfterR2[b],
+  );
+  const cutoffTotal = totalAfterR2[r2Indices[Math.min(CUT_POSITION - 1, n - 1)]];
+  const madeCut = new Array<boolean>(n);
+  for (let i = 0; i < n; i++) madeCut[i] = totalAfterR2[i] <= cutoffTotal + 1e-9;
+
+  // R3, R4 for survivors.
+  const total = new Array<number>(n);
+  for (let i = 0; i < n; i++) {
+    if (madeCut[i]) {
+      r3Score[i] = -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
+      r4Score[i] = -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
+      total[i] = totalAfterR2[i] + (r3Score[i] ?? 0) + (r4Score[i] ?? 0);
+    } else {
+      total[i] = totalAfterR2[i] + 999;
+    }
+  }
+
+  const finishOrder = Array.from({ length: n }, (_, i) => i).sort(
+    (a, b) => total[a] - total[b],
+  );
+
+  const results: SingleTournamentResult[] = finishOrder.map((i, rank) => ({
+    player_name: inputs[i].player_name,
+    dg_skill_estimate: inputs[i].dg_skill_estimate,
+    x_score: inputs[i].x_score,
+    adjusted_sg: inputs[i].adjusted_sg,
+    r1_score: +r1Score[i].toFixed(1),
+    r2_score: +r2Score[i].toFixed(1),
+    r3_score: r3Score[i] == null ? null : +(r3Score[i] as number).toFixed(1),
+    r4_score: r4Score[i] == null ? null : +(r4Score[i] as number).toFixed(1),
+    total: madeCut[i] ? +total[i].toFixed(1) : +totalAfterR2[i].toFixed(1),
+    made_cut: madeCut[i],
+    finish: rank + 1,
+  }));
+  return results;
+}
+
+/**
  * Accumulator for incremental Monte Carlo runs. Lets the UI update with
  * partial results as chunks of simulations complete (live convergence).
  */

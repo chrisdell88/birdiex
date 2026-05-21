@@ -372,6 +372,15 @@ Raw DataGolf JSON pulls from the Masters 2026 run: `masters_final_tracking.json`
 ## Open Items / Next Work
 
 ### Done (2026-05-21 session — major stealth-mode iteration)
+- [x] **Pre-R1 X Score now uses DataGolf skill estimate as Layer 1**
+      (was 0). Pre-tournament X Score formula:
+      `X = DG_skill_estimate + L2 + L3 + L4`. Post-R1 formula is unchanged
+      (still `X = L1(measured SG with course weights) + L2 + L3 + L4`,
+      145/145 Masters verified). Without this, top players like Scheffler
+      ranked ~#23 pre-R1 because L1=0 collapsed X Score to just
+      venue-specific adjustments — burying overall skill. Now Scheffler
+      correctly ranks #1 at the CJ Cup pre-tournament (X = 2.97, STRONGEST
+      BUY).
 - [x] **Predictability-aware matchup score threshold** — venue floor formula:
       `floor = clamp(3.05 − 14.62 × predictability, 0.95, 2.95)`, then snap to
       the **NEAREST** tier in {0.95, 1.45, 1.95, 2.45, 2.95}. Source of truth:

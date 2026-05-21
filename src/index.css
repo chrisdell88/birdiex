@@ -14,8 +14,9 @@ html {
   to { transform: translateX(-50%); }
 }
 .ticker-track {
-  /* slow, readable crawl — ~300s for a full loop of the field */
-  animation: ticker-scroll 300s linear infinite;
+  /* readable crawl, ~450s for a full loop. Calibrated between the prior
+     "too slow" (600s) and the recent "too fast" (300s). */
+  animation: ticker-scroll 450s linear infinite;
 }
 .ticker-track:hover {
   animation-play-state: paused;

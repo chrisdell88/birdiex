@@ -6,7 +6,6 @@ import PlayerSearch from './PlayerSearch';
 import Avatar from './Avatar';
 import DataSetToggle from './DataSetToggle';
 import RecommendedFloorBadge from './RecommendedFloorBadge';
-import MatchupHeatmap from './MatchupHeatmap';
 import { starsForEdge } from '../lib/sizing';
 
 interface MatchupsViewProps {
@@ -409,9 +408,6 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
       </div>
 
       {showDefinitions && <MatchupDefinitionsModal onClose={() => setShowDefinitions(false)} />}
-
-      {/* Live matchup heatmap — every H2H pick colored by edge */}
-      <MatchupHeatmap />
 
       {/* Player search */}
       <div className="mb-5">

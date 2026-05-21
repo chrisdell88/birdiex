@@ -82,6 +82,11 @@ export default function SimulatorPage() {
   const [aggChunksDone, setAggChunksDone] = useState(0);
   const [aggLive, setAggLive] = useState<SimulationResult[] | null>(null);
   const [aggResults, setAggResults] = useState<RowWithDg[] | null>(null);
+  // After each 10K run, ALSO simulate ONE fresh tournament and show its
+  // winner. This adds visible variance — the aggregate ranking is
+  // deterministic (same player always #1 because their win prob is
+  // highest), but the "sample tournament winner" differs per re-sim.
+  const [aggSampleWinner, setAggSampleWinner] = useState<SingleTournamentResult | null>(null);
 
   const [runCount, setRunCount] = useState(0);
   const cancelRef = useRef(false);
@@ -149,6 +154,7 @@ export default function SimulatorPage() {
     setAggRunning(true);
     setAggResults(null);
     setAggLive(null);
+    setAggSampleWinner(null);
     setAggChunksDone(0);
     await new Promise((r) => setTimeout(r, 30));
 
@@ -181,6 +187,12 @@ export default function SimulatorPage() {
         dg_make_cut_prob: dg?.dg_make_cut_prob ?? null,
       };
     });
+
+    // Pick a "sample tournament winner" — fresh single sim using the same
+    // inputs. Adds visible variance to the aggregate view so users can see
+    // that "Scheffler #1 with 33%" doesn't mean "Scheffler wins every run."
+    const sampleResult = simulateOneTournament(inputs);
+    setAggSampleWinner(sampleResult[0]);
 
     await new Promise((r) => setTimeout(r, 200));
     setAggResults(final);
@@ -311,6 +323,8 @@ export default function SimulatorPage() {
           chunksDone={aggChunksDone}
           liveTop10={aggLiveTop10}
           results={aggResults}
+          sampleWinner={aggSampleWinner}
+          runCount={runCount}
         />
       )}
     </div>
@@ -584,12 +598,16 @@ function AggregateView({
   chunksDone,
   liveTop10,
   results,
+  sampleWinner,
+  runCount,
 }: {
   running: boolean;
   progress: number;
   chunksDone: number;
   liveTop10: SimulationResult[];
   results: RowWithDg[] | null;
+  sampleWinner: SingleTournamentResult | null;
+  runCount: number;
 }) {
   if (!results && !running) {
     return (
@@ -706,7 +724,85 @@ function AggregateView({
 
   // results !== null
   if (!results) return null;
+
+  // Top player's aggregate win prob — shown alongside actual wins for
+  // unambiguous interpretation ("won 3300 of 10000, not every time").
+  const topRow = results[0];
+  const topWins = Math.round(topRow.result.win_prob * 10000);
+  const topLosses = 10000 - topWins;
+
   return (
+    <>
+      {/* Sample-tournament winner card — VARIES per re-sim. The single
+          most important thing to make visible: the aggregate ranking is
+          deterministic, but each tournament has a different winner. */}
+      {sampleWinner && (
+        <div className="bg-gradient-to-r from-[#22c55e]/15 via-[#22c55e]/8 to-transparent border border-[#22c55e]/40 rounded-lg p-4 mb-4 flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] uppercase tracking-widest text-[#22c55e] font-bold font-['Inter',system-ui,sans-serif]">
+              🏆 Sample run #{runCount} winner
+            </span>
+            <span className="w-9 h-9 rounded-full overflow-hidden border-2 border-[#22c55e] bg-[#1a1a1a] shrink-0">
+              {headshots[sampleWinner.player_name] ? (
+                <img
+                  src={headshots[sampleWinner.player_name]}
+                  alt={sampleWinner.player_name}
+                  className="w-full h-full object-cover object-top"
+                />
+              ) : (
+                <span className="w-full h-full inline-flex items-center justify-center text-xs font-bold text-[#f5f5f5]">
+                  {getInitials(sampleWinner.player_name)}
+                </span>
+              )}
+            </span>
+            <div>
+              <div className="text-sm font-bold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
+                {sampleWinner.player_name}
+              </div>
+              <div className="text-[10px] text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace]">
+                {sampleWinner.total > 0 ? '+' : ''}{sampleWinner.total.toFixed(1)}
+              </div>
+            </div>
+          </div>
+          <p className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] ml-0 sm:ml-auto leading-snug max-w-sm">
+            One specific tournament out of 10,000. Hit{' '}
+            <span className="text-[#22c55e]">Re-Simulate</span> and watch this
+            winner change while the aggregate ranking below barely moves.
+          </p>
+        </div>
+      )}
+
+      {/* Big "Scheffler wins X of 10,000" stat — kills the "he wins every
+          time" perception by showing the actual count. */}
+      {topRow && (
+        <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-4 mb-4">
+          <div className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mb-2">
+            What &ldquo;{topRow.result.player_name} #1&rdquo; actually means
+          </div>
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <span className="text-2xl font-bold text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace] tabular-nums">
+              {topWins.toLocaleString()}
+            </span>
+            <span className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">
+              wins
+            </span>
+            <span className="text-[#525252] mx-1">·</span>
+            <span className="text-lg text-[#d4d4d4] font-['JetBrains_Mono','SF_Mono',monospace] tabular-nums">
+              {topLosses.toLocaleString()}
+            </span>
+            <span className="text-sm text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
+              losses (of 10,000 sims)
+            </span>
+          </div>
+          <p className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mt-2 leading-relaxed">
+            The aggregate leaderboard ranks players by win frequency &mdash;
+            so the strongest favorite always sits at the top of the list. It
+            does NOT mean they win every tournament. They lose more sims than
+            they win whenever their probability is under 50%.
+          </p>
+        </div>
+      )}
+
     <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg overflow-hidden">
       <div className="px-4 py-3 border-b border-[#262626] flex items-center justify-between flex-wrap gap-2">
         <span className="text-sm font-semibold text-[#f5f5f5] uppercase tracking-wider font-['JetBrains_Mono','SF_Mono',monospace]">
@@ -795,5 +891,6 @@ function AggregateView({
         </p>
       </div>
     </div>
+    </>
   );
 }

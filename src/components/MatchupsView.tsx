@@ -191,6 +191,9 @@ const tierBorderColor: Record<Matchup['tier'], string> = {
 // --- Player Stat Popup ---
 
 function PlayerStatPopup({ player, onClose }: { player: PlayerData; onClose: () => void }) {
+  // Suppress signal + purity pre-R1 — they aren't meaningful before live
+  // SG data exists, and showing "STRONGEST BUY · NEUTRAL" is misleading.
+  const hideSignal = currentEvent.picksRound <= 1;
   const popupRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -217,12 +220,14 @@ function PlayerStatPopup({ player, onClose }: { player: PlayerData; onClose: () 
         </span>
         <button onClick={onClose} className="text-[#a1a1aa] hover:text-white text-xs cursor-pointer">X</button>
       </div>
-      <div className="flex items-center gap-2 mb-3">
-        <SignalBadge signal={player.signal} conflicted={player.purity === 'CONFLICTED'} />
-        <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
-          {player.purity}
-        </span>
-      </div>
+      {!hideSignal && (
+        <div className="flex items-center gap-2 mb-3">
+          <SignalBadge signal={player.signal} conflicted={player.purity === 'CONFLICTED'} />
+          <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
+            {player.purity}
+          </span>
+        </div>
+      )}
       <div className="mb-3">
         <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
           X Score

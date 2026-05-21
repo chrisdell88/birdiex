@@ -1,4 +1,4 @@
-import { useState, useMemo, Fragment } from 'react';
+import { useState, useMemo, useEffect, useRef, Fragment } from 'react';
 import type { PlayerData, SortField, SortDirection, Signal, DataSet } from '../types';
 import SignalBadge from './SignalBadge';
 import PurityIcon from './PurityIcon';
@@ -122,6 +122,22 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [signalFilter, setSignalFilter] = useState<string>('ALL');
   const [expandedPlayer, setExpandedPlayer] = useState<string | null>(null);
+  // When the user clicks a head in the Course Fit Scatter, we need to scroll
+  // to the newly-expanded row in the table. React 18 concurrent rendering can
+  // delay the DOM commit past a single rAF, so we set a "pending scroll" flag
+  // and a useEffect (keyed on expandedPlayer) does the scrollIntoView once
+  // the row is actually in the DOM.
+  const pendingScrollRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (pendingScrollRef.current && pendingScrollRef.current === expandedPlayer) {
+      const el = document.getElementById(
+        `player-row-${expandedPlayer.replace(/[^a-z0-9]/gi, '-')}`,
+      );
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      pendingScrollRef.current = null;
+    }
+  }, [expandedPlayer]);
   const [showStatsKey, setShowStatsKey] = useState(false);
 
   const playerNames = useMemo(
@@ -245,14 +261,14 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
       <div className="mb-6">
         <CourseFitScatter
           onPlayerClick={(p) => {
+            // Mark this name as the pending scroll target — useEffect
+            // (above) handles the actual scroll once React commits the
+            // expanded row to the DOM. Reliable on slow devices + with
+            // React 18 concurrent rendering.
+            pendingScrollRef.current = p.player_name;
             setSelectedPlayer(p.player_name);
             setExpandedPlayer(p.player_name);
             setSearch('');
-            // After state updates render, scroll to the row.
-            requestAnimationFrame(() => {
-              const el = document.getElementById(`player-row-${p.player_name.replace(/[^a-z0-9]/gi, '-')}`);
-              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            });
           }}
         />
       </div>

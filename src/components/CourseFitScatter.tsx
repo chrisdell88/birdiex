@@ -72,13 +72,15 @@ export default function CourseFitScatter({ topN = 20, onPlayerClick }: Props) {
     const X_LO = xMin - xPad, X_HI = xMax + xPad;
     const Y_LO = yMin - yPad, Y_HI = yMax + yPad;
 
+    // Compute max |x_score| ONCE before the map (not per-row).
+    const xRange = Math.max(0.01, ...sorted.map((q) => Math.abs(q.x_score)));
+
     return sorted.map((p) => {
       const cx = PAD + ((p.course_history_l2 - X_LO) / (X_HI - X_LO)) * PLOT_W;
       const cy = PAD + PLOT_H - ((p.fit_plus_category_l3 - Y_LO) / (Y_HI - Y_LO)) * PLOT_H;
 
       // Headshot diameter scales with |x_score|. Range 34–56px so heads
       // remain visible and clickable on first glance.
-      const xRange = Math.max(0.01, Math.max(...sorted.map((q) => Math.abs(q.x_score))));
       const strength = Math.min(1, Math.abs(p.x_score) / xRange);
       const size = 34 + strength * 22;
 

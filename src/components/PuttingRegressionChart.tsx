@@ -278,7 +278,7 @@ export default function PuttingRegressionChart() {
         Only Off-the-Tee shows real persistence round-to-round. Approach, Around-the-Green,
         and Putting all sit at near-random R² values. OTT carries forward roughly{' '}
         <span className="text-[#22c55e] font-semibold font-['JetBrains_Mono','SF_Mono',monospace]">
-          {(ottR2 / puttR2).toFixed(1)}x
+          {puttR2 > 0 ? `${(ottR2 / puttR2).toFixed(1)}×` : 'multiple times'}
         </span>
         {' '}stronger than putting. This is the thesis behind the X Score: the market treats
         all four as &ldquo;strokes gained,&rdquo; but only one is a repeatable skill at the

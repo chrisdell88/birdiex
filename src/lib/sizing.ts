@@ -52,9 +52,19 @@ export function starsForEdge(edge: number): number {
 /**
  * Stake required to win 1 unit at these American odds.
  * "-140" => 1.40  |  "+120" => 0.8333...
+ *
+ * Defensive: odds of 0, +0, missing, or NaN yield 1.0 (a sane fallback)
+ * rather than Infinity. Real bets should never have these values — we
+ * log a warning so the data-pipeline owner can investigate.
  */
 export function stakeToWin1(odds: string): number {
   const n = parseInt(odds, 10);
+  if (!Number.isFinite(n) || n === 0) {
+    if (typeof console !== 'undefined') {
+      console.warn('[stakeToWin1] non-positive odds value:', odds, '— defaulting stake to 1.0u');
+    }
+    return 1;
+  }
   return n < 0 ? Math.abs(n) / 100 : 100 / n;
 }
 

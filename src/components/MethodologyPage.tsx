@@ -1,4 +1,4 @@
-import { overallRecord, overallUnits, overallROI } from '../data/resultsData';
+import { allTimeStats } from '../lib/allTimeStats';
 import CourseAdaptiveChart from './CourseAdaptiveChart';
 import Glossary from './Glossary';
 
@@ -9,14 +9,20 @@ interface MethodologyPageProps {
 export default function MethodologyPage({ onNavigateToResults }: MethodologyPageProps) {
   return (
     <div className="max-w-3xl mx-auto">
-      {/* Results Banner */}
+      {/* Results Banner — All-Time tracked record (venue-aware floors). */}
       <div className="mb-8 bg-[#0a0a0a] border border-[#22c55e]/30 rounded-xl p-5">
         <div className="text-center">
           <div className="text-xs text-[#22c55e] uppercase tracking-widest font-semibold font-['Inter',system-ui,sans-serif] mb-2">
-            Masters 2026 Results
+            All-Time Tracked Record
           </div>
           <div className="text-2xl font-bold text-[#f5f5f5] font-['JetBrains_Mono','SF_Mono',monospace] mb-1">
-            {overallRecord.wins}-{overallRecord.losses}-{overallRecord.pushes} &nbsp;|&nbsp; +{overallUnits} units &nbsp;|&nbsp; +{overallROI}% ROI
+            {allTimeStats.wins}-{allTimeStats.losses}-{allTimeStats.pushes} &nbsp;|&nbsp;{' '}
+            {allTimeStats.units > 0 ? '+' : ''}{allTimeStats.units.toFixed(2)} units &nbsp;|&nbsp;{' '}
+            {allTimeStats.roi > 0 ? '+' : ''}{allTimeStats.roi.toFixed(1)}% ROI
+          </div>
+          <div className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mt-1">
+            Bets that cleared each venue&rsquo;s matchup score threshold &mdash;
+            see Results for per-tournament breakdown.
           </div>
           {onNavigateToResults && (
             <button
@@ -139,7 +145,11 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
               produce stronger signals -- Augusta's predictability score
               of <span className="text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace] font-medium">0.144</span> is
               the highest on Tour, meaning past performance there is more indicative of future results
-              than at any other venue.
+              than at any other venue. At the other extreme, less-established or weather-volatile
+              venues like Aronimink (<span className="text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace] font-medium">0.041</span>)
+              or TPC Craig Ranch (<span className="text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace] font-medium">0.037</span>)
+              carry far less course-specific signal &mdash; the X Score there leans more on overall
+              skill, and our matchup score threshold rises accordingly.
             </p>
           </div>
 
@@ -181,12 +191,84 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
         </div>
       </section>
 
-      {/* Section 3.5: Course-Adaptive Bet Selection */}
+      {/* Section 3.5: From X Score to Tracked Bet */}
       <section className="mb-12">
         <h2 className="text-xl font-bold text-[#f5f5f5] mb-4 font-['Inter',system-ui,sans-serif]">
-          Course-Adaptive Bet Selection
+          From X Score to Tracked Bet
         </h2>
+
+        <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-5 space-y-4 mb-6">
+          <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
+            The X Score outputs a number for every player in the field. To turn that into an
+            actual <span className="text-[#22c55e] font-semibold">bet</span>, we pair players
+            into head-to-head matchups and compute the <span className="text-[#22c55e] font-semibold">edge</span>
+            {' '}(the difference in X Scores between the pick and the opponent). The model only
+            considers matchups with edge{' '}
+            <span className="text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace] font-medium">
+              &ge; 0.95
+            </span>
+            {' '}&mdash; the hard pick floor below which the signal isn&rsquo;t actionable.
+          </p>
+          <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
+            Each qualifying matchup gets a <span className="text-[#22c55e] font-semibold">unit
+            size</span> from the Bet Sizing Ladder above &mdash; bigger edges get bigger sizes,
+            in 10 precise sub-bands. The star rating shown on the bet is just that unit size
+            rounded for visual clarity.
+          </p>
+        </div>
+
+        <h3 className="text-base font-semibold text-[#f5f5f5] mb-3 font-['Inter',system-ui,sans-serif]">
+          Course-Adaptive Threshold
+        </h3>
         <CourseAdaptiveChart />
+
+        <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-5 mt-5 space-y-4">
+          <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
+            Not every model pick becomes a recommended bet. Each venue gets its own{' '}
+            <span className="text-[#22c55e] font-semibold">matchup score threshold</span>{' '}
+            &mdash; a numeric edge cutoff derived from how predictable that course is. On the
+            most predictable courses (e.g., Augusta National at 0.144) we trust the model down to
+            the 0.95 hard floor. On less predictable courses (Aronimink at 0.041, TPC Craig Ranch
+            at 0.037) we raise the threshold significantly &mdash; only the strongest edges
+            warrant a recommendation.
+          </p>
+          <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
+            The threshold formula is backtest-derived: we sweep the entire edge floor across
+            every event we&rsquo;ve scored, then snap to a clean tier boundary so the public
+            record reflects what we&rsquo;d <span className="italic">actually</span> have
+            recommended. As we add more events, the formula gets re-fitted with more data points.
+          </p>
+        </div>
+      </section>
+
+      {/* Section 3.6: Backtesting + Continuous Refinement */}
+      <section className="mb-12">
+        <h2 className="text-xl font-bold text-[#f5f5f5] mb-4 font-['Inter',system-ui,sans-serif]">
+          Backtesting & Continuous Refinement
+        </h2>
+        <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-5 space-y-4">
+          <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
+            Every model pick with edge &ge; 0.95 is scored internally and stored in our raw bet
+            log, even if it falls below the venue&rsquo;s tracked-bet threshold. This gives us a
+            clean dataset to backtest sizing rules, threshold formulas, and signal definitions
+            against future tournament results without the bias of after-the-fact filtering.
+          </p>
+          <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
+            The matchup score threshold itself was derived from this approach. After the Masters
+            (high predictability, +26.2% ROI at the 0.95 floor) and PGA Championship (low
+            predictability, &minus;8.5% at 0.95), we ran a sweep of every edge floor from 0.95 to
+            5.00 to find where each venue actually broke even. The relationship between
+            predictability and required floor gave us the linear formula behind the chart above.
+          </p>
+          <div className="border-l-2 border-[#22c55e]/40 pl-4 mt-2">
+            <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed italic">
+              The public record reflects only tracked bets &mdash; the picks we&rsquo;d have
+              actually recommended at each venue. The raw log preserves everything for ongoing
+              backtest work. As the model evolves, only the threshold formula changes &mdash;
+              never the historical bet data.
+            </p>
+          </div>
+        </div>
       </section>
 
       {/* Section 4: Signal System */}
@@ -272,12 +354,13 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
           </p>
           <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
             BirdieX was founded by <span className="text-[#f5f5f5] font-medium">Chris Dell</span>,
-            Founder & CEO of Fantasy Edge Media
-            and <span className="text-[#22c55e] font-medium">BettingPredators.com</span>.
+            Founder & CEO of{' '}
+            <span className="text-[#22c55e] font-medium">Fantasy Edge Media</span>{' '}
+            <span className="text-[#a1a1aa]">(formerly Betting Predators)</span>.
             A former sports writer and news editor with an M.A. in Entrepreneurial Journalism from
             the Craig Newmark Graduate School of Journalism, Chris has spent over a decade building
             data-driven sports media products and grinding PGA Tour models on spreadsheets before
-            turning them into BirdieX.
+            turning them into BirdieX in 2026.
           </p>
           <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
             BirdieX is part of the <span className="text-[#f5f5f5] font-medium">BallerX</span> family

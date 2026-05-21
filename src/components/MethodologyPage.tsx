@@ -1,6 +1,7 @@
 import { allTimeStats } from '../lib/allTimeStats';
 import CourseAdaptiveChart from './CourseAdaptiveChart';
 import Glossary from './Glossary';
+import PuttingRegressionChart from './PuttingRegressionChart';
 
 interface MethodologyPageProps {
   onNavigateToResults?: () => void;
@@ -103,6 +104,11 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
               and that's where BirdieX finds value.
             </p>
           </div>
+        </div>
+
+        {/* Real-data scatterplot: PUTT R²≈0.04 vs OTT R²≈0.13. */}
+        <div className="mt-5">
+          <PuttingRegressionChart />
         </div>
       </section>
 

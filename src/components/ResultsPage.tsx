@@ -3,6 +3,7 @@ import type { BetRecord, TierType, ResultsSortField, SortDirection, Sportsbook }
 import PlayerSearch from './PlayerSearch';
 import { r2Results, r2Summary as pgaR2Summary } from '../data/pgaChampR2Results';
 import { r3Results, r3Summary as pgaR3Summary } from '../data/pgaChampR3Results';
+import { r4Results, r4Summary as pgaR4Summary } from '../data/pgaChampR4Results';
 import { starsForEdge } from '../lib/sizing';
 import {
   overallRecord,
@@ -31,14 +32,14 @@ import {
 
 // --- All-time totals (computed from raw data, not hardcoded) ---
 // All-time = Masters + PGA Championship, on a consistent stake-to-win-1 basis.
-const allTimeWins = overallRecord.wins + pgaR2Summary.wins + pgaR3Summary.wins;
-const allTimeLosses = overallRecord.losses + pgaR2Summary.losses + pgaR3Summary.losses;
-const allTimePushes = overallRecord.pushes + pgaR2Summary.pushes + pgaR3Summary.pushes;
-const allTimeUnits = +(overallUnits + pgaR2Summary.units + pgaR3Summary.units).toFixed(2);
+const allTimeWins = overallRecord.wins + pgaR2Summary.wins + pgaR3Summary.wins + pgaR4Summary.wins;
+const allTimeLosses = overallRecord.losses + pgaR2Summary.losses + pgaR3Summary.losses + pgaR4Summary.losses;
+const allTimePushes = overallRecord.pushes + pgaR2Summary.pushes + pgaR3Summary.pushes + pgaR4Summary.pushes;
+const allTimeUnits = +(overallUnits + pgaR2Summary.units + pgaR3Summary.units + pgaR4Summary.units).toFixed(2);
 // ROI = net units / total staked. The Masters' staked is derived from its own
 // published units + ROI, so the Masters slice always reconciles to its own ROI.
 const mastersStaked = overallUnits / (overallROI / 100);
-const allTimeStaked = mastersStaked + pgaR2Summary.staked + pgaR3Summary.staked;
+const allTimeStaked = mastersStaked + pgaR2Summary.staked + pgaR3Summary.staked + pgaR4Summary.staked;
 const allTimeROI = +((allTimeUnits / allTimeStaked) * 100).toFixed(1);
 const allTimeBets = allTimeWins + allTimeLosses + allTimePushes;
 
@@ -165,13 +166,13 @@ function AllTimeView() {
     },
     {
       name: 'PGA Championship 2026',
-      status: 'IN PROGRESS',
-      wins: pgaR2Summary.wins + pgaR3Summary.wins,
-      losses: pgaR2Summary.losses + pgaR3Summary.losses,
-      pushes: pgaR2Summary.pushes + pgaR3Summary.pushes,
-      units: +(pgaR2Summary.units + pgaR3Summary.units).toFixed(2),
-      roi: +(((pgaR2Summary.units + pgaR3Summary.units) /
-        (pgaR2Summary.staked + pgaR3Summary.staked)) * 100).toFixed(1),
+      status: 'COMPLETE',
+      wins: pgaR2Summary.wins + pgaR3Summary.wins + pgaR4Summary.wins,
+      losses: pgaR2Summary.losses + pgaR3Summary.losses + pgaR4Summary.losses,
+      pushes: pgaR2Summary.pushes + pgaR3Summary.pushes + pgaR4Summary.pushes,
+      units: +(pgaR2Summary.units + pgaR3Summary.units + pgaR4Summary.units).toFixed(2),
+      roi: +(((pgaR2Summary.units + pgaR3Summary.units + pgaR4Summary.units) /
+        (pgaR2Summary.staked + pgaR3Summary.staked + pgaR4Summary.staked)) * 100).toFixed(1),
     },
   ];
 
@@ -643,7 +644,7 @@ function PGAView() {
 
   const pgaPlayerNames = useMemo(() => {
     const names = new Set<string>();
-    [...r2Results, ...r3Results].forEach((b) => {
+    [...r2Results, ...r3Results, ...r4Results].forEach((b) => {
       names.add(b.pick);
       names.add(b.opponent);
     });
@@ -664,7 +665,7 @@ function PGAView() {
     return sortDir === 'asc' ? ' ▲' : ' ▼';
   };
 
-  const { sortedR2, sortedR3 } = useMemo(() => {
+  const { sortedR2, sortedR3, sortedR4 } = useMemo(() => {
     const view = (raw: BetRecord[]) => {
       let bets = [...raw];
       if (selectedPlayer) {
@@ -674,14 +675,18 @@ function PGAView() {
       }
       return bets.sort((a, b) => compareValues(a, b, sortField, sortDir));
     };
-    return { sortedR2: view(r2Results), sortedR3: view(r3Results) };
+    return {
+      sortedR2: view(r2Results),
+      sortedR3: view(r3Results),
+      sortedR4: view(r4Results),
+    };
   }, [sortField, sortDir, selectedPlayer]);
-  const filteredCount = sortedR2.length + sortedR3.length;
+  const filteredCount = sortedR2.length + sortedR3.length + sortedR4.length;
 
-  // Rounds data — structured so R4 can be added as a new entry.
   const rounds = [
     { round: 2, summary: pgaR2Summary, bets: sortedR2 },
     { round: 3, summary: pgaR3Summary, bets: sortedR3 },
+    { round: 4, summary: pgaR4Summary, bets: sortedR4 },
   ];
 
   return (
@@ -689,8 +694,8 @@ function PGAView() {
       {/* Tournament header */}
       <div className="bg-[#0a0a0a] border border-[#a1a1aa]/20 rounded-lg p-4 mb-6">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="bg-[#a1a1aa]/15 text-[#a1a1aa] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
-            IN PROGRESS
+          <span className="bg-[#22c55e]/15 text-[#22c55e] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
+            COMPLETE
           </span>
           <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">PGA Championship 2026</span>
           <span className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">Aronimink Golf Club</span>

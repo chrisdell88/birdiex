@@ -2,6 +2,7 @@ import { allTimeStats } from '../lib/allTimeStats';
 import CourseAdaptiveChart from './CourseAdaptiveChart';
 import Glossary from './Glossary';
 import PuttingRegressionChart from './PuttingRegressionChart';
+import PredictabilityBarChart from './PredictabilityBarChart';
 
 interface MethodologyPageProps {
   onNavigateToResults?: () => void;
@@ -227,6 +228,10 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
           Course-Adaptive Threshold
         </h3>
         <CourseAdaptiveChart />
+
+        <div className="mt-5">
+          <PredictabilityBarChart />
+        </div>
 
         <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-5 mt-5 space-y-4">
           <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">

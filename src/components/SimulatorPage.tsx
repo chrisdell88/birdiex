@@ -1,30 +1,32 @@
 /**
- * SimulatorPage — Tournament Simulator tab.
+ * SimulatorPage — Tournament Simulator with a live-converging leaderboard.
  *
- * One-click Monte Carlo: 10,000 simulated tournaments. Each click runs a
- * fresh simulation using DataGolf skill estimates + BirdieX X Score
- * adjustments. Progressive reveal animation while results stream in.
+ * Click "Run Simulation" and the Monte Carlo runs in 10 chunks of 1,000
+ * sims each. After each chunk, the displayed leaderboard updates so you
+ * can watch the probabilities converge to their final values in real
+ * time. After all 10,000 sims complete, the full results table appears
+ * with the DataGolf comparison columns.
  *
- * After the run completes, results table shows BirdieX MC probabilities
- * side-by-side with DataGolf's published projections — so users can see
- * where the two models agree and where they diverge.
- *
- * Inspired by the BracketX SIMULATE button experience.
+ * Visual style: clean, data-forward, modern. No gimmicks — the animation
+ * IS the data, watching it stabilize.
  */
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { currentEvent } from '../config/event';
 import { headshots } from '../data/headshots';
 import {
   buildSimInputs,
-  runSimulation,
+  createAccumulator,
+  runSimChunk,
+  finalizeResults,
   fmtPct,
   type SimulationResult,
 } from '../lib/simulator';
 import RecommendedFloorBadge from './RecommendedFloorBadge';
 
-const N_SIMS = 10000;
-const REVEAL_BATCH_MS = 70; // ms between successive row reveals
-const SIMULATING_MIN_MS = 2200; // min "running" time for engagement
+const TOTAL_SIMS = 10000;
+const CHUNK_SIZE = 1000;
+const TOTAL_CHUNKS = TOTAL_SIMS / CHUNK_SIZE;
+const CHUNK_MIN_INTERVAL_MS = 140; // visual pacing so users see the convergence
 
 function getInitials(name: string): string {
   const parts = name.split(',').map((s) => s.trim());
@@ -47,20 +49,20 @@ interface RowWithDg {
 
 export default function SimulatorPage() {
   const [running, setRunning] = useState(false);
+  const [chunksDone, setChunksDone] = useState(0);
+  const [liveResults, setLiveResults] = useState<SimulationResult[] | null>(null);
   const [results, setResults] = useState<RowWithDg[] | null>(null);
-  const [revealCount, setRevealCount] = useState(0);
   const [runCount, setRunCount] = useState(0);
-  const revealTimer = useRef<number | null>(null);
+  const cancelRef = useRef(false);
 
-  // DataGolf comparison data — keyed by player_name.
   const dgByName = useMemo(() => {
-    const m = new Map<string, RowWithDg['dg_win_prob' | 'dg_top5_prob' | 'dg_top10_prob' | 'dg_top20_prob' | 'dg_make_cut_prob']>() as unknown as Map<string, {
+    const m = new Map<string, {
       dg_win_prob: number | null;
       dg_top5_prob: number | null;
       dg_top10_prob: number | null;
       dg_top20_prob: number | null;
       dg_make_cut_prob: number | null;
-    }>;
+    }>();
     for (const s of currentEvent.skillEstimates) {
       m.set(s.player_name, {
         dg_win_prob: s.dg_win_prob,
@@ -73,67 +75,66 @@ export default function SimulatorPage() {
     return m;
   }, []);
 
-  const runSim = () => {
+  const runSim = async () => {
     if (running) return;
+    cancelRef.current = false;
     setRunning(true);
     setResults(null);
-    setRevealCount(0);
-    if (revealTimer.current) {
-      clearInterval(revealTimer.current);
-      revealTimer.current = null;
+    setLiveResults(null);
+    setChunksDone(0);
+
+    // Yield to UI before allocating.
+    await new Promise((r) => setTimeout(r, 30));
+
+    const inputs = buildSimInputs(currentEvent.rankingsRound, currentEvent.skillEstimates);
+    const acc = createAccumulator(inputs);
+
+    for (let i = 0; i < TOTAL_CHUNKS; i++) {
+      if (cancelRef.current) {
+        setRunning(false);
+        return;
+      }
+      const chunkStart = performance.now();
+      runSimChunk(acc, CHUNK_SIZE);
+      const partial = finalizeResults(acc);
+      setLiveResults(partial);
+      setChunksDone(i + 1);
+
+      // Pace the visual update — wait at least CHUNK_MIN_INTERVAL_MS so
+      // users can see the convergence (compute is much faster than that).
+      const elapsed = performance.now() - chunkStart;
+      const wait = Math.max(0, CHUNK_MIN_INTERVAL_MS - elapsed);
+      await new Promise((r) => setTimeout(r, wait));
     }
 
-    // Yield to the UI before running the heavy sim.
-    const start = performance.now();
-    setTimeout(() => {
-      const inputs = buildSimInputs(currentEvent.rankingsRound, currentEvent.skillEstimates);
-      const rawResults = runSimulation(inputs, N_SIMS);
-      const enriched: RowWithDg[] = rawResults.map((r) => {
-        const dg = dgByName.get(r.player_name);
-        return {
-          result: r,
-          dg_win_prob: dg?.dg_win_prob ?? null,
-          dg_top5_prob: dg?.dg_top5_prob ?? null,
-          dg_top10_prob: dg?.dg_top10_prob ?? null,
-          dg_top20_prob: dg?.dg_top20_prob ?? null,
-          dg_make_cut_prob: dg?.dg_make_cut_prob ?? null,
-        };
-      });
+    // Build the enriched final results with DG comparison columns.
+    const final = finalizeResults(acc).map((r) => {
+      const dg = dgByName.get(r.player_name);
+      return {
+        result: r,
+        dg_win_prob: dg?.dg_win_prob ?? null,
+        dg_top5_prob: dg?.dg_top5_prob ?? null,
+        dg_top10_prob: dg?.dg_top10_prob ?? null,
+        dg_top20_prob: dg?.dg_top20_prob ?? null,
+        dg_make_cut_prob: dg?.dg_make_cut_prob ?? null,
+      };
+    });
 
-      // Hold the "SIMULATING..." state for at least SIMULATING_MIN_MS so
-      // the click feels like a real computation (engagement, not lag).
-      const elapsed = performance.now() - start;
-      const delay = Math.max(0, SIMULATING_MIN_MS - elapsed);
-      setTimeout(() => {
-        setResults(enriched);
-        setRunning(false);
-        setRunCount((c) => c + 1);
-
-        // Progressive row reveal.
-        let i = 0;
-        revealTimer.current = window.setInterval(() => {
-          i++;
-          setRevealCount(i);
-          if (i >= 25) {
-            // After top 25 reveal fully, reveal the rest at once
-            setRevealCount(enriched.length);
-            if (revealTimer.current) {
-              clearInterval(revealTimer.current);
-              revealTimer.current = null;
-            }
-          }
-        }, REVEAL_BATCH_MS);
-      }, delay);
-    }, 30);
+    // Small final pause before revealing full table.
+    await new Promise((r) => setTimeout(r, 200));
+    setResults(final);
+    setRunning(false);
+    setRunCount((c) => c + 1);
   };
 
   useEffect(() => {
     return () => {
-      if (revealTimer.current) clearInterval(revealTimer.current);
+      cancelRef.current = true;
     };
   }, []);
 
-  const visibleResults = results ? results.slice(0, Math.max(revealCount, 0)) : [];
+  const liveTop10 = liveResults?.slice(0, 10) ?? [];
+  const progress = chunksDone / TOTAL_CHUNKS;
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -150,11 +151,11 @@ export default function SimulatorPage() {
               </span>
             </div>
             <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed max-w-2xl">
-              Monte Carlo simulation of <span className="text-[#22c55e] font-semibold font-['JetBrains_Mono','SF_Mono',monospace]">{N_SIMS.toLocaleString()}</span>{' '}
-              tournaments. Each run draws 4 rounds per player from a normal
-              distribution centered on the BirdieX-adjusted skill estimate.
-              Compare our results to DataGolf&rsquo;s published projections in
-              the rightmost columns.
+              Monte Carlo of <span className="text-[#22c55e] font-semibold font-['JetBrains_Mono','SF_Mono',monospace]">{TOTAL_SIMS.toLocaleString()}</span>{' '}
+              tournaments. Each player&rsquo;s 4 rounds drawn from a normal
+              distribution centered on their BirdieX-adjusted skill. Watch the
+              live leaderboard converge as runs accumulate, then compare to
+              DataGolf&rsquo;s model.
             </p>
           </div>
           <RecommendedFloorBadge
@@ -191,13 +192,13 @@ export default function SimulatorPage() {
 
           {runCount > 0 && (
             <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
-              Run #{runCount} · {N_SIMS.toLocaleString()} sims
+              Run #{runCount} · {TOTAL_SIMS.toLocaleString()} sims
             </span>
           )}
         </div>
       </div>
 
-      {/* Results */}
+      {/* Idle empty state */}
       {!results && !running && (
         <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-8 text-center">
           <div className="text-[10px] uppercase tracking-wider text-[#22c55e] font-medium font-['Inter',system-ui,sans-serif] mb-3">
@@ -205,48 +206,126 @@ export default function SimulatorPage() {
           </div>
           <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] max-w-md mx-auto leading-relaxed">
             Click <span className="text-[#22c55e] font-semibold">Run Simulation</span> to generate{' '}
-            {N_SIMS.toLocaleString()} tournament outcomes using the current field. Win, Top-5,
-            Top-10, Top-20, and Cut probabilities will populate below.
+            {TOTAL_SIMS.toLocaleString()} tournament outcomes using the current field. Win, Top-5,
+            Top-10, Top-20, and Cut probabilities will converge live below.
           </p>
         </div>
       )}
 
+      {/* Running — live converging leaderboard */}
       {running && (
-        <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-8 text-center">
-          <div className="text-[10px] uppercase tracking-wider text-[#22c55e] font-medium font-['Inter',system-ui,sans-serif] mb-3">
-            Simulating Tournament
+        <div className="bg-[#0a0a0a] border border-[#262626] rounded-xl overflow-hidden">
+          {/* Progress strip */}
+          <div className="px-5 pt-5 pb-3">
+            <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
+              <div>
+                <div className="text-[10px] uppercase tracking-widest text-[#22c55e] font-semibold font-['Inter',system-ui,sans-serif]">
+                  Simulating Tournament
+                </div>
+                <div className="text-sm text-[#f5f5f5] font-['JetBrains_Mono','SF_Mono',monospace] mt-1">
+                  {(chunksDone * CHUNK_SIZE).toLocaleString()}
+                  <span className="text-[#737373]"> / {TOTAL_SIMS.toLocaleString()}</span>
+                  <span className="text-[10px] text-[#a1a1aa] ml-2 font-['Inter',system-ui,sans-serif] uppercase tracking-wider">
+                    simulations complete
+                  </span>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-[10px] uppercase tracking-widest text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
+                  Convergence
+                </div>
+                <div className="text-lg font-bold font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">
+                  {(progress * 100).toFixed(0)}%
+                </div>
+              </div>
+            </div>
+            <div className="h-1 bg-[#1a1a1a] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-[#22c55e]/70 via-[#22c55e] to-[#4ade80] rounded-full transition-[width] duration-150 ease-out"
+                style={{ width: `${progress * 100}%` }}
+              />
+            </div>
           </div>
-          <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] max-w-md mx-auto leading-relaxed mb-5">
-            Running {N_SIMS.toLocaleString()} Monte Carlo simulations…
-          </p>
-          {/* Indeterminate progress bar */}
-          <div className="max-w-md mx-auto h-1 bg-[#262626] rounded-full overflow-hidden">
-            <div
-              className="h-full bg-[#22c55e] rounded-full"
-              style={{
-                width: '40%',
-                animation: 'simBar 1.4s ease-in-out infinite',
-              }}
-            />
+
+          {/* Live top-10 leaderboard */}
+          <div className="px-5 pb-5">
+            <div className="text-[10px] uppercase tracking-widest text-[#a1a1aa] font-medium font-['Inter',system-ui,sans-serif] mt-4 mb-3">
+              Live Leaderboard — Top 10 by Win Probability
+            </div>
+            <div className="space-y-1.5">
+              {liveTop10.length === 0 ? (
+                // Initial frame before chunk 1 completes
+                <div className="text-xs text-[#737373] py-6 text-center font-['Inter',system-ui,sans-serif]">
+                  Drawing initial round scores…
+                </div>
+              ) : (
+                liveTop10.map((r, i) => {
+                  const url = headshots[r.player_name];
+                  // Bar width = win_prob normalized to the top player.
+                  const maxWin = liveTop10[0]?.win_prob || 1;
+                  const barWidth = (r.win_prob / maxWin) * 100;
+                  return (
+                    <div
+                      key={r.player_name}
+                      className="flex items-center gap-3 bg-[#0a0a0a] border border-[#1a1a1a] rounded-md px-3 py-1.5"
+                      style={{ transition: 'all 200ms ease' }}
+                    >
+                      <span className="text-[10px] text-[#737373] font-['JetBrains_Mono','SF_Mono',monospace] w-4 shrink-0">
+                        {i + 1}
+                      </span>
+                      <span className="w-7 h-7 rounded-full overflow-hidden border border-[#262626] bg-[#1a1a1a] shrink-0 inline-flex items-center justify-center">
+                        {url ? (
+                          <img
+                            src={url}
+                            alt={r.player_name}
+                            className="w-full h-full object-cover object-top"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <span className="text-[9px] font-bold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
+                            {getInitials(r.player_name)}
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-xs text-[#f5f5f5] font-['Inter',system-ui,sans-serif] w-44 shrink-0 truncate">
+                        {r.player_name}
+                      </span>
+                      <div className="flex-1 relative h-2 bg-[#1a1a1a] rounded-full overflow-hidden">
+                        <div
+                          className="absolute inset-y-0 left-0 bg-gradient-to-r from-[#22c55e]/60 to-[#22c55e] rounded-full"
+                          style={{
+                            width: `${barWidth}%`,
+                            transition: 'width 300ms cubic-bezier(0.22, 1, 0.36, 1)',
+                          }}
+                        />
+                      </div>
+                      <span
+                        className="text-xs font-bold font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e] w-14 text-right shrink-0 tabular-nums"
+                        style={{ transition: 'color 200ms ease' }}
+                      >
+                        {fmtPct(r.win_prob)}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
+
           <style>{`
-            @keyframes simBar {
-              0%   { transform: translateX(-100%); }
-              50%  { transform: translateX(125%); }
-              100% { transform: translateX(250%); }
-            }
             @media (prefers-reduced-motion: reduce) {
-              [style*="animation: simBar"] { animation: none !important; width: 100% !important; }
+              [style*="transition"] { transition: none !important; }
             }
           `}</style>
         </div>
       )}
 
-      {results && (
+      {/* Completed — full comparison table */}
+      {results && !running && (
         <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg overflow-hidden">
           <div className="px-4 py-3 border-b border-[#262626] flex items-center justify-between flex-wrap gap-2">
             <span className="text-sm font-semibold text-[#f5f5f5] uppercase tracking-wider font-['JetBrains_Mono','SF_Mono',monospace]">
-              Results · Top {Math.min(visibleResults.length, 50)}
+              Results · Top {Math.min(results.length, 50)}
             </span>
             <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
               BirdieX MC vs. DataGolf model
@@ -292,7 +371,7 @@ export default function SimulatorPage() {
                 </tr>
               </thead>
               <tbody>
-                {visibleResults.slice(0, 50).map((row, i) => {
+                {results.slice(0, 50).map((row, i) => {
                   const url = headshots[row.result.player_name];
                   return (
                     <tr
@@ -303,6 +382,7 @@ export default function SimulatorPage() {
                       style={{
                         animation: 'simRowIn 280ms ease forwards',
                         opacity: 0,
+                        animationDelay: `${Math.min(i, 25) * 22}ms`,
                       }}
                     >
                       <td
@@ -333,7 +413,6 @@ export default function SimulatorPage() {
                           </span>
                         </div>
                       </td>
-                      {/* BirdieX MC columns */}
                       {[
                         row.result.win_prob,
                         row.result.top_5_prob,
@@ -343,12 +422,11 @@ export default function SimulatorPage() {
                       ].map((p, j) => (
                         <td
                           key={`bx-${j}`}
-                          className="px-3 py-2 text-right text-xs text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace] font-medium"
+                          className="px-3 py-2 text-right text-xs text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace] font-medium tabular-nums"
                         >
                           {fmtPct(p)}
                         </td>
                       ))}
-                      {/* DataGolf comparison columns */}
                       {[
                         row.dg_win_prob,
                         row.dg_top5_prob,
@@ -358,7 +436,7 @@ export default function SimulatorPage() {
                       ].map((p, j) => (
                         <td
                           key={`dg-${j}`}
-                          className="px-3 py-2 text-right text-xs text-[#a1a1aa] font-['JetBrains_Mono','SF_Mono',monospace]"
+                          className="px-3 py-2 text-right text-xs text-[#a1a1aa] font-['JetBrains_Mono','SF_Mono',monospace] tabular-nums"
                         >
                           {fmtPct(p ?? undefined)}
                         </td>
@@ -380,12 +458,12 @@ export default function SimulatorPage() {
           `}</style>
 
           <div className="px-4 py-3 border-t border-[#262626] text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] leading-relaxed">
-            BirdieX MC uses each player&rsquo;s DataGolf skill estimate plus the
-            BirdieX X-Score adjustment as a per-round expected strokes-gained.
-            Each round draws from a normal distribution with σ = 2.7 strokes
-            (PGA Tour empirical). DataGolf&rsquo;s model uses a similar but
-            independent formulation &mdash; differences in our columns reflect
-            our X-Score tilt (course history + fit + major adjustments).
+            BirdieX MC uses each player&rsquo;s DataGolf skill estimate plus
+            the BirdieX X-Score adjustment as a per-round expected
+            strokes-gained. Each round draws from a normal distribution with
+            σ = 2.7 strokes (PGA Tour empirical). Differences vs the DataGolf
+            columns reflect our X-Score tilt (course history + fit + major
+            adjustments).
           </div>
         </div>
       )}

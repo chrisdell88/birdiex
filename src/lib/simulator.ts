@@ -93,11 +93,119 @@ export function buildSimInputs(
 }
 
 /**
- * Run N Monte Carlo simulations of the tournament.
- *
- * @param inputs — players with adjusted skill estimates
- * @param nRuns — number of simulations (10,000 default)
- * @returns per-player probabilities + expected finish
+ * Accumulator for incremental Monte Carlo runs. Lets the UI update with
+ * partial results as chunks of simulations complete (live convergence).
+ */
+export interface SimAccumulator {
+  inputs: SimulationInput[];
+  wins: number[];
+  top5: number[];
+  top10: number[];
+  top20: number[];
+  madeCut: number[];
+  finishSum: number[];
+  runsCompleted: number;
+}
+
+export function createAccumulator(inputs: SimulationInput[]): SimAccumulator {
+  const n = inputs.length;
+  return {
+    inputs,
+    wins: new Array<number>(n).fill(0),
+    top5: new Array<number>(n).fill(0),
+    top10: new Array<number>(n).fill(0),
+    top20: new Array<number>(n).fill(0),
+    madeCut: new Array<number>(n).fill(0),
+    finishSum: new Array<number>(n).fill(0),
+    runsCompleted: 0,
+  };
+}
+
+/**
+ * Add nRuns simulations to the accumulator. Mutates the accumulator. Safe
+ * to call repeatedly to build up results incrementally.
+ */
+export function runSimChunk(acc: SimAccumulator, nRuns: number): void {
+  const { inputs } = acc;
+  const n = inputs.length;
+
+  const r1 = new Float64Array(n);
+  const r2 = new Float64Array(n);
+  const r34 = new Float64Array(n);
+  const totals = new Float64Array(n);
+  const indices = new Int32Array(n);
+
+  for (let sim = 0; sim < nRuns; sim++) {
+    for (let i = 0; i < n; i++) {
+      r1[i] = -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
+      r2[i] = -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
+      totals[i] = r1[i] + r2[i];
+      indices[i] = i;
+    }
+    indices.sort((a, b) => totals[a] - totals[b]);
+
+    const cutoffTotal = totals[indices[Math.min(CUT_POSITION - 1, n - 1)]];
+    const survivorMask = new Uint8Array(n);
+    for (let i = 0; i < n; i++) {
+      if (totals[i] <= cutoffTotal + 1e-9) survivorMask[i] = 1;
+    }
+
+    for (let i = 0; i < n; i++) {
+      if (survivorMask[i]) {
+        r34[i] =
+          (-inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND) +
+          (-inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND);
+        totals[i] = r1[i] + r2[i] + r34[i];
+      } else {
+        totals[i] = totals[i] + 999;
+      }
+    }
+
+    for (let i = 0; i < n; i++) indices[i] = i;
+    indices.sort((a, b) => totals[a] - totals[b]);
+
+    for (let rank = 0; rank < n; rank++) {
+      const i = indices[rank];
+      acc.finishSum[i] += rank + 1;
+      if (survivorMask[i]) acc.madeCut[i]++;
+      if (rank === 0) acc.wins[i]++;
+      if (rank < 5) acc.top5[i]++;
+      if (rank < 10) acc.top10[i]++;
+      if (rank < 20) acc.top20[i]++;
+    }
+  }
+  acc.runsCompleted += nRuns;
+}
+
+/**
+ * Finalize the accumulator into a sorted result array. Safe to call mid-run
+ * for partial results (e.g., during chunked simulation visualization).
+ */
+export function finalizeResults(acc: SimAccumulator): SimulationResult[] {
+  const n = acc.inputs.length;
+  const runs = Math.max(1, acc.runsCompleted);
+  const out: SimulationResult[] = acc.inputs.map((p, i) => ({
+    dg_id: p.dg_id,
+    player_name: p.player_name,
+    dg_skill_estimate: p.dg_skill_estimate,
+    x_score: p.x_score,
+    adjusted_sg: p.adjusted_sg,
+    win_prob: acc.wins[i] / runs,
+    top_5_prob: acc.top5[i] / runs,
+    top_10_prob: acc.top10[i] / runs,
+    top_20_prob: acc.top20[i] / runs,
+    made_cut_prob: acc.madeCut[i] / runs,
+    expected_finish: acc.finishSum[i] / runs,
+  }));
+  void n;
+  out.sort((a, b) => b.win_prob - a.win_prob);
+  return out;
+}
+
+/**
+ * Run N Monte Carlo simulations in one call (legacy single-shot API). For
+ * the new live-converging UI use createAccumulator + runSimChunk +
+ * finalizeResults in a loop.
  */
 export function runSimulation(
   inputs: SimulationInput[],

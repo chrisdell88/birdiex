@@ -1,7 +1,9 @@
 /**
- * PredictabilityBarChart — bar chart ranking PGA Tour venues by course
- * predictability. The first public visual of this data (DataGolf exposes
- * the underlying numbers via API but has no clean public ranking chart).
+ * PredictabilityBarChart — bar chart ranking the PGA Tour venues we've
+ * tracked, by course predictability. DataGolf publishes a similar ranking
+ * across all ~60 PGA Tour venues; ours is differentiated by overlaying
+ * the matchup score threshold per event — i.e., tying predictability
+ * directly to the cutoff we use to recommend bets.
  *
  * Predictability = mean |total_course_history_adjustment| over the field.
  * The higher the bar, the more a player's prior performance at that venue
@@ -219,6 +221,12 @@ export default function PredictabilityBarChart() {
         future ones, so we recommend every model pick at the 0.95 hard floor. At less-predictable
         venues, course history is much weaker signal; the model still produces picks, but we raise
         the matchup score threshold so only high-edge bets become tracked recommendations.
+      </p>
+      <p className="text-[10px] text-[#737373] font-['Inter',system-ui,sans-serif] leading-relaxed mt-2">
+        Predictability values pulled from DataGolf player decompositions. The ranking concept
+        appears on DataGolf&rsquo;s Course History tool across all PGA Tour venues; the
+        threshold overlay (right column) is our addition &mdash; we use that number to decide
+        which picks become tracked bets.
       </p>
     </div>
   );

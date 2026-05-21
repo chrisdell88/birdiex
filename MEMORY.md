@@ -1,10 +1,11 @@
 # BirdieX — Project Memory
 
-**Last updated:** 2026-05-17
+**Last updated:** 2026-05-21
 **Repo:** https://github.com/chrisdell88/birdiex
 **Live:** https://birdiex.co
 **Project path:** ~/Projects/birdiex
-**Current event:** PGA Championship 2026 at Aronimink — Round 4 live (R1–R3 complete & graded).
+**Current event:** CJ Cup Byron Nelson 2026 at TPC Craig Ranch — pre-tournament (R1 odds live, R1 tees off Thursday).
+**All-Time tracked record (venue-aware floor):** 135-70-21 · +85.30u · +28.4% ROI (Masters + PGA Champ).
 
 ## 🚨 READ THIS FIRST (any new Claude session)
 
@@ -370,7 +371,68 @@ Raw DataGolf JSON pulls from the Masters 2026 run: `masters_final_tracking.json`
 
 ## Open Items / Next Work
 
-### Done (2026-05 build)
+### Done (2026-05-21 session — major stealth-mode iteration)
+- [x] **Predictability-aware matchup score threshold** — venue floor formula:
+      `floor = clamp(3.05 − 14.62 × predictability, 0.95, 2.95)` then snap up to
+      tier boundary in {0.95, 1.45, 1.95, 2.45, 2.95}. Source of truth:
+      `src/lib/sizing.ts` (`recommendedFloorForPredictability`). Backtest sweep in
+      `docs/THRESHOLD_SWEEP.md`. Derived from Masters (Augusta 0.144 → 0.95)
+      and PGA Champ (Aronimink 0.0413 → 2.45) two-anchor linear fit.
+- [x] **Venue map** — `src/config/venues.ts` with predictability per event.
+      Currently: Masters/Augusta 0.144, PGA Champ/Aronimink 0.0413, CJ Cup/Craig Ranch 0.0373.
+- [x] **Tracked vs Scored separation** — every 0.95+ pick is scored internally for
+      backtesting; only picks ≥ venue threshold appear in public "tracked" record.
+- [x] **CJ Cup Byron Nelson 2026 wired up** — pre-tournament data + R1 matchups
+      pulled, currentEvent flipped to `cjCupPreData` + `cjCupR1Matchups`. Floor
+      ★★★+ (edge ≥ 2.95) at TPC Craig Ranch pending real DataGolf Course Fit
+      coefficients (currently neutral placeholders in `scripts/lib/courses.ts`).
+- [x] **All-Time record now reflects venue-aware floor** — Masters unchanged
+      (130-70-21, +74.80u, +26.2%); PGA Champ recut from 117 bets / -9.51u /
+      -8.5% to 5-0-0 / +10.50u / +70.4%; All-Time: **135-70-21, +85.30u, +28.4% ROI**.
+- [x] **Shared all-time lib** — `src/lib/allTimeStats.ts` so MethodologyPage banner
+      and ResultsPage hero render identical numbers.
+- [x] **Glossary section** + **Bet Sizing Ladder** — top of Methodology page.
+      Five terms defined: X-Score Edge, Star Rating, Matchup Score Threshold,
+      Course Predictability, Tracked vs Scored.
+- [x] **Stars vs Threshold separation** — Stars = unit size of an individual bet
+      (NOT a quality tier). Threshold = numeric edge cutoff (NO stars involved).
+      Two independent concepts, glossary nails it. Badge dropped the tier hint.
+- [x] **RecommendedFloorBadge** — `Matchup Score ≥ X.XX · Course` chip on every
+      page that recommends bets (Rankings, Matchups, Odds, Results).
+- [x] **SignalBadge conflicted state** — yellow badge when purity is CONFLICTED.
+- [x] **Round/Cumulative toggle moved** — onto data pages, default Cumulative.
+      `DataSetToggle` component with explanatory tooltip.
+- [x] **Cumulative headshot map** — `scripts/build-headshots.ts` merges existing
+      + fresh ESPN response (fixes post-cut player drop). Reads file as text
+      to avoid tsx dynamic-import bug.
+- [x] **Mobile player detail card compacted** — ~588px → ~482px.
+- [x] **Rankings table** — column order refined, all columns visible at every width.
+- [x] **Edge-banded sizing ladder** — 10 bands, 0.5u → 5u capped at top.
+- [x] **Min Edge dropdown on Odds page** — 6 options, defaults to venue floor.
+- [x] **Motion pass** — prefers-reduced-motion respected, tab fade, 5-star glow,
+      smooth scroll.
+- [x] **Bio fix** — "Fantasy Edge Media (formerly Betting Predators)" replaces
+      BettingPredators.com (URL no longer exists). "BirdieX in 2026."
+
+### Charts shipped 2026-05-21 (all original-build SVG, no libraries)
+- [x] **CourseAdaptiveChart** (Methodology) — predictability → recommended-floor
+      curve. Augusta at upper-right (more bets recommended), Aronimink at
+      lower-left. No formula coefs exposed.
+- [x] **BetSizingLadder** (Methodology / Glossary) — 10-row table mapping edge
+      band → star rating → unit size.
+- [x] **PuttingRegressionChart** (Methodology / Why Putting Regression) —
+      side-by-side scatters from real PGA Champ R1+R2: PUTT R²=0.038 vs
+      OTT R²=0.134.
+- [x] **PredictabilityBarChart** (Methodology) — tracked venues ranked.
+      DataGolf has a similar all-Tour ranking; ours is differentiated by the
+      matchup score threshold overlay.
+- [x] **EquityCurve** (Results / All-Time top) — cumulative units across every
+      tracked bet, Masters→PGA boundary marked, peak/trough/count footer.
+- [x] **CourseFitScatter** (Home / Rankings top) — MARQUEE chart. Player
+      HEADSHOTS as dots on Course History × Course Fit axes. Hover scales head
+      + green glow + name/X-Score tooltip. Top 30 by |X Score|.
+
+### Done (2026-05 build, earlier)
 - [x] Automated DataGolf API pulls per round — `scripts/update-round.ts` one-command pipeline
 - [x] Event-config refactor — `src/config/event.ts`, per-round update needs no code edits
 - [x] Multi-event Results page with All-Time running total + tournament picker

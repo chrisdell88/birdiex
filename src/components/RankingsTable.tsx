@@ -9,6 +9,7 @@ import Avatar from './Avatar';
 import DataSetToggle from './DataSetToggle';
 import RecommendedFloorBadge from './RecommendedFloorBadge';
 import CourseFitScatter from './CourseFitScatter';
+import PastChampions from './PastChampions';
 import { currentEvent } from '../config/event';
 
 interface RankingsTableProps {
@@ -254,6 +255,9 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
   return (
     <div>
       <DataSetToggle dataSet={dataSet} onChange={onDataSetChange} />
+
+      {/* Past champions at this venue — small horizontal strip up top. */}
+      <PastChampions />
 
       {/* Marquee chart: heads-as-dots course fit scatter.
           Clicking a head scrolls to that player's row in the table and

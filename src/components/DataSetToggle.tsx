@@ -49,7 +49,7 @@ export default function DataSetToggle({ dataSet, onChange }: DataSetToggleProps)
         <button
           type="button"
           onClick={() => setShowTip((s) => !s)}
-          className="w-5 h-5 rounded-full border border-[#22c55e]/50 text-[#22c55e] text-[10px] font-bold flex items-center justify-center cursor-pointer hover:bg-[#22c55e]/10 transition-colors"
+          className="w-5 h-5 shrink-0 rounded-full border border-[#22c55e]/50 text-[#22c55e] text-[10px] font-bold flex items-center justify-center cursor-pointer hover:bg-[#22c55e]/10 transition-colors"
           aria-label="What's the difference?"
         >
           ?

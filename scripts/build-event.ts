@@ -159,7 +159,12 @@ async function main() {
         major_adjustment: p.major_adjustment ?? 0,
       };
       const breakdown = computeXScore(null, decomp, courseProfile);
-      const signal = computeSignal(breakdown.x_score);
+      // Pre-tournament: Layer 1 (live SG) is zero, so X Scores cluster near
+      // zero and the standard signal thresholds (0.5 / 1.0 / 1.5) produce
+      // misleading LEAN BUY / NEUTRAL labels for any tiny positive or
+      // negative value. Suppress signals to NEUTRAL until R1 grades and
+      // L1 produces real spread.
+      const signal = 'NEUTRAL' as const;
       const purity = computePurity(signal, null);
       return {
         player_name: p.player_name,

@@ -10,6 +10,7 @@ const tabs: { id: TabId; label: string }[] = [
   { id: 'rankings', label: 'RANKINGS' },
   { id: 'matchups', label: 'MATCHUPS' },
   { id: 'odds', label: 'ODDS' },
+  { id: 'simulator', label: 'SIMULATOR' },
   { id: 'methodology', label: 'METHODOLOGY' },
   { id: 'results', label: 'RESULTS' },
   { id: 'alerts', label: 'ALERTS' },

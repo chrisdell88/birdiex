@@ -37,7 +37,7 @@ export type Signal =
   | 'STRONG SELL'
   | 'STRONGEST SELL';
 
-export type TabId = 'rankings' | 'matchups' | 'odds' | 'methodology' | 'results' | 'alerts';
+export type TabId = 'rankings' | 'matchups' | 'odds' | 'simulator' | 'methodology' | 'results' | 'alerts';
 
 export type DataSet = 'round' | 'cumulative';
 
@@ -161,4 +161,26 @@ export interface OutrightEntry {
   dgOdds: string | null;
   /** All real-book odds keyed by book name. */
   allBooks: Record<string, string>;
+}
+
+/**
+ * DataGolf skill estimate + projected probabilities per player. Used as the
+ * baseline input to the BirdieX Monte Carlo tournament simulator (combined
+ * with our X Score adjustment).
+ *
+ * dg_skill_estimate is in strokes-gained per round vs. field average — top
+ * players ~+2.8, fringe-of-cut ~-0.5.
+ */
+export interface PlayerSkillEstimate {
+  dg_id: number;
+  player_name: string;
+  dg_skill_estimate: number;
+  /** DataGolf's projected probabilities (0–1). Reference / comparison only. */
+  dg_win_prob: number | null;
+  dg_top5_prob: number | null;
+  dg_top10_prob: number | null;
+  dg_top20_prob: number | null;
+  dg_make_cut_prob: number | null;
+  dg_baseline_history_fit_odds: string | null;
+  dg_baseline_history_fit_prob: number | null;
 }

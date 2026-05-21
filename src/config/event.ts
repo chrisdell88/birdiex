@@ -7,10 +7,11 @@
  * imports, `picksRound`, `headerBanner`, and `lastUpdated`. No component
  * edits needed.
  */
-import type { PlayerData, MatchupOddsEntry, OutrightEntry } from '../types';
+import type { PlayerData, MatchupOddsEntry, OutrightEntry, PlayerSkillEstimate } from '../types';
 import { roundOnlyData, cumulativeData, generatedAt } from '../data/cjCupPreData';
 import { r1MatchupOddsData } from '../data/cjCupR1Matchups';
 import { r1OutrightsData } from '../data/cjCupR1Outrights';
+import { skillEstimatesData } from '../data/cjCupSkillEstimates';
 import { recommendedFloorForPredictability, floorTierLabel } from '../lib/sizing';
 
 export interface CurrentEvent {
@@ -38,6 +39,8 @@ export interface CurrentEvent {
   matchups: MatchupOddsEntry[];
   /** Outright winner odds across real sportsbooks. */
   outrights: OutrightEntry[];
+  /** DataGolf skill estimates + projected probs (input to the simulator). */
+  skillEstimates: PlayerSkillEstimate[];
 }
 
 const CRAIG_RANCH_PREDICTABILITY = 0.0373;
@@ -55,4 +58,5 @@ export const currentEvent: CurrentEvent = {
   rankingsCumulative: cumulativeData,
   matchups: r1MatchupOddsData,
   outrights: r1OutrightsData,
+  skillEstimates: skillEstimatesData,
 };

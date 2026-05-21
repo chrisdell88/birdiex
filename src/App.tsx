@@ -9,6 +9,7 @@ import MatchupsView from './components/MatchupsView';
 import MethodologyPage from './components/MethodologyPage';
 import ResultsPage from './components/ResultsPage';
 import OddsTablePage from './components/OddsTablePage';
+import SimulatorPage from './components/SimulatorPage';
 
 // Lazy — these are the only views that pull in the Supabase client. Keeping
 // them out of the main bundle avoids shipping it to every visitor.
@@ -55,6 +56,7 @@ function App() {
           {activeTab === 'rankings' && <RankingsTable data={activeData} dataSet={dataSet} onDataSetChange={setDataSet} />}
           {activeTab === 'matchups' && <MatchupsView data={activeData} dataSet={dataSet} onDataSetChange={setDataSet} />}
           {activeTab === 'odds' && <OddsTablePage data={activeData} dataSet={dataSet} onDataSetChange={setDataSet} />}
+          {activeTab === 'simulator' && <SimulatorPage />}
           {activeTab === 'methodology' && <MethodologyPage onNavigateToResults={() => setActiveTab('results')} />}
           {activeTab === 'results' && <ResultsPage />}
           {activeTab === 'alerts' && (

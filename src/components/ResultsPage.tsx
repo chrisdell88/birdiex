@@ -105,8 +105,10 @@ interface EventEntry {
   pushes: number;
   units: number;
   roi: number;
-  /** Tier label for the recommended-bet floor at this venue. */
-  floorLabel: string;
+  /** Numeric matchup-score threshold (edge cutoff) at this venue. */
+  threshold: number;
+  /** Star-tier hint for the threshold. */
+  tierHint: string;
   /** Course name. */
   course: string;
   /** Course predictability score. */
@@ -123,7 +125,8 @@ const EVENT_REGISTRY: EventEntry[] = [
     pushes: mastersSummary.pushes,
     units: mastersSummary.units,
     roi: mastersSummary.roi,
-    floorLabel: mastersFloor.label,
+    threshold: mastersFloor.floor,
+    tierHint: mastersFloor.label,
     course: mastersFloor.course,
     predictability: mastersFloor.predictability,
   },
@@ -136,7 +139,8 @@ const EVENT_REGISTRY: EventEntry[] = [
     pushes: pgaSummary.pushes,
     units: pgaSummary.units,
     roi: pgaSummary.roi,
-    floorLabel: pgaFloor.label,
+    threshold: pgaFloor.floor,
+    tierHint: pgaFloor.label,
     course: pgaFloor.course,
     predictability: pgaFloor.predictability,
   },
@@ -149,7 +153,8 @@ const EVENT_REGISTRY: EventEntry[] = [
     pushes: 0,
     units: 0,
     roi: 0,
-    floorLabel: cjCupFloor.label,
+    threshold: cjCupFloor.floor,
+    tierHint: cjCupFloor.label,
     course: cjCupFloor.course,
     predictability: cjCupFloor.predictability,
   },
@@ -358,7 +363,11 @@ function AllTimeView() {
                   {t.status}
                 </span>
                 <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">{t.name}</span>
-                <RecommendedFloorBadge floorLabel={t.floorLabel} course={t.course} />
+                <RecommendedFloorBadge
+                  threshold={t.threshold}
+                  tierHint={t.tierHint}
+                  course={t.course}
+                />
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
@@ -480,7 +489,8 @@ function MastersView() {
           </span>
           <span className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">The Masters 2026 — Final Results</span>
           <RecommendedFloorBadge
-            floorLabel={mastersFloor.label}
+            threshold={mastersFloor.floor}
+            tierHint={mastersFloor.label}
             course={mastersFloor.course}
           />
         </div>
@@ -837,7 +847,11 @@ function PGAView() {
           </span>
           <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">PGA Championship 2026</span>
           <span className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">Aronimink Golf Club</span>
-          <RecommendedFloorBadge floorLabel={pgaFloor.label} course={pgaFloor.course} />
+          <RecommendedFloorBadge
+            threshold={pgaFloor.floor}
+            tierHint={pgaFloor.label}
+            course={pgaFloor.course}
+          />
         </div>
       </div>
 
@@ -978,7 +992,11 @@ function CJCupView() {
           <span className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
             TPC Craig Ranch
           </span>
-          <RecommendedFloorBadge floorLabel={cjCupFloor.label} course={cjCupFloor.course} />
+          <RecommendedFloorBadge
+            threshold={cjCupFloor.floor}
+            tierHint={cjCupFloor.label}
+            course={cjCupFloor.course}
+          />
         </div>
       </div>
 
@@ -994,9 +1012,12 @@ function CJCupView() {
         </p>
         <p className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif] leading-relaxed mt-4 max-w-md mx-auto">
           At TPC Craig Ranch&rsquo;s low predictability ({cjCupFloor.predictability.toFixed(3)}),
-          the recommended bet floor is{' '}
-          <span className="text-[#22c55e] font-semibold">{cjCupFloor.label}</span>.
-          Tracked bets and graded results will appear here as the weekend unfolds.
+          the tracked matchup-score threshold is edge{' '}
+          <span className="text-[#22c55e] font-semibold font-['JetBrains_Mono','SF_Mono',monospace]">
+            ≥ {cjCupFloor.floor.toFixed(2)}
+          </span>
+          {' '}({cjCupFloor.label}+ tier). Tracked bets and graded results will appear
+          here as the weekend unfolds.
         </p>
         <p className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mt-5">
           Check the <span className="text-[#22c55e]">Matchups</span> or{' '}

@@ -257,7 +257,8 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
             ?
           </button>
           <RecommendedFloorBadge
-            floorLabel={currentEvent.recommendedFloorLabel}
+            threshold={currentEvent.recommendedFloor}
+            tierHint={currentEvent.recommendedFloorLabel}
             course={currentEvent.course}
           />
         </div>

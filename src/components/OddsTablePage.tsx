@@ -217,7 +217,8 @@ export default function OddsTablePage({ data, dataSet, onDataSetChange }: OddsTa
             </p>
           </div>
           <RecommendedFloorBadge
-            floorLabel={currentEvent.recommendedFloorLabel}
+            threshold={currentEvent.recommendedFloor}
+            tierHint={currentEvent.recommendedFloorLabel}
             course={currentEvent.course}
           />
         </div>

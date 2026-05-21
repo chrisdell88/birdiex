@@ -1,5 +1,6 @@
 import { overallRecord, overallUnits, overallROI } from '../data/resultsData';
 import CourseAdaptiveChart from './CourseAdaptiveChart';
+import Glossary from './Glossary';
 
 interface MethodologyPageProps {
   onNavigateToResults?: () => void;
@@ -27,6 +28,12 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
           )}
         </div>
       </div>
+
+      {/* Section 0: Glossary — definitions first so nothing else reads as
+          misleading. Most users will skim once and skip after that. */}
+      <section className="mb-10">
+        <Glossary />
+      </section>
 
       {/* Section 1: The X Score */}
       <section className="mb-12">

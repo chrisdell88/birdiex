@@ -27,6 +27,50 @@ import {
 // Stable reference for the all-time bet log (imports are static).
 const ALL_TIME_BETS = [...betLog, ...r2Results, ...r3Results, ...r4Results];
 
+// ─────────────────────────────────────────────────────────────────
+// EVENT REGISTRY — single source of truth for the tournaments shown
+// in the picker, the All-Time card grid, and the default-view logic.
+// To add a new event: append an entry here with status: 'IN PROGRESS';
+// flip to 'COMPLETE' when it ends. The Results page automatically
+// defaults to whichever event is currently IN PROGRESS, or falls back
+// to All-Time when nothing is live.
+// ─────────────────────────────────────────────────────────────────
+type EventStatus = 'IN PROGRESS' | 'COMPLETE';
+interface EventEntry {
+  id: 'masters-2026' | 'pga-2026';
+  name: string;
+  status: EventStatus;
+  wins: number;
+  losses: number;
+  pushes: number;
+  units: number;
+  roi: number;
+}
+
+const EVENT_REGISTRY: EventEntry[] = [
+  {
+    id: 'masters-2026',
+    name: 'Masters 2026',
+    status: 'COMPLETE',
+    wins: overallRecord.wins,
+    losses: overallRecord.losses,
+    pushes: overallRecord.pushes,
+    units: overallUnits,
+    roi: overallROI,
+  },
+  {
+    id: 'pga-2026',
+    name: 'PGA Championship 2026',
+    status: 'COMPLETE',
+    wins: pgaR2Summary.wins + pgaR3Summary.wins + pgaR4Summary.wins,
+    losses: pgaR2Summary.losses + pgaR3Summary.losses + pgaR4Summary.losses,
+    pushes: pgaR2Summary.pushes + pgaR3Summary.pushes + pgaR4Summary.pushes,
+    units: +(pgaR2Summary.units + pgaR3Summary.units + pgaR4Summary.units).toFixed(2),
+    roi: +(((pgaR2Summary.units + pgaR3Summary.units + pgaR4Summary.units) /
+      (pgaR2Summary.staked + pgaR3Summary.staked + pgaR4Summary.staked)) * 100).toFixed(1),
+  },
+];
+
 // --- All-time totals (computed from raw data, not hardcoded) ---
 // All-time = Masters + PGA Championship, on a consistent stake-to-win-1 basis.
 const allTimeWins = overallRecord.wins + pgaR2Summary.wins + pgaR3Summary.wins + pgaR4Summary.wins;
@@ -207,27 +251,7 @@ function StarBreakdown({ bets, heading }: { bets: BetRecord[]; heading?: string 
 
 // --- All-Time View ---
 function AllTimeView() {
-  const tournaments = [
-    {
-      name: 'Masters 2026',
-      status: 'COMPLETE',
-      wins: overallRecord.wins,
-      losses: overallRecord.losses,
-      pushes: overallRecord.pushes,
-      units: overallUnits,
-      roi: overallROI,
-    },
-    {
-      name: 'PGA Championship 2026',
-      status: 'COMPLETE',
-      wins: pgaR2Summary.wins + pgaR3Summary.wins + pgaR4Summary.wins,
-      losses: pgaR2Summary.losses + pgaR3Summary.losses + pgaR4Summary.losses,
-      pushes: pgaR2Summary.pushes + pgaR3Summary.pushes + pgaR4Summary.pushes,
-      units: +(pgaR2Summary.units + pgaR3Summary.units + pgaR4Summary.units).toFixed(2),
-      roi: +(((pgaR2Summary.units + pgaR3Summary.units + pgaR4Summary.units) /
-        (pgaR2Summary.staked + pgaR3Summary.staked + pgaR4Summary.staked)) * 100).toFixed(1),
-    },
-  ];
+  const tournaments = EVENT_REGISTRY;
 
   return (
     <div>
@@ -859,12 +883,15 @@ function PGAView() {
 
 const tournamentOptions: { value: TournamentView; label: string }[] = [
   { value: 'all-time', label: 'All-Time' },
-  { value: 'masters-2026', label: 'Masters 2026' },
-  { value: 'pga-2026', label: 'PGA Championship 2026' },
+  ...EVENT_REGISTRY.map((e) => ({ value: e.id, label: e.name })),
 ];
 
+// Default view: whichever event is currently IN PROGRESS; otherwise All-Time.
+const DEFAULT_VIEW: TournamentView =
+  EVENT_REGISTRY.find((e) => e.status === 'IN PROGRESS')?.id ?? 'all-time';
+
 export default function ResultsPage() {
-  const [activeView, setActiveView] = useState<TournamentView>('all-time');
+  const [activeView, setActiveView] = useState<TournamentView>(DEFAULT_VIEW);
 
   return (
     <div className="max-w-7xl mx-auto">

@@ -495,7 +495,7 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
                 <>Browse for context &mdash; R1 picks are not tracked.</>
               ) : (
                 <>
-                  Tracked threshold:{' '}
+                  Best Bet Matchup Score Threshold:{' '}
                   <span className="font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">
                     ≥ {currentEvent.recommendedFloor.toFixed(2)}
                   </span>{' '}
@@ -529,7 +529,7 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
                 className={`px-3 py-1 text-[10px] uppercase tracking-wider font-medium rounded-full font-['Inter',system-ui,sans-serif] cursor-pointer transition-colors ${
                   !showAll ? 'bg-[#22c55e] text-[#0a0a0a]' : 'text-[#d4d4d4] hover:text-white'
                 }`}
-                title={`Tracked bets — matchups at or above the venue threshold (≥ ${currentEvent.recommendedFloor.toFixed(2)}). If none, the next tier down (Leans) is shown.`}
+                title={`Best Bets — matchups at or above the Best Bet Matchup Score Threshold (≥ ${currentEvent.recommendedFloor.toFixed(2)}). If none, the next tier down (Leans) is shown.`}
               >
                 Best Bets
               </button>

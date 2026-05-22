@@ -10,6 +10,29 @@ import { starsForEdge } from '../lib/sizing';
 import { isBuy, isFade } from '../lib/signalDisplay';
 import MatchupsGlossary from './MatchupsGlossary';
 import OutrightsTable from './OutrightsTable';
+import PurityIcon from './PurityIcon';
+
+/**
+ * Venue-relative band classification. We DON'T use the absolute tier names
+ * (BEST BET / STRONG PLAY / LEAN at 1.95 / 1.45 / 0.95) here because what
+ * "Best Bet" means is venue-specific — at Augusta a 2.95-edge bet is the
+ * floor, at a low-predictability course a 0.95-edge bet might be the floor.
+ *
+ *   best-bet → matchupScore ≥ recommendedFloor   (tracked)
+ *   lean     → immediate snap-tier below floor   (close call, not tracked)
+ *   below    → further below floor                (research only)
+ */
+type Band = 'best-bet' | 'lean' | 'below';
+function classifyBand(matchupScore: number, floor: number): Band {
+  if (matchupScore >= floor) return 'best-bet';
+  if (matchupScore >= floor - 0.5) return 'lean';
+  return 'below';
+}
+const bandBorderColor: Record<Band, string> = {
+  'best-bet': 'border-l-[#22c55e]',
+  'lean': 'border-l-amber-500',
+  'below': 'border-l-gray-700',
+};
 
 interface MatchupsViewProps {
   data: PlayerData[];
@@ -186,13 +209,6 @@ function SportsbookLink({ bookName }: { bookName: string }) {
   );
 }
 
-const tierBorderColor: Record<Matchup['tier'], string> = {
-  'BEST BET': 'border-l-[#22c55e]',
-  'STRONG PLAY': 'border-l-emerald-500',
-  'LEAN': 'border-l-gray-600',
-};
-
-
 // --- Player Stat Popup ---
 
 function PlayerStatPopup({ player, onClose }: { player: PlayerData; onClose: () => void }) {
@@ -319,28 +335,16 @@ function MatchupDefinitionsModal({ onClose }: { onClose: () => void }) {
         </div>
         <div className="space-y-3 text-sm font-['Inter',system-ui,sans-serif]">
           <div className="border-b border-[#1a1a1a] pb-3">
-            <span className="text-[#22c55e] font-semibold">X Score</span>
-            <p className="text-[#d4d4d4] mt-1">The BirdieX proprietary putting regression rating</p>
+            <span className="text-[#22c55e] font-semibold">Matchup Score</span>
+            <p className="text-[#d4d4d4] mt-1">X Score difference between the pick and opponent. Higher = more conviction.</p>
           </div>
           <div className="border-b border-[#1a1a1a] pb-3">
-            <span className="text-[#22c55e] font-semibold">Edge</span>
-            <p className="text-[#d4d4d4] mt-1">X Score difference between the pick and opponent</p>
+            <span className="text-[#22c55e] font-semibold">Best Bet</span>
+            <p className="text-[#d4d4d4] mt-1">A matchup at or above the venue's Best Bet Matchup Score Threshold. These are the bets we officially track.</p>
           </div>
           <div className="border-b border-[#1a1a1a] pb-3">
-            <span className="text-[#22c55e] font-semibold">Pure Buy</span>
-            <p className="text-[#d4d4d4] mt-1">OTT and APP both support the buy signal (neither below -0.45)</p>
-          </div>
-          <div className="border-b border-[#1a1a1a] pb-3">
-            <span className="text-[#22c55e] font-semibold">Pure Fade</span>
-            <p className="text-[#d4d4d4] mt-1">OTT and APP both support the fade signal (neither above +0.45)</p>
-          </div>
-          <div className="border-b border-[#1a1a1a] pb-3">
-            <span className="text-[#22c55e] font-semibold">Conflicted</span>
-            <p className="text-[#d4d4d4] mt-1">One of OTT or APP contradicts the signal direction</p>
-          </div>
-          <div className="border-b border-[#1a1a1a] pb-3">
-            <span className="text-[#22c55e] font-semibold">Best Odds</span>
-            <p className="text-[#d4d4d4] mt-1">The most favorable odds available across all sportsbooks</p>
+            <span className="text-[#22c55e] font-semibold">Lean</span>
+            <p className="text-[#d4d4d4] mt-1">A matchup in the tier just below the venue threshold — close call, not tracked. Shown as a fallback when no Best Bets are available.</p>
           </div>
           <div>
             <span className="text-[#22c55e] font-semibold">Star Ratings</span>
@@ -367,20 +371,29 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
 
   const rawMatchups = useMemo(() => generateMatchups(data, currentEvent.matchups), [data]);
 
-  // Best Bets = matchups at or above the venue threshold (the bets we track).
-  // All Matchups = the full model output (edge ≥ 0.95) for research/transparency.
-  //
-  // Default behavior:
-  //   • PRE-R1 → All Matchups (we don't track anything pre-tournament)
-  //   • POST-R1 with at least one bet ≥ threshold → Best Bets
-  //   • POST-R1 with zero bets ≥ threshold → All Matchups (don't strand the
-  //     user on an empty view)
-  const hasBestBets = useMemo(
-    () => rawMatchups.some((m) => m.matchupScore >= currentEvent.recommendedFloor),
-    [rawMatchups],
+  const floor = currentEvent.recommendedFloor;
+
+  // Three bands:
+  //   bestBets — matchupScore ≥ venue floor (the tracked recommendations)
+  //   leans    — immediate snap-tier below floor (close calls; shown as a
+  //              fallback when Best Bets is empty so the user always sees
+  //              SOMETHING when they click Best Bets)
+  //   below    — further below floor (research only; only visible in
+  //              All Matchups view)
+  const bestBets = useMemo(
+    () => rawMatchups.filter((m) => m.matchupScore >= floor),
+    [rawMatchups, floor],
   );
-  const defaultShowAll = isPreTournament || !hasBestBets;
-  const [showAll, setShowAll] = useState<boolean>(defaultShowAll);
+  const leans = useMemo(
+    () => rawMatchups.filter((m) => m.matchupScore >= floor - 0.5 && m.matchupScore < floor),
+    [rawMatchups, floor],
+  );
+
+  // Default view:
+  //   • PRE-R1 → All Matchups (we don't track anything pre-tournament)
+  //   • POST-R1 → Best Bets (UI handles the empty case with a Leans fallback,
+  //     so the button is always clickable and we always land on tracked-first)
+  const [showAll, setShowAll] = useState<boolean>(isPreTournament);
 
   // All unique player names that appear in qualifying matchups
   const matchupPlayerNames = useMemo(() => {
@@ -392,31 +405,33 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
     return [...names].sort((a, b) => a.localeCompare(b));
   }, [rawMatchups]);
 
-  const matchups = useMemo(() => {
-    let sorted = [...rawMatchups];
-    // Tracked-only filter: drop matchups below the venue threshold by
-    // default. "Show all" toggle exposes everything 0.95+ for research /
-    // transparency.
-    if (!showAll) {
-      sorted = sorted.filter((m) => m.matchupScore >= currentEvent.recommendedFloor);
-    }
-    switch (sortBy) {
-      case 'edge-high':
-        sorted.sort((a, b) => b.matchupScore - a.matchupScore);
-        break;
-      case 'edge-low':
-        sorted.sort((a, b) => a.matchupScore - b.matchupScore);
-        break;
-    }
-    if (selectedPlayer) {
-      return sorted.filter(
-        (m) =>
-          m.pick.player_name === selectedPlayer ||
-          m.opponent.player_name === selectedPlayer
-      );
-    }
-    return sorted;
-  }, [rawMatchups, sortBy, selectedPlayer, showAll]);
+  // Sort + selectedPlayer filter applied to whichever set we render.
+  const refine = useMemo(() => {
+    return (set: Matchup[]): Matchup[] => {
+      let sorted = [...set];
+      if (sortBy === 'edge-high') sorted.sort((a, b) => b.matchupScore - a.matchupScore);
+      else sorted.sort((a, b) => a.matchupScore - b.matchupScore);
+      if (selectedPlayer) {
+        sorted = sorted.filter(
+          (m) =>
+            m.pick.player_name === selectedPlayer ||
+            m.opponent.player_name === selectedPlayer
+        );
+      }
+      return sorted;
+    };
+  }, [sortBy, selectedPlayer]);
+
+  const displayBestBets = useMemo(() => refine(bestBets), [refine, bestBets]);
+  const displayLeans = useMemo(() => refine(leans), [refine, leans]);
+  const displayAll = useMemo(() => refine(rawMatchups), [refine, rawMatchups]);
+
+  // When showAll is false we're in "Best Bets" mode. If there are zero best
+  // bets we fall through to the Leans subsection instead of an empty grid.
+  const showLeansFallback = !showAll && displayBestBets.length === 0;
+
+  // Pre-R1 we hide signal + purity icons (no live SG data to back them up).
+  const hideSignal = isPreTournament;
 
   const fmtXScore = (v: number) => (v > 0 ? `+${v.toFixed(2)}` : v.toFixed(2));
 
@@ -461,13 +476,21 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
           onClear={() => setSelectedPlayer(null)}
           placeholder="Filter by player..."
         />
-        {selectedPlayer && (
-          <p className="mt-2 text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
-            Showing matchups involving{' '}
-            <span className="text-[#22c55e] font-medium">{selectedPlayer}</span>
-            {' '}({matchups.length} result{matchups.length !== 1 ? 's' : ''})
-          </p>
-        )}
+        {selectedPlayer && (() => {
+          // Count matches the set currently being rendered.
+          const count = showAll
+            ? displayAll.length
+            : showLeansFallback
+              ? displayLeans.length
+              : displayBestBets.length;
+          return (
+            <p className="mt-2 text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
+              Showing matchups involving{' '}
+              <span className="text-[#22c55e] font-medium">{selectedPlayer}</span>
+              {' '}({count} result{count !== 1 ? 's' : ''})
+            </p>
+          );
+        })()}
       </div>
 
       {/* Header */}
@@ -500,24 +523,18 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           {/* Best Bets / All Matchups toggle — hidden pre-R1 since we don't
-              track anything there; default is "All Matchups" then. Post-R1
-              we default to Best Bets, unless there are zero bets meeting the
-              threshold, in which case we fall back to All Matchups so the
-              user never lands on an empty view. */}
+              track anything there. Both buttons are always clickable; when
+              Best Bets has zero matches the UI falls through to a Leans
+              section so users never land on a fully empty view. */}
           {!isPreTournament && (
             <div className="flex border border-[#22c55e]/50 rounded-full p-0.5">
               <button
                 type="button"
                 onClick={() => setShowAll(false)}
-                disabled={!hasBestBets}
-                className={`px-3 py-1 text-[10px] uppercase tracking-wider font-medium rounded-full font-['Inter',system-ui,sans-serif] transition-colors ${
+                className={`px-3 py-1 text-[10px] uppercase tracking-wider font-medium rounded-full font-['Inter',system-ui,sans-serif] cursor-pointer transition-colors ${
                   !showAll ? 'bg-[#22c55e] text-[#0a0a0a]' : 'text-[#d4d4d4] hover:text-white'
-                } ${!hasBestBets ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
-                title={
-                  hasBestBets
-                    ? `Tracked bets — matchups at or above the venue threshold (≥ ${currentEvent.recommendedFloor.toFixed(2)})`
-                    : 'No bets currently meet the venue threshold'
-                }
+                }`}
+                title={`Tracked bets — matchups at or above the venue threshold (≥ ${currentEvent.recommendedFloor.toFixed(2)}). If none, the next tier down (Leans) is shown.`}
               >
                 Best Bets
               </button>
@@ -545,129 +562,198 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
         </div>
       </div>
 
-      {/* H2H Matchups — full width */}
-      <div>
-        <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-sm font-semibold text-[#f5f5f5] uppercase tracking-wider font-['JetBrains_Mono','SF_Mono',monospace]">
-            H2H Matchups
-          </h3>
-          <span className="text-[10px] font-bold font-['JetBrains_Mono','SF_Mono',monospace] bg-[#22c55e]/15 text-[#22c55e] rounded-full px-2 py-0.5">
-            {matchups.length}
-          </span>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {matchups.length === 0 && (
-            <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-6 text-center md:col-span-2">
-              <div className="text-[10px] uppercase tracking-wider text-[#22c55e] font-medium font-['Inter',system-ui,sans-serif] mb-2">
-                No matchups to show
-              </div>
-              <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed max-w-md mx-auto">
-                Either the field hasn&rsquo;t been pulled yet, or all picks
-                fall below the current filter. Try toggling to &ldquo;Show
-                All&rdquo; if you&rsquo;re post-R1.
-              </p>
-            </div>
-          )}
-          {matchups.map((m, idx) => (
-              <div
-                key={idx}
-                className={`bg-[#0a0a0a] border border-[#262626] border-l-4 ${tierBorderColor[m.tier]} rounded-lg p-4 hover:bg-[#111111] transition-colors`}
-              >
-                {/* Header row */}
-                <div className="flex items-center justify-between mb-3">
-                  {(() => {
-                    const stars = starsForEdge(m.matchupScore);
-                    return (
-                      <span
-                        className={`text-[#22c55e] text-sm tracking-tight ${stars === 5 ? 'star-glow' : ''}`}
-                        title={`${stars}-star play`}
-                        aria-label={`${stars} star play`}
-                      >
-                        {'★'.repeat(stars)}
-                      </span>
-                    );
-                  })()}
-                  <span className="text-xs text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">
-                    Edge:{' '}
-                    <span className="text-[#22c55e] font-bold font-['JetBrains_Mono','SF_Mono',monospace]">
-                      {m.matchupScore.toFixed(2)}
+      {/* Card renderer — used for both Best Bets and the Leans fallback. */}
+      {(() => {
+        const renderCard = (m: Matchup, idx: number) => {
+          const band = classifyBand(m.matchupScore, floor);
+          return (
+            <div
+              key={idx}
+              className={`bg-[#0a0a0a] border border-[#262626] border-l-4 ${bandBorderColor[band]} rounded-lg p-4 hover:bg-[#111111] transition-colors`}
+            >
+              {/* Header row */}
+              <div className="flex items-center justify-between mb-3">
+                {(() => {
+                  const stars = starsForEdge(m.matchupScore);
+                  return (
+                    <span
+                      className={`text-[#22c55e] text-sm tracking-tight ${stars === 5 ? 'star-glow' : ''}`}
+                      title={`${stars}-star play`}
+                      aria-label={`${stars} star play`}
+                    >
+                      {'★'.repeat(stars)}
                     </span>
+                  );
+                })()}
+                <span className="text-xs text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">
+                  Edge:{' '}
+                  <span className="text-[#22c55e] font-bold font-['JetBrains_Mono','SF_Mono',monospace]">
+                    {m.matchupScore.toFixed(2)}
+                  </span>
+                </span>
+              </div>
+
+              <div className="border-t border-[#1a1a1a] mb-3" />
+
+              {/* Players row */}
+              <div className="flex items-center justify-between gap-4">
+                {/* Pick (left) */}
+                <div className="flex-1 flex items-start gap-2 min-w-0">
+                  <Avatar playerName={m.pick.player_name} size="sm" />
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif] leading-snug">
+                      <ClickablePlayerName player={m.pick}>
+                        {m.pick.player_name}
+                      </ClickablePlayerName>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <span className="text-xs font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">
+                        X Score: {fmtXScore(m.pick.x_score)}
+                      </span>
+                      {!hideSignal && (
+                        <>
+                          <SignalBadge signal={m.pick.signal} compact conflicted={m.pick.purity === 'CONFLICTED'} />
+                          <PurityIcon player={m.pick} />
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-[#d4d4d4] text-xs font-bold font-['Inter',system-ui,sans-serif] shrink-0">
+                  vs
+                </div>
+
+                {/* Opponent (right) */}
+                <div className="flex-1 flex items-start gap-2 justify-end min-w-0">
+                  <div className="min-w-0 text-right">
+                    <div className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif] leading-snug">
+                      <ClickablePlayerName player={m.opponent}>
+                        {m.opponent.player_name}
+                      </ClickablePlayerName>
+                    </div>
+                    <div className="flex items-center justify-end gap-2 mt-1 flex-wrap">
+                      {!hideSignal && (
+                        <>
+                          <PurityIcon player={m.opponent} />
+                          <SignalBadge signal={m.opponent.signal} compact conflicted={m.opponent.purity === 'CONFLICTED'} />
+                        </>
+                      )}
+                      <span className="text-xs font-['JetBrains_Mono','SF_Mono',monospace] text-red-400">
+                        X Score: {fmtXScore(m.opponent.x_score)}
+                      </span>
+                    </div>
+                  </div>
+                  <Avatar playerName={m.opponent.player_name} size="sm" />
+                </div>
+              </div>
+
+              {/* Best odds */}
+              <div className="border-t border-[#1a1a1a] mt-3 pt-3">
+                <div className="text-xs font-['Inter',system-ui,sans-serif]">
+                  <span className="text-[#d4d4d4]">Best Odds: </span>
+                  <span className="text-[#f5f5f5] font-bold font-['JetBrains_Mono','SF_Mono',monospace]">
+                    {m.bestOdds}
+                  </span>
+                  {' '}<SportsbookLink bookName={m.bestBook} />
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        // All Matchups mode — just dump the full set.
+        if (showAll) {
+          return (
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <h3 className="text-sm font-semibold text-[#f5f5f5] uppercase tracking-wider font-['JetBrains_Mono','SF_Mono',monospace]">
+                  H2H Matchups
+                </h3>
+                <span className="text-[10px] font-bold font-['JetBrains_Mono','SF_Mono',monospace] bg-[#22c55e]/15 text-[#22c55e] rounded-full px-2 py-0.5">
+                  {displayAll.length}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {displayAll.length === 0 && (
+                  <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-6 text-center md:col-span-2">
+                    <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed max-w-md mx-auto">
+                      No matchups to show. The field may not be pulled yet
+                      for this round.
+                    </p>
+                  </div>
+                )}
+                {displayAll.map((m, i) => renderCard(m, i))}
+              </div>
+            </div>
+          );
+        }
+
+        // Best Bets mode — show tracked bets, OR fall through to Leans when
+        // the tracked set is empty.
+        return (
+          <>
+            {!showLeansFallback && (
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <h3 className="text-sm font-semibold text-[#f5f5f5] uppercase tracking-wider font-['JetBrains_Mono','SF_Mono',monospace]">
+                    Best Bets
+                  </h3>
+                  <span className="text-[10px] font-bold font-['JetBrains_Mono','SF_Mono',monospace] bg-[#22c55e]/15 text-[#22c55e] rounded-full px-2 py-0.5">
+                    {displayBestBets.length}
                   </span>
                 </div>
-
-                <div className="border-t border-[#1a1a1a] mb-3" />
-
-                {/* Players row */}
-                <div className="flex items-center justify-between gap-4">
-                  {/* Pick (left) */}
-                  <div className="flex-1 flex items-start gap-2 min-w-0">
-                    <Avatar playerName={m.pick.player_name} size="sm" />
-                    <div className="min-w-0">
-                      <div className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif] leading-snug">
-                        <ClickablePlayerName player={m.pick}>
-                          {m.pick.player_name}
-                        </ClickablePlayerName>
-                      </div>
-                      <div className="flex items-center gap-3 mt-1 flex-wrap">
-                        <span className="text-xs font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">
-                          X Score: {fmtXScore(m.pick.x_score)}
-                        </span>
-                        {m.pick.purity === 'PURE BUY' && (
-                          <span className="text-[10px] uppercase tracking-wider text-[#22c55e] font-medium font-['Inter',system-ui,sans-serif]">
-                            PURE BUY
-                            <svg width="10" height="10" viewBox="0 0 16 16" className="inline ml-0.5 -mt-0.5 text-[#22c55e]">
-                              <path fill="currentColor" d="M6.5 12.5l-4-4 1.4-1.4 2.6 2.6 5.6-5.6 1.4 1.4-7 7z" />
-                            </svg>
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="text-[#d4d4d4] text-xs font-bold font-['Inter',system-ui,sans-serif] shrink-0">
-                    vs
-                  </div>
-
-                  {/* Opponent (right) */}
-                  <div className="flex-1 flex items-start gap-2 justify-end min-w-0">
-                    <div className="min-w-0 text-right">
-                      <div className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif] leading-snug">
-                        <ClickablePlayerName player={m.opponent}>
-                          {m.opponent.player_name}
-                        </ClickablePlayerName>
-                      </div>
-                      <div className="flex items-center justify-end gap-3 mt-1 flex-wrap">
-                        {m.opponent.purity === 'PURE FADE' && (
-                          <span className="text-[10px] uppercase tracking-wider text-red-400 font-medium font-['Inter',system-ui,sans-serif]">
-                            PURE FADE
-                            <svg width="10" height="10" viewBox="0 0 16 16" className="inline ml-0.5 -mt-0.5 text-red-400">
-                              <path fill="currentColor" d="M6.5 12.5l-4-4 1.4-1.4 2.6 2.6 5.6-5.6 1.4 1.4-7 7z" />
-                            </svg>
-                          </span>
-                        )}
-                        <span className="text-xs font-['JetBrains_Mono','SF_Mono',monospace] text-red-400">
-                          X Score: {fmtXScore(m.opponent.x_score)}
-                        </span>
-                      </div>
-                    </div>
-                    <Avatar playerName={m.opponent.player_name} size="sm" />
-                  </div>
-                </div>
-
-                {/* Best odds */}
-                <div className="border-t border-[#1a1a1a] mt-3 pt-3">
-                  <div className="text-xs font-['Inter',system-ui,sans-serif]">
-                    <span className="text-[#d4d4d4]">Best Odds: </span>
-                    <span className="text-[#f5f5f5] font-bold font-['JetBrains_Mono','SF_Mono',monospace]">
-                      {m.bestOdds}
-                    </span>
-                    {' '}<SportsbookLink bookName={m.bestBook} />
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {displayBestBets.map((m, i) => renderCard(m, i))}
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
+            )}
+
+            {showLeansFallback && (
+              <>
+                <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-5 mb-6">
+                  <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
+                    No current matchups cross the Best Bet Matchup Score
+                    Threshold (≥{' '}
+                    <span className="font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">
+                      {floor.toFixed(2)}
+                    </span>
+                    ) for Round {currentEvent.picksRound}. Showing{' '}
+                    <span className="text-amber-400 font-semibold">Leans</span>{' '}
+                    instead — the tier just below the threshold.
+                  </p>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <h3 className="text-sm font-semibold text-amber-400 uppercase tracking-wider font-['JetBrains_Mono','SF_Mono',monospace]">
+                      Leans
+                    </h3>
+                    <span className="text-[10px] font-bold font-['JetBrains_Mono','SF_Mono',monospace] bg-amber-500/15 text-amber-400 rounded-full px-2 py-0.5">
+                      {displayLeans.length}
+                    </span>
+                    <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
+                      {(floor - 0.5).toFixed(2)} – {floor.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {displayLeans.length === 0 && (
+                      <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-6 text-center md:col-span-2">
+                        <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed max-w-md mx-auto">
+                          No matchups in the Leans band either. Switch to{' '}
+                          <span className="text-[#22c55e]">All Matchups</span>{' '}
+                          to see the full model output.
+                        </p>
+                      </div>
+                    )}
+                    {displayLeans.map((m, i) => renderCard(m, i))}
+                  </div>
+                </div>
+              </>
+            )}
+          </>
+        );
+      })()}
 
       {/* Outright winner odds — mirrored from the Odds page so matchup users
           can see tournament context without changing tabs. Reference only;

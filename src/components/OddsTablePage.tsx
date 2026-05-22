@@ -13,7 +13,7 @@ interface OddsTablePageProps {
   onDataSetChange: (ds: DataSet) => void;
 }
 
-type OddsSortField = 'edge' | 'pick' | 'opp' | 'tier' | 'bet365' | 'betmgm' | 'betonline' | 'bovada' | 'caesars' | 'draftkings' | 'fanduel' | 'pinnacle' | 'pointsbet' | 'unibet' | 'betcris' | 'best';
+type OddsSortField = 'edge' | 'pick' | 'opp' | 'tier' | 'pos' | 'score' | 'bet365' | 'betmgm' | 'betonline' | 'bovada' | 'caesars' | 'draftkings' | 'fanduel' | 'pinnacle' | 'pointsbet' | 'unibet' | 'betcris' | 'best';
 type SortDir = 'asc' | 'desc';
 
 const sportsbookKeys = ['bet365', 'betmgm', 'betonline', 'bovada', 'caesars', 'draftkings', 'fanduel', 'pinnacle', 'pointsbet', 'unibet', 'betcris'] as const;
@@ -50,6 +50,18 @@ function parseOdds(odds: string): number {
   const n = parseInt(odds, 10);
   if (isNaN(n)) return -9999;
   return n;
+}
+
+// "T1" → 1, "CUT" / "WD" / "" → 999 so they sort to the bottom.
+function parsePosition(pos: string): number {
+  if (!pos) return 999;
+  const n = parseInt(pos.replace('T', ''), 10);
+  return isNaN(n) ? 999 : n;
+}
+
+function formatScore(s: number): string {
+  if (s === 0) return 'E';
+  return s > 0 ? `+${s}` : `${s}`;
 }
 
 function isBuySide(p: PlayerData): boolean {
@@ -180,6 +192,8 @@ export default function OddsTablePage({ data, dataSet, onDataSetChange }: OddsTa
       if (sortField === 'edge') { aVal = a.edge; bVal = b.edge; }
       else if (sortField === 'pick') { aVal = a.pick.player_name; bVal = b.pick.player_name; }
       else if (sortField === 'opp') { aVal = a.opponent.player_name; bVal = b.opponent.player_name; }
+      else if (sortField === 'pos') { aVal = parsePosition(a.pick.position); bVal = parsePosition(b.pick.position); }
+      else if (sortField === 'score') { aVal = a.pick.score_to_par; bVal = b.pick.score_to_par; }
       else if (sortField === 'tier') {
         const tierOrder = { 'BEST BET': 0, 'STRONG PLAY': 1, 'LEAN': 2 };
         aVal = tierOrder[a.tier]; bVal = tierOrder[b.tier];
@@ -314,6 +328,18 @@ export default function OddsTablePage({ data, dataSet, onDataSetChange }: OddsTa
               <thead>
                 <tr className="border-b border-[#262626]">
                   <th
+                    onClick={() => handleSort('pos')}
+                    className={`px-2 py-3 text-[10px] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif] cursor-pointer hover:text-[#22c55e] transition-colors whitespace-nowrap select-none ${sortField === 'pos' ? 'text-[#22c55e]' : 'text-[#a1a1aa]'}`}
+                  >
+                    Pos{sortArrow('pos')}
+                  </th>
+                  <th
+                    onClick={() => handleSort('score')}
+                    className={`px-2 py-3 text-[10px] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif] cursor-pointer hover:text-[#22c55e] transition-colors whitespace-nowrap select-none ${sortField === 'score' ? 'text-[#22c55e]' : 'text-[#a1a1aa]'}`}
+                  >
+                    Score{sortArrow('score')}
+                  </th>
+                  <th
                     onClick={() => handleSort('pick')}
                     className={`px-3 py-3 text-[10px] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif] cursor-pointer hover:text-[#22c55e] transition-colors whitespace-nowrap select-none sticky left-0 bg-[#0a0a0a] z-10 ${sortField === 'pick' ? 'text-[#22c55e]' : 'text-[#a1a1aa]'}`}
                   >
@@ -367,11 +393,20 @@ export default function OddsTablePage({ data, dataSet, onDataSetChange }: OddsTa
                 </tr>
               </thead>
               <tbody>
-                {sortedH2H.map((row, i) => (
+                {sortedH2H.map((row, i) => {
+                  const score = row.pick.score_to_par;
+                  const scoreColor = score < 0 ? 'text-[#22c55e]' : score > 0 ? 'text-red-400' : 'text-[#d4d4d4]';
+                  return (
                   <tr
                     key={`${row.pick.player_name}-${row.opponent.player_name}-${i}`}
                     className={`border-b border-[#1a1a1a] ${i % 2 === 0 ? 'bg-[#0a0a0a]' : 'bg-[#0f0f0f]'} hover:bg-[#141414] transition-colors`}
                   >
+                    <td className={`px-2 py-2.5 text-xs ${mono} text-[#d4d4d4] whitespace-nowrap`}>
+                      {row.pick.position || '—'}
+                    </td>
+                    <td className={`px-2 py-2.5 text-xs ${mono} ${scoreColor} whitespace-nowrap`}>
+                      {formatScore(score)}
+                    </td>
                     <td className="px-3 py-2.5 text-xs text-[#f5f5f5] font-['Inter',system-ui,sans-serif] whitespace-nowrap sticky left-0 bg-inherit z-10">
                       {row.pick.player_name}
                     </td>
@@ -423,10 +458,11 @@ export default function OddsTablePage({ data, dataSet, onDataSetChange }: OddsTa
                       </span>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
                 {sortedH2H.length === 0 && (
                   <tr>
-                    <td colSpan={5 + sportsbookKeys.length + 1} className="px-3 py-8 text-center text-sm text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
+                    <td colSpan={7 + sportsbookKeys.length + 1} className="px-3 py-8 text-center text-sm text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
                       No H2H matchups match the current filters
                     </td>
                   </tr>

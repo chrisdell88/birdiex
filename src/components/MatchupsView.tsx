@@ -331,20 +331,9 @@ function MatchupDefinitionsModal({ onClose }: { onClose: () => void }) {
             <span className="text-[#22c55e] font-semibold">Best Bet</span>
             <p className="text-[#d4d4d4] mt-1">A matchup at or above the venue's Best Bet Matchup Score Threshold. These are the bets we officially track.</p>
           </div>
-          <div className="border-b border-[#1a1a1a] pb-3">
-            <span className="text-[#22c55e] font-semibold">Best Bet Matchup Score Threshold</span>
-            <p className="text-[#d4d4d4] mt-1">Venue-specific cutoff above which a model pick counts as a tracked Best Bet. Lower at predictable courses, higher at unpredictable ones.</p>
-          </div>
           <div>
-            <span className="text-[#22c55e] font-semibold">Star Ratings</span>
-            <p className="text-[#d4d4d4] mt-1">
-              More edge = more stars = bigger play.{' '}
-              <span className="text-[#22c55e]">★</span> 0.95–1.95 &nbsp;|&nbsp;
-              <span className="text-[#22c55e]">★★</span> 1.95–2.95 &nbsp;|&nbsp;
-              <span className="text-[#22c55e]">★★★</span> 2.95–3.95 &nbsp;|&nbsp;
-              <span className="text-[#22c55e]">★★★★</span> 3.95–4.95 &nbsp;|&nbsp;
-              <span className="text-[#22c55e]">★★★★★</span> 4.95+
-            </p>
+            <span className="text-[#22c55e] font-semibold">Best Bet Matchup Score Threshold</span>
+            <p className="text-[#d4d4d4] mt-1">Venue-specific cutoff above which a model pick counts as a Best Bet. Lower at predictable courses, higher at unpredictable ones.</p>
           </div>
         </div>
       </div>

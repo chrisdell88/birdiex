@@ -233,8 +233,8 @@ export default function OddsTablePage({ data, dataSet, onDataSetChange }: OddsTa
             </h2>
             <p className="text-sm text-[#d4d4d4] mt-1 font-['Inter',system-ui,sans-serif]">
               {activeTab === 'matchups'
-                ? 'H2H matchup odds across all 11 sportsbooks. Best odds highlighted.'
-                : 'Outright winner odds across all 11 sportsbooks. Reference only — model targets H2H matchups, not outrights.'}
+                ? 'H2H matchup odds across 11 sportsbooks. Best odds highlighted.'
+                : 'Outright winner odds across 11 sportsbooks. Reference only — model targets H2H matchups, not outrights.'}
             </p>
           </div>
           {activeTab === 'matchups' && (
@@ -476,7 +476,7 @@ export default function OddsTablePage({ data, dataSet, onDataSetChange }: OddsTa
 
       {/* ───────── Outrights tab ───────── */}
       {activeTab === 'outrights' && (
-        <OutrightsTable outrights={currentEvent.outrights} />
+        <OutrightsTable outrights={currentEvent.outrights} players={data} />
       )}
     </div>
   );

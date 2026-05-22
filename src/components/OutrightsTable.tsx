@@ -6,8 +6,8 @@
  * Data: currentEvent.outrights (built from DataGolf's /betting-tools/outrights
  * win market for the current event). Sorted favorites-first by best odds.
  */
-import { useState } from 'react';
-import type { OutrightEntry } from '../types';
+import { useState, useMemo } from 'react';
+import type { OutrightEntry, PlayerData } from '../types';
 
 const REAL_BOOKS = [
   'bet365',
@@ -45,14 +45,34 @@ function oddsToPayout(odds: string): number {
   return n < 0 ? 100 / Math.abs(n) : n / 100;
 }
 
-interface Props {
-  outrights: OutrightEntry[];
+// "T1" → 1, blank/CUT/WD → 999 so they sort to the bottom.
+function parsePosition(pos: string): number {
+  if (!pos) return 999;
+  const n = parseInt(pos.replace('T', ''), 10);
+  return isNaN(n) ? 999 : n;
 }
 
-type SortKey = 'player' | 'best' | typeof REAL_BOOKS[number];
+function formatScore(s: number): string {
+  if (s === 0) return 'E';
+  return s > 0 ? `+${s}` : `${s}`;
+}
+
+interface Props {
+  outrights: OutrightEntry[];
+  /** Optional — used to look up live POS/SCORE per player. */
+  players?: PlayerData[];
+}
+
+type SortKey = 'player' | 'pos' | 'score' | 'best' | typeof REAL_BOOKS[number];
 type SortDir = 'asc' | 'desc';
 
-export default function OutrightsTable({ outrights }: Props) {
+export default function OutrightsTable({ outrights, players = [] }: Props) {
+  // Map player_name → live PlayerData for POS / SCORE lookup.
+  const playerLookup = useMemo(() => {
+    const m = new Map<string, PlayerData>();
+    players.forEach((p) => m.set(p.player_name, p));
+    return m;
+  }, [players]);
   // Sortable table. Default = by best implied payout, ascending (favorites
   // first — shortest odds at top).
   const [sortKey, setSortKey] = useState<SortKey>('best');
@@ -82,6 +102,12 @@ export default function OutrightsTable({ outrights }: Props) {
     if (sortKey === 'player') {
       av = a.player_name;
       bv = b.player_name;
+    } else if (sortKey === 'pos') {
+      av = parsePosition(playerLookup.get(a.player_name)?.position ?? '');
+      bv = parsePosition(playerLookup.get(b.player_name)?.position ?? '');
+    } else if (sortKey === 'score') {
+      av = playerLookup.get(a.player_name)?.score_to_par ?? 999;
+      bv = playerLookup.get(b.player_name)?.score_to_par ?? 999;
     } else if (sortKey === 'best') {
       av = oddsToPayout(a.bestOdds);
       bv = oddsToPayout(b.bestOdds);
@@ -112,6 +138,22 @@ export default function OutrightsTable({ outrights }: Props) {
           <thead>
             <tr className="border-b border-[#262626]">
               <th
+                onClick={() => handleSort('pos')}
+                className={`px-2 py-3 text-[10px] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif] whitespace-nowrap cursor-pointer hover:text-[#22c55e] transition-colors select-none ${
+                  sortKey === 'pos' ? 'text-[#22c55e]' : 'text-[#a1a1aa]'
+                }`}
+              >
+                Pos{sortArrow('pos')}
+              </th>
+              <th
+                onClick={() => handleSort('score')}
+                className={`px-2 py-3 text-[10px] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif] whitespace-nowrap cursor-pointer hover:text-[#22c55e] transition-colors select-none ${
+                  sortKey === 'score' ? 'text-[#22c55e]' : 'text-[#a1a1aa]'
+                }`}
+              >
+                Score{sortArrow('score')}
+              </th>
+              <th
                 onClick={() => handleSort('player')}
                 className={`px-3 py-3 text-[10px] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif] whitespace-nowrap sticky left-0 bg-[#0a0a0a] z-10 cursor-pointer hover:text-[#22c55e] transition-colors select-none ${
                   sortKey === 'player' ? 'text-[#22c55e]' : 'text-[#a1a1aa]'
@@ -141,13 +183,31 @@ export default function OutrightsTable({ outrights }: Props) {
             </tr>
           </thead>
           <tbody>
-            {display.map((o, i) => (
+            {display.map((o, i) => {
+              const player = playerLookup.get(o.player_name);
+              const pos = player?.position ?? '';
+              const score = player?.score_to_par ?? null;
+              const scoreColor =
+                score == null
+                  ? 'text-[#525252]'
+                  : score < 0
+                    ? 'text-[#22c55e]'
+                    : score > 0
+                      ? 'text-red-400'
+                      : 'text-[#d4d4d4]';
+              return (
               <tr
                 key={o.dg_id}
                 className={`border-t border-[#1a1a1a] hover:bg-[#141414] transition-colors ${
                   i % 2 === 0 ? 'bg-[#0a0a0a]' : 'bg-[#0f0f0f]'
                 }`}
               >
+                <td className={`px-2 py-2 text-xs ${mono} text-[#d4d4d4] whitespace-nowrap`}>
+                  {pos || '—'}
+                </td>
+                <td className={`px-2 py-2 text-xs ${mono} ${scoreColor} whitespace-nowrap`}>
+                  {score == null ? '—' : formatScore(score)}
+                </td>
                 <td
                   className={`px-3 py-2 text-xs text-[#f5f5f5] font-['Inter',system-ui,sans-serif] whitespace-nowrap sticky left-0 z-10 ${
                     i % 2 === 0 ? 'bg-[#0a0a0a]' : 'bg-[#0f0f0f]'
@@ -193,7 +253,8 @@ export default function OutrightsTable({ outrights }: Props) {
                   );
                 })}
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

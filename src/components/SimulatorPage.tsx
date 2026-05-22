@@ -73,6 +73,14 @@ interface RowWithDg {
 export default function SimulatorPage() {
   const [mode, setMode] = useState<Mode>('single');
 
+  // Simulator mode. Defaults to current-leaderboard if R1+ has finished
+  // (so the user sees realistic projections from where the field actually
+  // sits); otherwise pre-tournament. Always togglable.
+  const completedRounds = (Math.max(0, Math.min(3, currentEvent.picksRound - 1))) as 0 | 1 | 2 | 3;
+  const defaultMode: 'pre-tournament' | 'current-leaderboard' =
+    completedRounds >= 1 ? 'current-leaderboard' : 'pre-tournament';
+  const [simMode, setSimMode] = useState<'pre-tournament' | 'current-leaderboard'>(defaultMode);
+
   // Single-tournament state
   const [single, setSingle] = useState<SingleTournamentResult[] | null>(null);
   const [stage, setStage] = useState<RevealStage>('idle');
@@ -121,8 +129,8 @@ export default function SimulatorPage() {
 
     await new Promise((r) => setTimeout(r, 30));
 
-    const inputs = buildSimInputs(currentEvent.rankingsRound, currentEvent.skillEstimates);
-    const result = simulateOneTournament(inputs);
+    const inputs = buildSimInputs(currentEvent.rankingsRound, currentEvent.skillEstimates, completedRounds);
+    const result = simulateOneTournament(inputs, simMode, completedRounds);
 
     // Phase-by-phase reveal: R1 → R2 → cut → R3 → R4 → final
     setSingle(result);
@@ -156,8 +164,8 @@ export default function SimulatorPage() {
     setAggChunksDone(0);
     await new Promise((r) => setTimeout(r, 30));
 
-    const inputs = buildSimInputs(currentEvent.rankingsRound, currentEvent.skillEstimates);
-    const acc = createAccumulator(inputs);
+    const inputs = buildSimInputs(currentEvent.rankingsRound, currentEvent.skillEstimates, completedRounds);
+    const acc = createAccumulator(inputs, simMode, completedRounds);
 
     for (let i = 0; i < TOTAL_CHUNKS; i++) {
       if (cancelRef.current) {
@@ -300,6 +308,49 @@ export default function SimulatorPage() {
             Runs this session: {runCount}
           </div>
         )}
+
+        {/* Field-state toggle: pre-tournament vs current leaderboard.
+            Pre-tournament re-simulates all 4 rounds. Current leaderboard
+            locks each player at their actual score-to-par through the
+            completed rounds and only simulates what's left. */}
+        <div className="flex items-center gap-2 mt-4 pt-4 border-t border-[#262626] flex-wrap">
+          <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-medium font-['Inter',system-ui,sans-serif] mr-1">
+            Field state:
+          </span>
+          <div className="flex border border-[#22c55e]/50 rounded-full p-0.5">
+            <button
+              type="button"
+              onClick={() => setSimMode('current-leaderboard')}
+              className={`px-3.5 py-1 text-[11px] uppercase tracking-wider font-medium rounded-full font-['Inter',system-ui,sans-serif] cursor-pointer transition-colors ${
+                simMode === 'current-leaderboard'
+                  ? 'bg-[#22c55e] text-[#0a0a0a]'
+                  : 'text-[#d4d4d4] hover:text-white'
+              }`}
+              title="Lock each player's actual score-to-par through the completed rounds, simulate only what's left."
+            >
+              Current Leaderboard
+            </button>
+            <button
+              type="button"
+              onClick={() => setSimMode('pre-tournament')}
+              className={`px-3.5 py-1 text-[11px] uppercase tracking-wider font-medium rounded-full font-['Inter',system-ui,sans-serif] cursor-pointer transition-colors ${
+                simMode === 'pre-tournament'
+                  ? 'bg-[#22c55e] text-[#0a0a0a]'
+                  : 'text-[#d4d4d4] hover:text-white'
+              }`}
+              title="Re-simulate all 4 rounds from scratch. Ignores what's already happened."
+            >
+              Pre-Tournament
+            </button>
+          </div>
+          <span className="text-[10px] text-[#737373] font-['Inter',system-ui,sans-serif] ml-2">
+            {simMode === 'current-leaderboard'
+              ? completedRounds === 0
+                ? 'No rounds completed yet — same result as Pre-Tournament.'
+                : `Locking R1${completedRounds >= 2 ? '+R2' : ''}${completedRounds >= 3 ? '+R3' : ''} at actual scores · simulating ${4 - completedRounds} round${4 - completedRounds === 1 ? '' : 's'}.`
+              : 'All 4 rounds simulated fresh each run.'}
+          </span>
+        </div>
       </div>
 
       {/* ───────────── Mode 1: Single Tournament ───────────── */}

@@ -42,7 +42,28 @@ export interface SimulationInput {
   x_score: number;
   /** Combined adjusted skill — what we actually use to draw round scores. */
   adjusted_sg: number;
+  /**
+   * Cumulative actual score-to-par through whatever rounds have already
+   * completed in real life. 0 for pre-tournament mode. For current-
+   * leaderboard mode: the player's score_to_par from the live leaderboard.
+   */
+  starting_score: number;
+  /**
+   * Whether the player has been cut in real life. Null = cut hasn't
+   * happened yet (pre-R2 or R1-just-done states). True/false only after
+   * the real cut has been made.
+   */
+  real_made_cut: boolean | null;
 }
+
+/**
+ * Simulator mode.
+ *   pre-tournament    — re-simulates all 4 rounds, ignores starting_score.
+ *   current-leaderboard — locks each player's starting_score (their actual
+ *                         cumulative score through completed rounds) and
+ *                         simulates only the remaining rounds.
+ */
+export type SimMode = 'pre-tournament' | 'current-leaderboard';
 
 export interface SimulationResult {
   dg_id: number;
@@ -84,6 +105,12 @@ function randn(): number {
 export function buildSimInputs(
   players: PlayerData[],
   skillEstimates: PlayerSkillEstimate[],
+  /**
+   * How many rounds have already been completed in real life. Used to
+   * decide whether the cut has happened yet and therefore whether to
+   * trust each player's `position` field. Default 0 (pre-tournament).
+   */
+  completedRounds: 0 | 1 | 2 | 3 = 0,
 ): SimulationInput[] {
   const skillByName = new Map<string, number>();
   for (const s of skillEstimates) skillByName.set(s.player_name, s.dg_skill_estimate);
@@ -92,12 +119,23 @@ export function buildSimInputs(
   for (const p of players) {
     const dgSkill = skillByName.get(p.player_name);
     if (dgSkill == null) continue;
+    // Cut status:
+    //   • If real cut hasn't been made yet (completedRounds < 2), real_made_cut
+    //     stays null and the sim will apply its own cut after sim-round-2.
+    //   • Otherwise inspect position — "CUT" / "WD" / "MDF" mean out.
+    let realMadeCut: boolean | null = null;
+    if (completedRounds >= 2) {
+      const pos = (p.position ?? '').toUpperCase();
+      realMadeCut = !(pos === 'CUT' || pos === 'WD' || pos === 'MDF' || pos === '');
+    }
     inputs.push({
       dg_id: 0,
       player_name: p.player_name,
       dg_skill_estimate: dgSkill,
       x_score: p.x_score,
       adjusted_sg: p.x_score,
+      starting_score: p.score_to_par ?? 0,
+      real_made_cut: realMadeCut,
     });
   }
   return inputs;
@@ -126,34 +164,78 @@ export interface SingleTournamentResult {
  * Run a SINGLE simulated tournament. Each player gets 4 round scores
  * (R3/R4 only if they make the cut). Returns the full field sorted by
  * finish position. Different every call — that's the point.
+ *
+ * In `pre-tournament` mode all 4 rounds are freshly simulated and the cut
+ * is applied after sim-R2.
+ *
+ * In `current-leaderboard` mode each player's `starting_score` (their
+ * actual cumulative score-to-par) is locked. We simulate only the
+ * remaining 4 − completedRounds rounds and add them onto the starting
+ * score. If the real cut has already happened (completedRounds ≥ 2) we
+ * use `real_made_cut` to determine survivors; otherwise the cut is
+ * applied after the first simulated round (which is R2 in reality).
  */
-export function simulateOneTournament(inputs: SimulationInput[]): SingleTournamentResult[] {
+export function simulateOneTournament(
+  inputs: SimulationInput[],
+  mode: SimMode = 'pre-tournament',
+  completedRounds: 0 | 1 | 2 | 3 = 0,
+): SingleTournamentResult[] {
   const n = inputs.length;
   const r1Score = new Array<number>(n);
   const r2Score = new Array<number>(n);
   const r3Score = new Array<number | null>(n).fill(null);
   const r4Score = new Array<number | null>(n).fill(null);
   const totalAfterR2 = new Array<number>(n);
+  const madeCut = new Array<boolean>(n);
+  const total = new Array<number>(n);
 
+  // Decide whether real-life data fills in any rounds.
+  const lock = mode === 'current-leaderboard';
+
+  // ─── R1 ───
+  // Pre-tournament OR current-leaderboard with completedRounds == 0:
+  // simulate. Current-leaderboard with completedRounds ≥ 1: R1 is part
+  // of starting_score — we model it as 0 here to avoid double-counting.
   for (let i = 0; i < n; i++) {
-    r1Score[i] = -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
-    r2Score[i] = -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
-    totalAfterR2[i] = r1Score[i] + r2Score[i];
+    if (lock && completedRounds >= 1) r1Score[i] = 0;
+    else r1Score[i] = -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
   }
 
-  // Determine cut.
-  const r2Indices = Array.from({ length: n }, (_, i) => i).sort(
-    (a, b) => totalAfterR2[a] - totalAfterR2[b],
-  );
-  const cutoffTotal = totalAfterR2[r2Indices[Math.min(CUT_POSITION - 1, n - 1)]];
-  const madeCut = new Array<boolean>(n);
-  for (let i = 0; i < n; i++) madeCut[i] = totalAfterR2[i] <= cutoffTotal + 1e-9;
+  // ─── R2 ───
+  for (let i = 0; i < n; i++) {
+    if (lock && completedRounds >= 2) r2Score[i] = 0;
+    else r2Score[i] = -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
+  }
 
-  // R3, R4 for survivors.
-  const total = new Array<number>(n);
+  // After R2 (locked + simulated), compute 36-hole total per player. For
+  // current-leaderboard mode the locked starting_score covers whatever
+  // real-life rounds have completed, so we add it once. r1Score and
+  // r2Score are 0 for any locked round.
+  for (let i = 0; i < n; i++) {
+    const base = lock ? inputs[i].starting_score : 0;
+    totalAfterR2[i] = base + r1Score[i] + r2Score[i];
+  }
+
+  // ─── Cut ───
+  if (lock && completedRounds >= 2) {
+    // Real cut already happened; honor it.
+    for (let i = 0; i < n; i++) madeCut[i] = inputs[i].real_made_cut === true;
+  } else {
+    // Sim-driven cut after 36 holes (R1 + R2 cumulative).
+    const r2Indices = Array.from({ length: n }, (_, i) => i).sort(
+      (a, b) => totalAfterR2[a] - totalAfterR2[b],
+    );
+    const cutoffTotal = totalAfterR2[r2Indices[Math.min(CUT_POSITION - 1, n - 1)]];
+    for (let i = 0; i < n; i++) madeCut[i] = totalAfterR2[i] <= cutoffTotal + 1e-9;
+  }
+
+  // ─── R3 / R4 ───
   for (let i = 0; i < n; i++) {
     if (madeCut[i]) {
-      r3Score[i] = -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
+      // R3
+      if (lock && completedRounds >= 3) r3Score[i] = 0;
+      else r3Score[i] = -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
+      // R4 (no completed-round case — picksRound caps at 3 in this app)
       r4Score[i] = -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
       total[i] = totalAfterR2[i] + (r3Score[i] ?? 0) + (r4Score[i] ?? 0);
     } else {
@@ -187,6 +269,8 @@ export function simulateOneTournament(inputs: SimulationInput[]): SingleTourname
  */
 export interface SimAccumulator {
   inputs: SimulationInput[];
+  mode: SimMode;
+  completedRounds: 0 | 1 | 2 | 3;
   wins: number[];
   top5: number[];
   top10: number[];
@@ -196,10 +280,16 @@ export interface SimAccumulator {
   runsCompleted: number;
 }
 
-export function createAccumulator(inputs: SimulationInput[]): SimAccumulator {
+export function createAccumulator(
+  inputs: SimulationInput[],
+  mode: SimMode = 'pre-tournament',
+  completedRounds: 0 | 1 | 2 | 3 = 0,
+): SimAccumulator {
   const n = inputs.length;
   return {
     inputs,
+    mode,
+    completedRounds,
     wins: new Array<number>(n).fill(0),
     top5: new Array<number>(n).fill(0),
     top10: new Array<number>(n).fill(0),
@@ -212,11 +302,17 @@ export function createAccumulator(inputs: SimulationInput[]): SimAccumulator {
 
 /**
  * Add nRuns simulations to the accumulator. Mutates the accumulator. Safe
- * to call repeatedly to build up results incrementally.
+ * to call repeatedly to build up results incrementally. Respects the
+ * accumulator's mode + completedRounds for cut handling and locked rounds.
  */
 export function runSimChunk(acc: SimAccumulator, nRuns: number): void {
-  const { inputs } = acc;
+  const { inputs, mode, completedRounds } = acc;
   const n = inputs.length;
+  const lock = mode === 'current-leaderboard';
+  const cutAlreadyHappened = lock && completedRounds >= 2;
+  const r1Locked = lock && completedRounds >= 1;
+  const r2Locked = lock && completedRounds >= 2;
+  const r3Locked = lock && completedRounds >= 3;
 
   const r1 = new Float64Array(n);
   const r2 = new Float64Array(n);
@@ -226,25 +322,33 @@ export function runSimChunk(acc: SimAccumulator, nRuns: number): void {
 
   for (let sim = 0; sim < nRuns; sim++) {
     for (let i = 0; i < n; i++) {
-      r1[i] = -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
-      r2[i] = -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
-      totals[i] = r1[i] + r2[i];
+      r1[i] = r1Locked ? 0 : -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
+      r2[i] = r2Locked ? 0 : -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
+      // Locked rounds (whichever ones) are baked into starting_score.
+      totals[i] = (lock ? inputs[i].starting_score : 0) + r1[i] + r2[i];
       indices[i] = i;
     }
-    indices.sort((a, b) => totals[a] - totals[b]);
 
-    const cutoffTotal = totals[indices[Math.min(CUT_POSITION - 1, n - 1)]];
     const survivorMask = new Uint8Array(n);
-    for (let i = 0; i < n; i++) {
-      if (totals[i] <= cutoffTotal + 1e-9) survivorMask[i] = 1;
+    if (cutAlreadyHappened) {
+      // Use real cut status from inputs.
+      for (let i = 0; i < n; i++) {
+        if (inputs[i].real_made_cut === true) survivorMask[i] = 1;
+      }
+    } else {
+      indices.sort((a, b) => totals[a] - totals[b]);
+      const cutoffTotal = totals[indices[Math.min(CUT_POSITION - 1, n - 1)]];
+      for (let i = 0; i < n; i++) {
+        if (totals[i] <= cutoffTotal + 1e-9) survivorMask[i] = 1;
+      }
     }
 
     for (let i = 0; i < n; i++) {
       if (survivorMask[i]) {
-        r34[i] =
-          (-inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND) +
-          (-inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND);
-        totals[i] = r1[i] + r2[i] + r34[i];
+        const r3 = r3Locked ? 0 : -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
+        const r4 = -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
+        r34[i] = r3 + r4;
+        totals[i] = (lock ? inputs[i].starting_score : 0) + r1[i] + r2[i] + r34[i];
       } else {
         totals[i] = totals[i] + 999;
       }
@@ -299,8 +403,15 @@ export function finalizeResults(acc: SimAccumulator): SimulationResult[] {
 export function runSimulation(
   inputs: SimulationInput[],
   nRuns = 10000,
+  mode: SimMode = 'pre-tournament',
+  completedRounds: 0 | 1 | 2 | 3 = 0,
 ): SimulationResult[] {
   const n = inputs.length;
+  const lock = mode === 'current-leaderboard';
+  const cutAlreadyHappened = lock && completedRounds >= 2;
+  const r1Locked = lock && completedRounds >= 1;
+  const r2Locked = lock && completedRounds >= 2;
+  const r3Locked = lock && completedRounds >= 3;
 
   // Accumulators per player.
   const wins = new Array<number>(n).fill(0);
@@ -318,32 +429,36 @@ export function runSimulation(
   const indices = new Int32Array(n);
 
   for (let sim = 0; sim < nRuns; sim++) {
-    // R1 + R2 for everyone.
+    // R1 + R2 for everyone (locked rounds contribute 0; their score is
+    // embedded in starting_score).
     for (let i = 0; i < n; i++) {
-      r1[i] = -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
-      r2[i] = -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
-      totals[i] = r1[i] + r2[i];
+      r1[i] = r1Locked ? 0 : -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
+      r2[i] = r2Locked ? 0 : -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
+      totals[i] = (lock ? inputs[i].starting_score : 0) + r1[i] + r2[i];
       indices[i] = i;
     }
 
-    // Sort indices by 36-hole total ascending (lower = better).
-    indices.sort((a, b) => totals[a] - totals[b]);
-
-    // Identify cut survivors (top CUT_POSITION inclusive).
-    const cutoffTotal = totals[indices[Math.min(CUT_POSITION - 1, n - 1)]];
-    // Players within cutoff (incl. ties) make the cut.
+    // Cut determination.
     const survivorMask = new Uint8Array(n);
-    for (let i = 0; i < n; i++) {
-      if (totals[i] <= cutoffTotal + 1e-9) survivorMask[i] = 1;
+    if (cutAlreadyHappened) {
+      for (let i = 0; i < n; i++) {
+        if (inputs[i].real_made_cut === true) survivorMask[i] = 1;
+      }
+    } else {
+      indices.sort((a, b) => totals[a] - totals[b]);
+      const cutoffTotal = totals[indices[Math.min(CUT_POSITION - 1, n - 1)]];
+      for (let i = 0; i < n; i++) {
+        if (totals[i] <= cutoffTotal + 1e-9) survivorMask[i] = 1;
+      }
     }
 
     // R3 + R4 for survivors only.
     for (let i = 0; i < n; i++) {
       if (survivorMask[i]) {
-        r34[i] =
-          (-inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND) +
-          (-inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND);
-        totals[i] = r1[i] + r2[i] + r34[i];
+        const r3 = r3Locked ? 0 : -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
+        const r4 = -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
+        r34[i] = r3 + r4;
+        totals[i] = (lock ? inputs[i].starting_score : 0) + r1[i] + r2[i] + r34[i];
       } else {
         // Cut player — locked at their 36-hole total + a penalty so they
         // sort below all survivors when computing finish.

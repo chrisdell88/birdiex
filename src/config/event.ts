@@ -8,9 +8,9 @@
  * edits needed.
  */
 import type { PlayerData, MatchupOddsEntry, OutrightEntry, PlayerSkillEstimate } from '../types';
-import { roundOnlyData, cumulativeData, generatedAt } from '../data/cjCupPreData';
-import { r1MatchupOddsData } from '../data/cjCupR1Matchups';
-import { r1OutrightsData } from '../data/cjCupR1Outrights';
+import { roundOnlyData, cumulativeData, generatedAt } from '../data/cjCupR1Data';
+import { r2MatchupOddsData } from '../data/cjCupR2Matchups';
+import { r2OutrightsData } from '../data/cjCupR2Outrights';
 import { skillEstimatesData } from '../data/cjCupSkillEstimates';
 import { recommendedFloorForPredictability, floorTierLabel } from '../lib/sizing';
 
@@ -55,12 +55,12 @@ export const currentEvent: CurrentEvent = {
   predictability: CRAIG_RANCH_PREDICTABILITY,
   recommendedFloor: recommendedFloorForPredictability(CRAIG_RANCH_PREDICTABILITY),
   recommendedFloorLabel: floorTierLabel(recommendedFloorForPredictability(CRAIG_RANCH_PREDICTABILITY)),
-  picksRound: 1,
-  headerBanner: 'PRE-TOURNAMENT · ROUND 1 PICKS',
+  picksRound: 2,
+  headerBanner: 'R1 FINAL · ROUND 2 PICKS',
   dataUpdatedAt: generatedAt,
   rankingsRound: roundOnlyData,
   rankingsCumulative: cumulativeData,
-  matchups: r1MatchupOddsData,
-  outrights: r1OutrightsData,
+  matchups: r2MatchupOddsData,
+  outrights: r2OutrightsData,
   skillEstimates: skillEstimatesData,
 };

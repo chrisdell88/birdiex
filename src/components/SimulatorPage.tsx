@@ -118,6 +118,38 @@ export default function SimulatorPage() {
     return m;
   }, []);
 
+  // Skip flags: in current-leaderboard mode, completed rounds are locked
+  // (their scores come from real life). Their reveal stages aren't needed
+  // because the data is already known — we just display it.
+  const skipR1Stage = simMode === 'current-leaderboard' && completedRounds >= 1;
+  const skipR2Stage = simMode === 'current-leaderboard' && completedRounds >= 2;
+  const skipR3Stage = simMode === 'current-leaderboard' && completedRounds >= 3;
+  // The cut already happened in real life if R2 is locked.
+  const skipCutStage = skipR2Stage;
+
+  /**
+   * Drives the R1 → R2 → cut → R3 → R4 → final stage reveal. Skipped
+   * stages are jumped over (their data is already locked). Used by BOTH
+   * single-tournament and 10K-aggregate runs so they share the same UI.
+   */
+  const playStageReveal = async (): Promise<boolean> => {
+    const stages: { stage: RevealStage; ms: number; skip: boolean }[] = [
+      { stage: 'r1',  ms: SINGLE_REVEAL_R1_MS,  skip: skipR1Stage },
+      { stage: 'r2',  ms: SINGLE_REVEAL_R2_MS,  skip: skipR2Stage },
+      { stage: 'cut', ms: SINGLE_REVEAL_CUT_MS, skip: skipCutStage },
+      { stage: 'r3',  ms: SINGLE_REVEAL_R3_MS,  skip: skipR3Stage },
+      { stage: 'r4',  ms: SINGLE_REVEAL_R4_MS,  skip: false },
+    ];
+    for (const { stage, ms, skip } of stages) {
+      if (skip) continue;
+      setStage(stage);
+      await new Promise((r) => setTimeout(r, ms));
+      if (cancelRef.current) return false;
+    }
+    setStage('final');
+    return true;
+  };
+
   // ─────────────────────────────────────────────────────────────
   // Mode 1: Single Tournament
   // ─────────────────────────────────────────────────────────────
@@ -125,35 +157,22 @@ export default function SimulatorPage() {
     if (stage !== 'idle' && stage !== 'final') return;
     cancelRef.current = false;
     setSingle(null);
-    setStage('r1');
+    setStage('idle');
 
     await new Promise((r) => setTimeout(r, 30));
 
     const inputs = buildSimInputs(currentEvent.rankingsRound, currentEvent.skillEstimates, completedRounds);
     const result = simulateOneTournament(inputs, simMode, completedRounds);
-
-    // Phase-by-phase reveal: R1 → R2 → cut → R3 → R4 → final
     setSingle(result);
-    await new Promise((r) => setTimeout(r, SINGLE_REVEAL_R1_MS));
-    if (cancelRef.current) return;
-    setStage('r2');
-    await new Promise((r) => setTimeout(r, SINGLE_REVEAL_R2_MS));
-    if (cancelRef.current) return;
-    setStage('cut');
-    await new Promise((r) => setTimeout(r, SINGLE_REVEAL_CUT_MS));
-    if (cancelRef.current) return;
-    setStage('r3');
-    await new Promise((r) => setTimeout(r, SINGLE_REVEAL_R3_MS));
-    if (cancelRef.current) return;
-    setStage('r4');
-    await new Promise((r) => setTimeout(r, SINGLE_REVEAL_R4_MS));
-    if (cancelRef.current) return;
-    setStage('final');
-    setRunCount((c) => c + 1);
+
+    const ok = await playStageReveal();
+    if (ok) setRunCount((c) => c + 1);
   };
 
   // ─────────────────────────────────────────────────────────────
-  // Mode 2: 10K Aggregate
+  // Mode 2: 10K Aggregate — same round-by-round visual as Single
+  // Tournament. A sample tournament drives the reveal animation; the
+  // 10K aggregate runs in the background and surfaces below at the end.
   // ─────────────────────────────────────────────────────────────
   const runAggregate = async () => {
     if (aggRunning) return;
@@ -162,24 +181,40 @@ export default function SimulatorPage() {
     setAggResults(null);
     setAggLive(null);
     setAggChunksDone(0);
+    setSingle(null);
+    setStage('idle');
     await new Promise((r) => setTimeout(r, 30));
 
     const inputs = buildSimInputs(currentEvent.rankingsRound, currentEvent.skillEstimates, completedRounds);
-    const acc = createAccumulator(inputs, simMode, completedRounds);
 
-    for (let i = 0; i < TOTAL_CHUNKS; i++) {
-      if (cancelRef.current) {
-        setAggRunning(false);
-        return;
+    // One sample tournament drives the visual reveal.
+    const sample = simulateOneTournament(inputs, simMode, completedRounds);
+    setSingle(sample);
+
+    // Kick off the 10K Monte Carlo in parallel so the user sees both the
+    // stage reveal AND the probability convergence happen at the same time.
+    const acc = createAccumulator(inputs, simMode, completedRounds);
+    const chunkLoop = (async () => {
+      for (let i = 0; i < TOTAL_CHUNKS; i++) {
+        if (cancelRef.current) return;
+        const chunkStart = performance.now();
+        runSimChunk(acc, CHUNK_SIZE);
+        const partial = finalizeResults(acc);
+        setAggLive(partial);
+        setAggChunksDone(i + 1);
+        const elapsed = performance.now() - chunkStart;
+        const wait = Math.max(0, CHUNK_MIN_INTERVAL_MS - elapsed);
+        await new Promise((r) => setTimeout(r, wait));
       }
-      const chunkStart = performance.now();
-      runSimChunk(acc, CHUNK_SIZE);
-      const partial = finalizeResults(acc);
-      setAggLive(partial);
-      setAggChunksDone(i + 1);
-      const elapsed = performance.now() - chunkStart;
-      const wait = Math.max(0, CHUNK_MIN_INTERVAL_MS - elapsed);
-      await new Promise((r) => setTimeout(r, wait));
+    })();
+
+    const ok = await playStageReveal();
+    // Wait for the 10K to finish if the visual reveal beat it.
+    await chunkLoop;
+
+    if (!ok || cancelRef.current) {
+      setAggRunning(false);
+      return;
     }
 
     const final = finalizeResults(acc).map((r) => {
@@ -194,7 +229,6 @@ export default function SimulatorPage() {
       };
     });
 
-    await new Promise((r) => setTimeout(r, 200));
     setAggResults(final);
     setAggRunning(false);
     setRunCount((c) => c + 1);
@@ -366,6 +400,8 @@ export default function SimulatorPage() {
           chunksDone={aggChunksDone}
           liveTop10={aggLiveTop10}
           results={aggResults}
+          single={single}
+          stage={stage}
         />
       )}
     </div>
@@ -639,12 +675,16 @@ function AggregateView({
   chunksDone,
   liveTop10,
   results,
+  single,
+  stage,
 }: {
   running: boolean;
   progress: number;
   chunksDone: number;
   liveTop10: SimulationResult[];
   results: RowWithDg[] | null;
+  single: SingleTournamentResult[] | null;
+  stage: RevealStage;
 }) {
   if (!results && !running) {
     return (
@@ -654,109 +694,74 @@ function AggregateView({
         </div>
         <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] max-w-md mx-auto leading-relaxed">
           Click <span className="text-[#22c55e] font-semibold">Run 10K Sim</span> to generate
-          10,000 tournament outcomes using the current field. Win, Top-5, Top-10, Top-20, and
-          Cut probabilities will converge live below.
+          10,000 tournament outcomes using the current field. A sample tournament plays out
+          round-by-round on top; the 10K aggregate converges below.
         </p>
       </div>
     );
   }
 
-  if (running) {
-    return (
-      <div className="bg-[#0a0a0a] border border-[#262626] rounded-xl overflow-hidden">
-        <div className="px-5 pt-5 pb-3">
-          <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
-            <div>
-              <div className="text-[10px] uppercase tracking-widest text-[#22c55e] font-semibold font-['Inter',system-ui,sans-serif]">
-                Running Monte Carlo
-              </div>
-              <div className="text-sm text-[#f5f5f5] font-['JetBrains_Mono','SF_Mono',monospace] mt-1">
-                {(chunksDone * CHUNK_SIZE).toLocaleString()}
-                <span className="text-[#737373]"> / {TOTAL_SIMS.toLocaleString()}</span>
-                <span className="text-[10px] text-[#a1a1aa] ml-2 font-['Inter',system-ui,sans-serif] uppercase tracking-wider">
-                  simulations complete
-                </span>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-[10px] uppercase tracking-widest text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
-                Convergence
-              </div>
-              <div className="text-lg font-bold font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">
-                {(progress * 100).toFixed(0)}%
-              </div>
-            </div>
-          </div>
-          <div className="h-1 bg-[#1a1a1a] rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-[#22c55e]/70 via-[#22c55e] to-[#4ade80] rounded-full transition-[width] duration-150 ease-out"
-              style={{ width: `${progress * 100}%` }}
-            />
-          </div>
-        </div>
+  // Render the sample tournament's round-by-round reveal (identical UI to
+  // Single Tournament mode) PLUS a slim 10K progress indicator above it
+  // while the Monte Carlo is still computing. Once stage='final' AND the
+  // 10K has finished, the aggregate stats table renders below.
+  const sampleReveal = single && stage !== 'idle' ? (
+    <SingleTournamentView single={single} stage={stage} />
+  ) : null;
 
-        <div className="px-5 pb-5">
-          <div className="text-[10px] uppercase tracking-widest text-[#a1a1aa] font-medium font-['Inter',system-ui,sans-serif] mt-4 mb-3">
-            Live Leaderboard — Top 10 by Win Probability
-          </div>
-          <div className="space-y-1.5">
-            {liveTop10.length === 0 ? (
-              <div className="text-xs text-[#737373] py-6 text-center font-['Inter',system-ui,sans-serif]">
-                Drawing initial round scores…
-              </div>
-            ) : (
-              liveTop10.map((r, i) => {
-                const url = headshots[r.player_name];
-                const maxWin = liveTop10[0]?.win_prob || 1;
-                const barWidth = (r.win_prob / maxWin) * 100;
-                const winsSoFar = Math.round(r.win_prob * chunksDone * CHUNK_SIZE);
-                return (
-                  <div
-                    key={r.player_name}
-                    className="flex items-center gap-3 bg-[#0a0a0a] border border-[#1a1a1a] rounded-md px-3 py-1.5"
-                    style={{ transition: 'all 200ms ease' }}
-                  >
-                    <span className="text-[10px] text-[#737373] font-['JetBrains_Mono','SF_Mono',monospace] w-4 shrink-0">
-                      {i + 1}
-                    </span>
-                    <span className="w-7 h-7 rounded-full overflow-hidden border border-[#262626] bg-[#1a1a1a] shrink-0 inline-flex items-center justify-center">
-                      {url ? (
-                        <img src={url} alt={r.player_name} className="w-full h-full object-cover object-top" loading="lazy" />
-                      ) : (
-                        <span className="text-[9px] font-bold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
-                          {getInitials(r.player_name)}
-                        </span>
-                      )}
-                    </span>
-                    <span className="text-xs text-[#f5f5f5] font-['Inter',system-ui,sans-serif] w-44 shrink-0 truncate">
-                      {r.player_name}
-                    </span>
-                    <div className="flex-1 relative h-2 bg-[#1a1a1a] rounded-full overflow-hidden">
-                      <div
-                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-[#22c55e]/60 to-[#22c55e] rounded-full"
-                        style={{ width: `${barWidth}%`, transition: 'width 300ms cubic-bezier(0.22, 1, 0.36, 1)' }}
-                      />
-                    </div>
-                    <span className="text-xs font-bold font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e] w-14 text-right shrink-0 tabular-nums" style={{ transition: 'color 200ms ease' }}>
-                      {fmtPct(r.win_prob)}
-                    </span>
-                    <span className="text-[10px] font-['JetBrains_Mono','SF_Mono',monospace] text-[#737373] w-20 text-right shrink-0 tabular-nums hidden md:inline">
-                      {winsSoFar.toLocaleString()} wins
-                    </span>
-                  </div>
-                );
-              })
-            )}
-          </div>
-          <p className="text-[10px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] leading-relaxed mt-3">
-            Each row shows how many simulated tournaments that player has won
-            so far. Win % = wins ÷ sims complete. Bars are sized relative to
-            the current leader.
-          </p>
+  const progressStrip = running ? (
+    <div className="bg-[#0a0a0a] border border-[#262626] rounded-xl overflow-hidden mb-4">
+      <div className="px-5 py-3 flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] uppercase tracking-widest text-[#22c55e] font-semibold font-['Inter',system-ui,sans-serif]">
+            10K Monte Carlo running
+          </span>
+          <span className="text-xs text-[#f5f5f5] font-['JetBrains_Mono','SF_Mono',monospace]">
+            {(chunksDone * CHUNK_SIZE).toLocaleString()}
+            <span className="text-[#737373]"> / {TOTAL_SIMS.toLocaleString()}</span>
+          </span>
         </div>
-        <style>{`@media (prefers-reduced-motion: reduce) { [style*="transition"] { transition: none !important; } }`}</style>
+        <span className="text-sm font-bold font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">
+          {(progress * 100).toFixed(0)}%
+        </span>
       </div>
+      <div className="h-1 bg-[#1a1a1a]">
+        <div
+          className="h-full bg-gradient-to-r from-[#22c55e]/70 via-[#22c55e] to-[#4ade80] transition-[width] duration-150 ease-out"
+          style={{ width: `${progress * 100}%` }}
+        />
+      </div>
+      {liveTop10.length > 0 && (
+        <div className="px-5 py-3 border-t border-[#262626]">
+          <div className="text-[10px] uppercase tracking-widest text-[#a1a1aa] font-medium font-['Inter',system-ui,sans-serif] mb-2">
+            Live aggregate — Top 3 by win %
+          </div>
+          <div className="flex items-center gap-3 flex-wrap text-xs font-['Inter',system-ui,sans-serif]">
+            {liveTop10.slice(0, 3).map((r, i) => (
+              <span key={r.player_name} className="inline-flex items-center gap-1.5">
+                <span className="text-[10px] text-[#737373] font-['JetBrains_Mono','SF_Mono',monospace]">{i + 1}.</span>
+                <span className="text-[#f5f5f5]">{r.player_name}</span>
+                <span className="text-[#22c55e] font-bold font-['JetBrains_Mono','SF_Mono',monospace] tabular-nums">{fmtPct(r.win_prob)}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  ) : null;
+
+  if (running && sampleReveal) {
+    return (
+      <>
+        {progressStrip}
+        {sampleReveal}
+      </>
     );
+  }
+
+  if (running && !sampleReveal) {
+    // Edge case — sample not ready yet
+    return progressStrip;
   }
 
   // results !== null
@@ -766,6 +771,11 @@ function AggregateView({
   // unambiguous interpretation ("won 3300 of 10000, not every time").
   return (
     <>
+    {sampleReveal && (
+      <div className="mb-6">
+        {sampleReveal}
+      </div>
+    )}
     <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg overflow-hidden">
       <div className="px-4 py-3 border-b border-[#262626] flex items-center justify-between flex-wrap gap-2">
         <span className="text-sm font-semibold text-[#f5f5f5] uppercase tracking-wider font-['JetBrains_Mono','SF_Mono',monospace]">

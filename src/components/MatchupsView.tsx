@@ -12,16 +12,11 @@ import { isBuy, isFade } from '../lib/signalDisplay';
 import MatchupsGlossary from './MatchupsGlossary';
 import PurityIcon from './PurityIcon';
 
-// Original absolute-tier border coloring (restored). The tier comes from
-// Matchup.tier which is set during generation by absolute matchupScore
-// thresholds (1.95 / 1.45 / 0.95). All cards stay in the green family —
-// this is purely a visual conviction signal, NOT the venue-based Best Bet
-// concept (which is enforced via filtering, not via card color).
-const tierBorderColor: Record<Matchup['tier'], string> = {
-  'BEST BET': 'border-l-[#22c55e]',
-  'STRONG PLAY': 'border-l-emerald-500',
-  'LEAN': 'border-l-gray-600',
-};
+// All matchup cards get the same bright green left border. Conviction is
+// communicated by the matchup score number itself, not by border shading.
+// The Matchup.tier field is preserved on the data model (used by Odds and
+// Results pages) but no longer drives card color here.
+const CARD_BORDER = 'border-l-[#22c55e]';
 
 interface MatchupsViewProps {
   data: PlayerData[];
@@ -568,7 +563,7 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
           return (
             <div
               key={idx}
-              className={`bg-[#0a0a0a] border border-[#262626] border-l-4 ${tierBorderColor[m.tier]} rounded-lg p-4 hover:bg-[#111111] transition-colors`}
+              className={`bg-[#0a0a0a] border border-[#262626] border-l-4 ${CARD_BORDER} rounded-lg p-4 hover:bg-[#111111] transition-colors`}
             >
               {/* Header row */}
               <div className="flex items-center justify-between mb-3">

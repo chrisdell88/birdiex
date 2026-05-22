@@ -1,12 +1,16 @@
 /**
- * MatchupsGlossary — bottom-of-page reference. Intentionally minimal: only
- * defines terms that aren't obvious AND match how the system actually
- * works (venue-relative, not absolute tiers).
+ * MatchupsGlossary — bottom-of-page reference.
  *
- * Skipped on purpose: "Best Odds" (obvious), "All Matchups" (obvious),
- * absolute BEST BET / STRONG PLAY / LEAN tiers (don't match the venue
- * threshold methodology), purity (handled via the icon hover tooltip
- * inline; no need to surface here).
+ * Only contains terms Chris explicitly approved:
+ *   - Matchup Score
+ *   - Best Bet
+ *   - Best Bet Matchup Score Threshold
+ *   - ★ Stars
+ *
+ * Do NOT add new entries to this file without asking Chris first.
+ * Removed (do not re-add without explicit approval): All Matchups,
+ * Best Odds, Purity section, absolute BEST BET / STRONG PLAY / LEAN tier
+ * definitions, Lean.
  */
 
 interface Term {
@@ -20,12 +24,12 @@ const TERMS: Term[] = [
     def: 'X Score difference between the pick and opponent. Higher = more conviction.',
   },
   {
-    label: 'Best Bet Matchup Score Threshold',
-    def: 'Venue-specific cutoff above which a model pick counts as a tracked Best Bet. Lower at predictable courses, higher at unpredictable ones.',
+    label: 'Best Bet',
+    def: 'A matchup at or above the venue\'s Best Bet Matchup Score Threshold. These are the bets we officially track.',
   },
   {
-    label: 'Lean',
-    def: 'A matchup in the tier just below the venue threshold — close call, not tracked. Shown when no Best Bets are available so the page is never empty.',
+    label: 'Best Bet Matchup Score Threshold',
+    def: 'Venue-specific cutoff above which a model pick counts as a tracked Best Bet. Lower at predictable courses, higher at unpredictable ones.',
   },
   {
     label: '★ Stars',

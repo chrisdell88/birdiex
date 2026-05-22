@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import type { PlayerData, Matchup, BucketType, MatchupOddsEntry, DataSet } from '../types';
 import { currentEvent } from '../config/event';
 import SignalBadge from './SignalBadge';
@@ -12,26 +13,15 @@ import MatchupsGlossary from './MatchupsGlossary';
 import OutrightsTable from './OutrightsTable';
 import PurityIcon from './PurityIcon';
 
-/**
- * Venue-relative band classification. We DON'T use the absolute tier names
- * (BEST BET / STRONG PLAY / LEAN at 1.95 / 1.45 / 0.95) here because what
- * "Best Bet" means is venue-specific — at Augusta a 2.95-edge bet is the
- * floor, at a low-predictability course a 0.95-edge bet might be the floor.
- *
- *   best-bet → matchupScore ≥ recommendedFloor   (tracked)
- *   lean     → immediate snap-tier below floor   (close call, not tracked)
- *   below    → further below floor                (research only)
- */
-type Band = 'best-bet' | 'lean' | 'below';
-function classifyBand(matchupScore: number, floor: number): Band {
-  if (matchupScore >= floor) return 'best-bet';
-  if (matchupScore >= floor - 0.5) return 'lean';
-  return 'below';
-}
-const bandBorderColor: Record<Band, string> = {
-  'best-bet': 'border-l-[#22c55e]',
-  'lean': 'border-l-amber-500',
-  'below': 'border-l-gray-700',
+// Original absolute-tier border coloring (restored). The tier comes from
+// Matchup.tier which is set during generation by absolute matchupScore
+// thresholds (1.95 / 1.45 / 0.95). All cards stay in the green family —
+// this is purely a visual conviction signal, NOT the venue-based Best Bet
+// concept (which is enforced via filtering, not via card color).
+const tierBorderColor: Record<Matchup['tier'], string> = {
+  'BEST BET': 'border-l-[#22c55e]',
+  'STRONG PLAY': 'border-l-emerald-500',
+  'LEAN': 'border-l-gray-600',
 };
 
 interface MatchupsViewProps {
@@ -212,8 +202,7 @@ function SportsbookLink({ bookName }: { bookName: string }) {
 // --- Player Stat Popup ---
 
 function PlayerStatPopup({ player, onClose }: { player: PlayerData; onClose: () => void }) {
-  // Suppress signal + purity pre-R1 — they aren't meaningful before live
-  // SG data exists, and showing "STRONGEST BUY · NEUTRAL" is misleading.
+  // Suppress signal pre-R1 — it isn't meaningful before live SG data exists.
   const hideSignal = currentEvent.picksRound <= 1;
   const popupRef = useRef<HTMLDivElement>(null);
 
@@ -233,20 +222,21 @@ function PlayerStatPopup({ player, onClose }: { player: PlayerData; onClose: () 
   return (
     <div
       ref={popupRef}
-      className="absolute z-50 bg-[#111111] border border-[#262626] rounded-lg p-4 shadow-xl w-72 left-0 top-full mt-1"
+      // Responsive: w-72 preferred, but never exceed viewport - 2rem of
+      // margin so the popup never overflows on narrow screens. left-0 keeps
+      // it anchored to the player name on desktop; max-w cap handles mobile.
+      className="absolute z-50 bg-[#111111] border border-[#262626] rounded-lg p-4 shadow-xl w-72 max-w-[calc(100vw-2rem)] left-0 top-full mt-1"
     >
       <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
+        <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif] truncate pr-2">
           {player.player_name}
         </span>
-        <button onClick={onClose} className="text-[#a1a1aa] hover:text-white text-xs cursor-pointer">X</button>
+        <button onClick={onClose} className="text-[#a1a1aa] hover:text-white text-xs cursor-pointer shrink-0">X</button>
       </div>
       {!hideSignal && (
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-2 mb-3 flex-wrap">
           <SignalBadge signal={player.signal} conflicted={player.purity === 'CONFLICTED'} />
-          <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
-            {player.purity}
-          </span>
+          <PurityIcon player={player} />
         </div>
       )}
       <div className="mb-3">
@@ -316,8 +306,13 @@ function ClickablePlayerName({
 // --- Main Component ---
 
 function MatchupDefinitionsModal({ onClose }: { onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70" onClick={onClose}>
+  // Render to document.body via a portal so the modal escapes any parent
+  // stacking context, transform, overflow, or contain rule. This was the
+  // recurring "? button does nothing" bug — the modal was technically
+  // mounting but getting trapped by an ancestor's stacking context. Portal
+  // moves it to <body> so fixed positioning works against the viewport.
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70" onClick={onClose}>
       <div
         className="bg-[#0a0a0a] border border-[#262626] rounded-xl p-6 max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
@@ -343,8 +338,8 @@ function MatchupDefinitionsModal({ onClose }: { onClose: () => void }) {
             <p className="text-[#d4d4d4] mt-1">A matchup at or above the venue's Best Bet Matchup Score Threshold. These are the bets we officially track.</p>
           </div>
           <div className="border-b border-[#1a1a1a] pb-3">
-            <span className="text-[#22c55e] font-semibold">Lean</span>
-            <p className="text-[#d4d4d4] mt-1">A matchup in the tier just below the venue threshold — close call, not tracked. Shown as a fallback when no Best Bets are available.</p>
+            <span className="text-[#22c55e] font-semibold">Best Bet Matchup Score Threshold</span>
+            <p className="text-[#d4d4d4] mt-1">Venue-specific cutoff above which a model pick counts as a tracked Best Bet. Lower at predictable courses, higher at unpredictable ones.</p>
           </div>
           <div>
             <span className="text-[#22c55e] font-semibold">Star Ratings</span>
@@ -359,7 +354,8 @@ function MatchupDefinitionsModal({ onClose }: { onClose: () => void }) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -515,7 +511,12 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
             </p>
           </div>
           <button
-            onClick={() => setShowDefinitions(true)}
+            type="button"
+            aria-label="Open matchup definitions"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowDefinitions(true);
+            }}
             className="w-5 h-5 rounded-full border border-[#22c55e]/50 text-[#22c55e] text-[10px] font-bold flex items-center justify-center cursor-pointer hover:bg-[#22c55e]/10 transition-colors shrink-0"
           >
             ?
@@ -565,11 +566,10 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
       {/* Card renderer — used for both Best Bets and the Leans fallback. */}
       {(() => {
         const renderCard = (m: Matchup, idx: number) => {
-          const band = classifyBand(m.matchupScore, floor);
           return (
             <div
               key={idx}
-              className={`bg-[#0a0a0a] border border-[#262626] border-l-4 ${bandBorderColor[band]} rounded-lg p-4 hover:bg-[#111111] transition-colors`}
+              className={`bg-[#0a0a0a] border border-[#262626] border-l-4 ${tierBorderColor[m.tier]} rounded-lg p-4 hover:bg-[#111111] transition-colors`}
             >
               {/* Header row */}
               <div className="flex items-center justify-between mb-3">
@@ -719,17 +719,17 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
                       {floor.toFixed(2)}
                     </span>
                     ) for Round {currentEvent.picksRound}. Showing{' '}
-                    <span className="text-amber-400 font-semibold">Leans</span>{' '}
+                    <span className="text-[#22c55e] font-semibold">Leans</span>{' '}
                     instead — the tier just below the threshold.
                   </p>
                 </div>
 
                 <div>
                   <div className="flex items-center gap-2 mb-4">
-                    <h3 className="text-sm font-semibold text-amber-400 uppercase tracking-wider font-['JetBrains_Mono','SF_Mono',monospace]">
+                    <h3 className="text-sm font-semibold text-[#f5f5f5] uppercase tracking-wider font-['JetBrains_Mono','SF_Mono',monospace]">
                       Leans
                     </h3>
-                    <span className="text-[10px] font-bold font-['JetBrains_Mono','SF_Mono',monospace] bg-amber-500/15 text-amber-400 rounded-full px-2 py-0.5">
+                    <span className="text-[10px] font-bold font-['JetBrains_Mono','SF_Mono',monospace] bg-[#22c55e]/15 text-[#22c55e] rounded-full px-2 py-0.5">
                       {displayLeans.length}
                     </span>
                     <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">

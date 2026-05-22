@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { DataSet } from '../types';
+import { currentEvent } from '../config/event';
 
 interface DataSetToggleProps {
   dataSet: DataSet;
@@ -7,19 +8,32 @@ interface DataSetToggleProps {
 }
 
 /**
- * Prominent on-page Round-Only vs Cumulative toggle with a help "?" that
- * expands a short explanation. Lives at the top of the data pages
- * (Rankings, Matchups, Odds) so users can see + change which dataset
- * drives the view.
+ * Round / Cumulative toggle.
+ *
+ * Pills always show the LATEST completed round number on the left
+ * (e.g., "Round 2") and "Cumulative" on the right. Cumulative is
+ * DISABLED until at least 2 rounds have been played — pre-R2 there's
+ * only one dataset (R1), so the cumulative view would be identical.
+ *
+ * We never use the wording "Round Only" — pills always carry the actual
+ * round number for clarity.
  */
 export default function DataSetToggle({ dataSet, onChange }: DataSetToggleProps) {
   const [showTip, setShowTip] = useState(false);
 
-  const pillBtn = (active: boolean) =>
-    `px-4 py-1.5 text-xs uppercase tracking-wider font-medium rounded-full transition-colors cursor-pointer font-['Inter',system-ui,sans-serif] ${
-      active
-        ? 'bg-[#22c55e] text-[#0a0a0a]'
-        : 'text-[#f5f5f5] hover:text-white'
+  // The "latest completed round" = picksRound - 1.
+  // picksRound = 2 means R1 is complete and we're picking R2 → "Round 1" pill.
+  const completedRound = Math.max(1, currentEvent.picksRound - 1);
+  // Cumulative only makes sense once 2+ rounds have been played.
+  const cumulativeEnabled = completedRound >= 2;
+
+  const pillBtn = (active: boolean, disabled: boolean) =>
+    `px-4 py-1.5 text-xs uppercase tracking-wider font-medium rounded-full transition-colors font-['Inter',system-ui,sans-serif] ${
+      disabled
+        ? 'text-[#525252] cursor-not-allowed opacity-50'
+        : active
+          ? 'bg-[#22c55e] text-[#0a0a0a] cursor-pointer'
+          : 'text-[#f5f5f5] hover:text-white cursor-pointer'
     }`;
 
   return (
@@ -31,21 +45,29 @@ export default function DataSetToggle({ dataSet, onChange }: DataSetToggleProps)
         <div className="flex border border-[#22c55e]/50 rounded-full p-0.5">
           <button
             type="button"
-            onClick={() => onChange('cumulative')}
-            className={pillBtn(dataSet === 'cumulative')}
-            aria-pressed={dataSet === 'cumulative'}
+            onClick={() => onChange('round')}
+            className={pillBtn(dataSet === 'round', false)}
+            aria-pressed={dataSet === 'round'}
           >
-            Cumulative
+            Round {completedRound}
           </button>
           <button
             type="button"
-            onClick={() => onChange('round')}
-            className={pillBtn(dataSet === 'round')}
-            aria-pressed={dataSet === 'round'}
+            onClick={cumulativeEnabled ? () => onChange('cumulative') : undefined}
+            disabled={!cumulativeEnabled}
+            className={pillBtn(dataSet === 'cumulative', !cumulativeEnabled)}
+            aria-pressed={dataSet === 'cumulative'}
+            aria-disabled={!cumulativeEnabled}
+            title={cumulativeEnabled ? undefined : 'Cumulative becomes available after Round 2 completes'}
           >
-            Round-Only
+            Cumulative
           </button>
         </div>
+        {!cumulativeEnabled && (
+          <span className="text-[10px] text-[#737373] font-['Inter',system-ui,sans-serif]">
+            Cumulative unlocks after Round 2 completes
+          </span>
+        )}
         <button
           type="button"
           onClick={() => setShowTip((s) => !s)}
@@ -54,16 +76,14 @@ export default function DataSetToggle({ dataSet, onChange }: DataSetToggleProps)
         >
           ?
         </button>
-        <span className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] ml-auto">
-          {dataSet === 'cumulative'
-            ? 'Picks blend every round played so far.'
-            : 'Picks use only the latest completed round.'}
-        </span>
       </div>
       {showTip && (
         <p className="text-xs text-[#d4d4d4] font-['Inter',system-ui,sans-serif] mt-3 pt-3 border-t border-[#262626] leading-relaxed">
-          <span className="text-[#22c55e] font-medium">Cumulative</span> blends every round played so far — historically the stronger long-run signal (cumulative model went +63u / +37% ROI at the Masters vs round-only at +21u / +12%).{' '}
-          <span className="text-[#22c55e] font-medium">Round-Only</span> uses just the latest completed round — shows who's hot or cold right now. Same model; only the input window changes.
+          <span className="text-[#22c55e] font-medium">Round {completedRound}</span> uses only the
+          latest completed round&rsquo;s strokes-gained data to drive picks.{' '}
+          <span className="text-[#22c55e] font-medium">Cumulative</span> blends every round played
+          so far &mdash; historically the stronger long-run signal. Same model; only the input
+          window changes.
         </p>
       )}
     </div>

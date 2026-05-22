@@ -7,7 +7,7 @@ import PlayerDetailCard from './PlayerDetailCard';
 import PlayerSearch from './PlayerSearch';
 import Avatar from './Avatar';
 import DataSetToggle from './DataSetToggle';
-import RecommendedFloorBadge from './RecommendedFloorBadge';
+import RankingsGlossary from './RankingsGlossary';
 import CourseFitScatter from './CourseFitScatter';
 import PastChampions from './PastChampions';
 import { currentEvent } from '../config/event';
@@ -59,66 +59,19 @@ function parsePosition(pos: string): number {
   return isNaN(n) ? 999 : n;
 }
 
-function StatsKeyModal({ onClose }: { onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70" onClick={onClose}>
-      <div
-        className="bg-[#0a0a0a] border border-[#262626] rounded-xl p-6 max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
-            Stats Key
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-[#d4d4d4] hover:text-white text-xl cursor-pointer"
-          >
-            x
-          </button>
-        </div>
-        <div className="space-y-3 text-sm font-['Inter',system-ui,sans-serif]">
-          <div className="border-b border-[#1a1a1a] pb-3">
-            <span className="text-[#22c55e] font-semibold">X Score</span>
-            <p className="text-[#d4d4d4] mt-1">BirdieX proprietary rating combining 4 layers of analysis</p>
-          </div>
-          <div className="border-b border-[#1a1a1a] pb-3">
-            <span className="text-[#22c55e] font-semibold">SG Score (Layer 1)</span>
-            <p className="text-[#d4d4d4] mt-1">Course-weighted putting regression</p>
-          </div>
-          <div className="border-b border-[#1a1a1a] pb-3">
-            <span className="text-[#22c55e] font-semibold">History (Layer 2)</span>
-            <p className="text-[#d4d4d4] mt-1">DataGolf course history adjustment</p>
-          </div>
-          <div className="border-b border-[#1a1a1a] pb-3">
-            <span className="text-[#22c55e] font-semibold">Fit (Layer 3)</span>
-            <p className="text-[#d4d4d4] mt-1">Course fit + skill category adjustment</p>
-          </div>
-          <div className="border-b border-[#1a1a1a] pb-3">
-            <span className="text-[#22c55e] font-semibold">Major (Layer 4)</span>
-            <p className="text-[#d4d4d4] mt-1">Major championship performance adjustment</p>
-          </div>
-          <div className="border-b border-[#1a1a1a] pb-3">
-            <span className="text-[#22c55e] font-semibold">SG_PUTT / SG_APP / SG_OTT</span>
-            <p className="text-[#d4d4d4] mt-1">Raw strokes gained stats from the round (Putting, Approach, Off the Tee)</p>
-          </div>
-          <div className="border-b border-[#1a1a1a] pb-3">
-            <span className="text-[#22c55e] font-semibold">Signal</span>
-            <p className="text-[#d4d4d4] mt-1">Buy/Fade recommendation based on X Score thresholds</p>
-          </div>
-          <div>
-            <span className="text-[#22c55e] font-semibold">Purity</span>
-            <p className="text-[#d4d4d4] mt-1">Whether OTT and APP stats support the signal (+/-0.45 threshold)</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+// StatsKeyModal removed — replaced by RankingsGlossary at the bottom of
+// the page (no modal, no "?" button, always visible by scrolling).
 
 export default function RankingsTable({ data, dataSet, onDataSetChange }: RankingsTableProps) {
-  const [sortField, setSortField] = useState<SortField>('rank');
-  const [sortDir, setSortDir] = useState<SortDirection>('asc');
+  // Default sort: leaderboard position pre/post round (the most user-intuitive
+  // ordering). Pre-tournament there's no leaderboard yet, so we fall back to
+  // X Score as the default sort. Users can re-sort by any column.
+  const isPreTournament = currentEvent.picksRound <= 1;
+  const [sortField, setSortField] = useState<SortField>(isPreTournament ? 'x_score' : 'position');
+  const [sortDir, setSortDir] = useState<SortDirection>(
+    // ascending for position (lower is better); descending for X Score
+    isPreTournament ? 'desc' : 'asc',
+  );
   const [search, setSearch] = useState('');
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [signalFilter, setSignalFilter] = useState<string>('ALL');
@@ -139,7 +92,6 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
       pendingScrollRef.current = null;
     }
   }, [expandedPlayer]);
-  const [showStatsKey, setShowStatsKey] = useState(false);
 
   const playerNames = useMemo(
     () => [...data].map((p) => p.player_name).sort((a, b) => a.localeCompare(b)),
@@ -264,58 +216,46 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
   }, [data, search, selectedPlayer, signalFilter, sortField, sortDir, outrightsByName]);
 
   // Pre-tournament has no live SG / score / position data yet — hide those
-  // columns until R1 grades. Signal is also hidden pre-R1 (X Score + To Win
-  // already convey direction). Major column only renders on majors.
-  const isPreTournament = currentEvent.picksRound <= 1;
+  // columns until R1 grades. Signal is also hidden pre-R1.
 
-  const liveOnlyColumns: { field: SortField; label: string }[] = isPreTournament
+  // Live-only side columns (SG splits). Live POS + SCORE are surfaced as
+  // the very FIRST columns instead, replacing the old "#" rank column.
+  const sgSplitColumns: { field: SortField; label: string }[] = isPreTournament
     ? []
     : [
-        { field: 'position', label: 'POS' },
-        { field: 'score_to_par', label: 'SCORE' },
         { field: 'sg_putt', label: 'SG_PUTT' },
         { field: 'sg_app', label: 'SG_APP' },
         { field: 'sg_ott', label: 'SG_OTT' },
       ];
 
   const columns: { field: SortField; label: string }[] = [
-    { field: 'rank', label: '#' },
+    // POS + SCORE first post-R1; nothing meaningful pre-R1.
+    ...(isPreTournament
+      ? []
+      : [
+          { field: 'position' as SortField, label: 'POS' },
+          { field: 'score_to_par' as SortField, label: 'SCORE' },
+        ]),
     { field: 'player_name', label: 'Player' },
     { field: 'x_score', label: 'X Score' },
-    // Signal column suppressed pre-R1 — at that stage X Score + To Win
-    // already convey direction, and the BUY/FADE labels are calibrated to
-    // post-R1 spreads.
     ...(isPreTournament ? [] : [{ field: 'signal' as SortField, label: 'Signal' }]),
     { field: 'outright_odds', label: 'To Win' },
-    ...liveOnlyColumns,
+    ...sgSplitColumns,
     { field: 'sg_score_l1', label: isPreTournament ? 'DG Skill' : 'SG Score' },
     { field: 'course_history_l2', label: 'History' },
     { field: 'fit_plus_category_l3', label: 'Fit' },
-    // Major column only on actual majors.
     ...(currentEvent.isMajor ? [{ field: 'major_adj_l4' as SortField, label: 'Major' }] : []),
   ];
 
-  return (
-    <div>
-      {/* Pre-R1: nothing to toggle (only one data set exists). Suppress
-          the toggle entirely until R1 grades. */}
-      {!isPreTournament && (
-        <DataSetToggle dataSet={dataSet} onChange={onDataSetChange} />
-      )}
-
-      {/* Past champions at this venue — small horizontal strip up top. */}
+  // Reference blocks (Champions strip + Course Fit Scatter) sit at the TOP
+  // pre-R1 (when the live table is mostly empty) and move to the BOTTOM
+  // post-R1 (once the rankings table has real data and becomes the headline).
+  const referenceBlocks = (
+    <>
       <PastChampions />
-
-      {/* Marquee chart: heads-as-dots course fit scatter.
-          Clicking a head scrolls to that player's row in the table and
-          expands the detail card. */}
       <div className="mb-6">
         <CourseFitScatter
           onPlayerClick={(p) => {
-            // Mark this name as the pending scroll target — useEffect
-            // (above) handles the actual scroll once React commits the
-            // expanded row to the DOM. Reliable on slow devices + with
-            // React 18 concurrent rendering.
             pendingScrollRef.current = p.player_name;
             setSelectedPlayer(p.player_name);
             setExpandedPlayer(p.player_name);
@@ -323,55 +263,76 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
           }}
         />
       </div>
+    </>
+  );
 
-      <SummaryCards data={data} activeFilter={signalFilter} onFilterChange={handleCardFilter} />
-
-      {showStatsKey && <StatsKeyModal onClose={() => setShowStatsKey(false)} />}
-
-      {/* Last updated + filters */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[11px] text-[#d4d4d4] uppercase tracking-wider font-['Inter',system-ui,sans-serif]">
-            Last Updated: {formatUpdated(currentEvent.dataUpdatedAt)} —{' '}
-            {currentEvent.picksRound > 1
-              ? `RD${currentEvent.picksRound - 1} Results Below`
-              : 'Pre-Tournament Rankings Below'}
-          </span>
-          <button
-            onClick={() => setShowStatsKey(true)}
-            className="w-5 h-5 rounded-full border border-[#22c55e]/50 text-[#22c55e] text-[10px] font-bold flex items-center justify-center cursor-pointer hover:bg-[#22c55e]/10 transition-colors"
-          >
-            ?
-          </button>
-          <RecommendedFloorBadge
-            threshold={currentEvent.recommendedFloor}
-            course={currentEvent.course}
-          />
-        </div>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <PlayerSearch
-            players={playerNames}
-            selected={selectedPlayer}
-            onSelect={(name) => {
-              setSelectedPlayer(name);
-              setSearch('');
-            }}
-            onClear={() => {
-              setSelectedPlayer(null);
-              setSearch('');
-            }}
-          />
-          <select
-            value={signalFilter}
-            onChange={(e) => setSignalFilter(e.target.value)}
-            className="bg-[#0a0a0a] border border-[#22c55e]/50 rounded-lg px-3 py-2 text-sm text-[#f5f5f5] focus:outline-none focus:border-[#22c55e] font-['Inter',system-ui,sans-serif] cursor-pointer"
-          >
-            <option value="ALL">All Signals</option>
-            <option value="BUYS">Buys</option>
-            <option value="SELLS">Sells</option>
-          </select>
-        </div>
+  // Filters bar — last-updated + player search + signal select.
+  // Threshold badge + "?" button removed (badge belongs on the Matchups
+  // page; "?" replaced by the always-visible bottom glossary).
+  const filtersBar = (
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-[11px] text-[#d4d4d4] uppercase tracking-wider font-['Inter',system-ui,sans-serif]">
+          Last Updated: {formatUpdated(currentEvent.dataUpdatedAt)} —{' '}
+          {currentEvent.picksRound > 1
+            ? `RD${currentEvent.picksRound - 1} Results Below`
+            : 'Pre-Tournament Rankings Below'}
+        </span>
       </div>
+      <div className="flex gap-2 w-full sm:w-auto">
+        <PlayerSearch
+          players={playerNames}
+          selected={selectedPlayer}
+          onSelect={(name) => {
+            setSelectedPlayer(name);
+            setSearch('');
+          }}
+          onClear={() => {
+            setSelectedPlayer(null);
+            setSearch('');
+          }}
+        />
+        <select
+          value={signalFilter}
+          onChange={(e) => setSignalFilter(e.target.value)}
+          className="bg-[#0a0a0a] border border-[#22c55e]/50 rounded-lg px-3 py-2 text-sm text-[#f5f5f5] focus:outline-none focus:border-[#22c55e] font-['Inter',system-ui,sans-serif] cursor-pointer"
+        >
+          <option value="ALL">All Signals</option>
+          <option value="BUYS">Buys</option>
+          <option value="SELLS">Sells</option>
+        </select>
+      </div>
+    </div>
+  );
+
+  return (
+    <div>
+      {/* Pre-R1: no data toggle yet (no rounds played). Post-R1 the toggle
+          appears with the latest-round pill enabled + Cumulative disabled
+          until 2+ rounds exist. */}
+      {!isPreTournament && (
+        <DataSetToggle dataSet={dataSet} onChange={onDataSetChange} />
+      )}
+
+      {/* PRE-R1: reference blocks (champions, chart) at top, then summary
+          cards, then filters, then table. The table is mostly empty pre-R1
+          so we lead with the visual + historical references.
+
+          POST-R1: filters + cards + table FIRST (the rankings table is the
+          headline content once we have real data). Reference blocks move
+          to the bottom. */}
+      {isPreTournament ? (
+        <>
+          {referenceBlocks}
+          <SummaryCards data={data} activeFilter={signalFilter} onFilterChange={handleCardFilter} />
+          {filtersBar}
+        </>
+      ) : (
+        <>
+          {filtersBar}
+          <SummaryCards data={data} activeFilter={signalFilter} onFilterChange={handleCardFilter} />
+        </>
+      )}
 
       {/* Table */}
       <div className="overflow-x-auto rounded-lg border border-[#262626]">
@@ -409,9 +370,22 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
                   }
                   className="cursor-pointer transition-colors border-t border-[#1a1a1a] hover:bg-[#111111] bg-[#0a0a0a]"
                 >
-                  <td className="px-3 py-2.5 text-[#d4d4d4] font-['JetBrains_Mono','SF_Mono',monospace] text-xs">
-                    {player.rank}
-                  </td>
+                  {/* POS + SCORE first post-R1 (replaces the old "#" column);
+                      both are absent pre-R1. */}
+                  {!isPreTournament && (
+                    <>
+                      <td className="px-3 py-2.5 text-[#d4d4d4] font-['JetBrains_Mono','SF_Mono',monospace] text-xs">
+                        {player.position}
+                      </td>
+                      <td className="px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs">
+                        <span className={
+                          player.score_to_par < 0 ? 'text-[#22c55e]' : player.score_to_par > 0 ? 'text-red-400' : 'text-[#d4d4d4]'
+                        }>
+                          {formatScore(player.score_to_par)}
+                        </span>
+                      </td>
+                    </>
+                  )}
                   <td className="px-3 py-2.5 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       <Avatar playerName={player.player_name} size="sm" />
@@ -452,16 +426,6 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
                   </td>
                   {!isPreTournament && (
                     <>
-                      <td className="px-3 py-2.5 text-[#d4d4d4] font-['JetBrains_Mono','SF_Mono',monospace] text-xs">
-                        {player.position}
-                      </td>
-                      <td className="px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs">
-                        <span className={
-                          player.score_to_par < 0 ? 'text-[#22c55e]' : player.score_to_par > 0 ? 'text-red-400' : 'text-[#d4d4d4]'
-                        }>
-                          {formatScore(player.score_to_par)}
-                        </span>
-                      </td>
                       <td className={`px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs ${
                         player.sg_putt >= 0 ? 'text-[#22c55e]' : 'text-red-400'
                       }`}>
@@ -506,6 +470,15 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
       <div className="mt-3 text-xs text-[#d4d4d4] text-center font-['Inter',system-ui,sans-serif]">
         Showing {filtered.length} of {data.length} players -- Click any row to expand details
       </div>
+
+      {/* Post-R1: reference blocks demoted to the bottom now that the
+          rankings table has taken the top slot. */}
+      {!isPreTournament && (
+        <div className="mt-8">{referenceBlocks}</div>
+      )}
+
+      {/* Full glossary — always at the bottom, above the footer. */}
+      <RankingsGlossary />
     </div>
   );
 }

@@ -9,6 +9,11 @@
  */
 import type { PlayerData, MatchupOddsEntry, OutrightEntry, PlayerSkillEstimate } from '../types';
 import { roundOnlyData, cumulativeData, generatedAt } from '../data/cjCupR1Data';
+// Pre-tournament rankings — used as a FROZEN snapshot for the Course Fit
+// Scatter chart. The chart is meant to be a pre-tournament reference, not
+// updated round-by-round. Stays pointed at the pre-tournament file even
+// once the main rankings advance.
+import { roundOnlyData as preTournamentRoundOnly } from '../data/cjCupPreData';
 import { r2MatchupOddsData } from '../data/cjCupR2Matchups';
 import { r2OutrightsData } from '../data/cjCupR2Outrights';
 import { skillEstimatesData } from '../data/cjCupSkillEstimates';
@@ -38,6 +43,9 @@ export interface CurrentEvent {
   rankingsRound: PlayerData[];
   /** Cumulative rankings data (all rounds played). */
   rankingsCumulative: PlayerData[];
+  /** Frozen pre-tournament rankings — used by the Course Fit Scatter so
+   *  that chart doesn't change round-to-round. */
+  preTournamentRankings: PlayerData[];
   /** H2H matchup odds for the upcoming round. */
   matchups: MatchupOddsEntry[];
   /** Outright winner odds across real sportsbooks. */
@@ -60,6 +68,7 @@ export const currentEvent: CurrentEvent = {
   dataUpdatedAt: generatedAt,
   rankingsRound: roundOnlyData,
   rankingsCumulative: cumulativeData,
+  preTournamentRankings: preTournamentRoundOnly,
   matchups: r2MatchupOddsData,
   outrights: r2OutrightsData,
   skillEstimates: skillEstimatesData,

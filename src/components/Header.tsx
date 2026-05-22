@@ -46,11 +46,25 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Tournament badge — hidden on mobile (no room; the round context
-                is shown on every page's own content). */}
+            {/* Tournament badge — course · event · last-updated. Hidden on
+                mobile (no room; the round context is shown on every page's
+                own content). */}
             <div className="hidden sm:block border border-[#22c55e]/50 rounded-full px-3 md:px-4 py-1.5 bg-[#0a0a0a]">
               <span className="text-[10px] md:text-xs text-[#f5f5f5] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif]">
-                {currentEvent.name} <span className="text-[#f5f5f5]/50">|</span> {currentEvent.headerBanner}
+                {currentEvent.course}{' '}
+                <span className="text-[#f5f5f5]/50">·</span>{' '}
+                {currentEvent.name}{' '}
+                <span className="text-[#f5f5f5]/50">·</span>{' '}
+                <span className="text-[#a1a1aa]">
+                  Updated{' '}
+                  {new Date(currentEvent.dataUpdatedAt).toLocaleString('en-US', {
+                    timeZone: 'America/New_York',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true,
+                    timeZoneName: 'short',
+                  })}
+                </span>
               </span>
             </div>
           </div>

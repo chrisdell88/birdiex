@@ -73,7 +73,7 @@ export default function CourseFitScatter({ topN = 20, onPlayerClick }: Props) {
   const { points, ranges } = useMemo(() => {
     // Top-N by X Score (descending). Filter to positive X Score so we
     // surface model favorites only.
-    const sorted = [...currentEvent.rankingsRound]
+    const sorted = [...currentEvent.preTournamentRankings]
       .filter((p) => p.x_score != null)
       .sort((a, b) => b.x_score - a.x_score)
       .slice(0, topN);
@@ -164,17 +164,17 @@ export default function CourseFitScatter({ topN = 20, onPlayerClick }: Props) {
       <div className="flex items-end justify-between mb-4 flex-wrap gap-3">
         <div>
           <h3 className="text-base font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
-            Model Favorites &mdash; {currentEvent.course}
+            Pre-Tournament Model Favorites &mdash; {currentEvent.course}
           </h3>
           <p className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mt-0.5">
-            Top {points.length} players. Course history on the x-axis, course fit
-            on the y-axis. Players in the upper-right corner are the model&rsquo;s
-            strongest picks at {currentEvent.course}. Diagonal line shows the
-            history + fit trend.
+            Top {points.length} pre-tournament picks. Course history on the
+            x-axis, course fit on the y-axis. Upper-right corner = strongest
+            BirdieX picks heading into the week. <span className="text-[#22c55e]">This chart is a
+            pre-tournament snapshot &mdash; it does not update round-to-round.</span>
           </p>
         </div>
         <span className="text-[10px] uppercase tracking-wider text-[#22c55e] font-medium font-['Inter',system-ui,sans-serif] bg-[#22c55e]/10 border border-[#22c55e]/30 rounded-full px-2.5 py-0.5">
-          Live Field
+          Pre-Tournament
         </span>
       </div>
 

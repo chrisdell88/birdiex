@@ -18,17 +18,6 @@ export default function PlayerDetailCard({ player, colSpan = 14 }: PlayerDetailC
     { label: 'PUTT', value: player.sg_putt },
   ];
 
-  // Layer 1 label changes pre- vs post-R1 to reflect what's feeding it.
-  // Major (L4) only renders on actual majors.
-  const isPreTournament = currentEvent.picksRound <= 1;
-  const layers = [
-    { label: isPreTournament ? 'DG Skill (L1)' : 'SG Score (L1)', value: player.sg_score_l1 },
-    { label: 'History (L2)', value: player.course_history_l2 },
-    { label: 'Fit (L3)', value: player.fit_plus_category_l3 },
-    ...(currentEvent.isMajor
-      ? [{ label: 'Major (L4)', value: player.major_adj_l4 }]
-      : []),
-  ];
 
   const xScoreColor =
     player.x_score > 0 ? 'text-[#22c55e]' : player.x_score < 0 ? 'text-red-400' : 'text-[#f5f5f5]';
@@ -98,17 +87,10 @@ export default function PlayerDetailCard({ player, colSpan = 14 }: PlayerDetailC
               </div>
             </div>
 
-            {/* Model Layers */}
-            <div className="flex-1">
-              <h4 className="text-[#d4d4d4] text-xs uppercase tracking-wider mb-2 font-['Inter',system-ui,sans-serif]">
-                X Score Layers
-              </h4>
-              <div className="space-y-0.5">
-                {layers.map((l) => (
-                  <StatBar key={l.label} label={l.label} value={l.value} min={-3} max={3} />
-                ))}
-              </div>
-            </div>
+            {/* Model layers section removed — too internal-model. Users
+                see the X Score number on the player card header; the
+                layer breakdown is now covered by the Methodology page +
+                bottom-of-page glossary. */}
           </div>
         </div>
       </td>

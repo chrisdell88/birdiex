@@ -10,7 +10,6 @@ import RecommendedFloorBadge from './RecommendedFloorBadge';
 import { starsForEdge } from '../lib/sizing';
 import { isBuy, isFade } from '../lib/signalDisplay';
 import MatchupsGlossary from './MatchupsGlossary';
-import OutrightsTable from './OutrightsTable';
 import PurityIcon from './PurityIcon';
 
 // Original absolute-tier border coloring (restored). The tier comes from
@@ -754,23 +753,6 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
           </>
         );
       })()}
-
-      {/* Outright winner odds — mirrored from the Odds page so matchup users
-          can see tournament context without changing tabs. Reference only;
-          we don't track outrights as bets. */}
-      {currentEvent.outrights && currentEvent.outrights.length > 0 && (
-        <div className="mt-10">
-          <div className="mb-4">
-            <h2 className="text-xl font-bold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
-              Outright Winner Odds
-            </h2>
-            <p className="text-sm text-[#d4d4d4] mt-1 font-['Inter',system-ui,sans-serif]">
-              Reference only — the model targets H2H matchups, not outrights.
-            </p>
-          </div>
-          <OutrightsTable outrights={currentEvent.outrights} />
-        </div>
-      )}
 
       {/* Glossary — always at the bottom, mirrors the Rankings page. */}
       <MatchupsGlossary />

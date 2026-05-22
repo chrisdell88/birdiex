@@ -79,13 +79,13 @@ export default function MatchupHeatmap() {
           </h3>
           <p className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mt-0.5">
             One cell per live H2H matchup, sorted by edge. Darker green = higher edge.
-            Cells with the green ring clear the matchup score threshold (≥{' '}
-            {currentEvent.recommendedFloor.toFixed(2)}).
+            Cells with the green ring clear the Best Bet Matchup Score Threshold
+            (≥ {currentEvent.recommendedFloor.toFixed(2)}).
           </p>
         </div>
         <div className="text-right">
           <div className="text-[10px] uppercase tracking-wider text-[#22c55e] font-['Inter',system-ui,sans-serif]">
-            Tracked / Total
+            Best Bets / Total
           </div>
           <div className="text-lg font-bold font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">
             {trackedCount} / {rows.length}
@@ -197,8 +197,9 @@ export default function MatchupHeatmap() {
 
       <p className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] leading-relaxed mt-3">
         Hover any cell for the pick / opponent / edge. Top row labeled with the star
-        count. The ringed cells are the tracked recommendations &mdash; everything else is
-        a below-threshold model pick scored internally for backtesting.
+        count. The ringed cells are Best Bets &mdash; matchups at or above the venue&rsquo;s
+        Best Bet Matchup Score Threshold. Everything else is a below-threshold
+        model pick scored internally for backtesting.
       </p>
     </div>
   );

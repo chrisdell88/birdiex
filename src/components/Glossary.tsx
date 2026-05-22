@@ -32,22 +32,22 @@ const terms: Term[] = [
       'The stars on a bet tell you the unit size we sized the bet to win. ★ = 0.5–1u, ★★ = 1.5–2u, ★★★ = 2.5–3u, ★★★★ = 3.5–4u, ★★★★★ = 4.5–5u. The star count is driven by the bet’s edge (bigger edge → bigger size), but it is NOT a "quality tier" or a recommendation cutoff. Two bets with the same star count are the same SIZE, not the same threshold of recommendation.',
   },
   {
-    term: 'Matchup Score Threshold',
+    term: 'Best Bet Matchup Score Threshold',
     short: 'A numeric edge cutoff. No stars involved.',
     detail:
-      'The threshold is the minimum X-Score Edge we require before treating a matchup as a tracked/recommended bet. It is a number (e.g. 2.45 at Aronimink, 2.95 at TPC Craig Ranch, 0.95 at Augusta). It is venue-specific: a less-predictable course gets a higher threshold. Picks below the threshold are still scored internally for backtesting, but are not surfaced as recommendations. Star ratings are unrelated to this — a ★★ bet may or may not clear a given threshold, depending on the venue.',
+      'The threshold is the minimum X-Score Edge we require before treating a matchup as a Best Bet (the recommendations we officially track). It is a number (e.g. 2.45 at Aronimink, 2.95 at TPC Craig Ranch, 0.95 at Augusta). It is venue-specific: a less-predictable course gets a higher threshold. Picks below the threshold are still scored internally for backtesting, but are not Best Bets. Star ratings are unrelated to this — a ★★ bet may or may not clear a given threshold, depending on the venue.',
   },
   {
     term: 'Course Predictability',
     short: 'How much past performance at a course predicts future results.',
     detail:
-      'Computed as the mean |total course history adjustment| across a tournament’s field. Augusta National is the highest on Tour at 0.144 — historical performance there is strongly indicative. Most other venues are far lower (e.g. Aronimink at 0.041, TPC Craig Ranch at 0.037). Lower predictability raises the matchup score threshold.',
+      'Computed as the mean |total course history adjustment| across a tournament’s field. Augusta National is the highest on Tour at 0.144 — historical performance there is strongly indicative. Most other venues are far lower (e.g. Aronimink at 0.041, TPC Craig Ranch at 0.037). Lower predictability raises the Best Bet Matchup Score Threshold.',
   },
   {
-    term: 'Tracked Bet vs. Scored Bet',
-    short: 'Tracked = part of the public record. Scored = internal-only.',
+    term: 'Best Bet vs. Scored Bet',
+    short: 'Best Bet = part of the public record. Scored = internal-only.',
     detail:
-      'Every matchup with edge ≥ 0.95 is scored internally for backtesting. A bet only counts as TRACKED (and appears in the public record + recommendation set) if it also clears the venue’s matchup score threshold. This lets us refine the threshold formula without losing data.',
+      'Every matchup with edge ≥ 0.95 is scored internally for backtesting. A bet only counts as a BEST BET (and appears in the public record + recommendation set) if it also clears the venue’s Best Bet Matchup Score Threshold. This lets us refine the threshold formula without losing data.',
   },
 ];
 
@@ -69,8 +69,8 @@ export default function Glossary() {
       <p className="text-xs text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed mb-5">
         <span className="text-[#22c55e] font-semibold">Stars are a bet&rsquo;s unit size</span>{' '}
         &mdash; how many units we sized the bet to win. The{' '}
-        <span className="text-[#22c55e] font-semibold">matchup score threshold</span> is a
-        numeric edge cutoff &mdash; whether we recommend the bet at all. They&rsquo;re separate
+        <span className="text-[#22c55e] font-semibold">Best Bet Matchup Score Threshold</span> is
+        a numeric edge cutoff &mdash; whether we recommend the bet at all. They&rsquo;re separate
         concepts. A &#9733;&#9733; bet at one venue is the same SIZE as a &#9733;&#9733; bet at
         another, but only some venues recommend it depending on the threshold.
       </p>

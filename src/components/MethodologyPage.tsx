@@ -25,8 +25,8 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
             {allTimeStats.roi > 0 ? '+' : ''}{allTimeStats.roi.toFixed(1)}% ROI
           </div>
           <div className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mt-1">
-            Bets that cleared each venue&rsquo;s matchup score threshold &mdash;
-            see Results for per-tournament breakdown.
+            Best Bets &mdash; bets that cleared each venue&rsquo;s Best Bet
+            Matchup Score Threshold. See Results for per-tournament breakdown.
           </div>
           {onNavigateToResults && (
             <button
@@ -164,7 +164,7 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
               venues like Aronimink (<span className="text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace] font-medium">0.041</span>)
               or TPC Craig Ranch (<span className="text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace] font-medium">0.037</span>)
               carry far less course-specific signal &mdash; the X Score there leans more on overall
-              skill, and our matchup score threshold rises accordingly.
+              skill, and our Best Bet Matchup Score Threshold rises accordingly.
             </p>
           </div>
 
@@ -247,13 +247,13 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
 
         <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-5 mt-5 space-y-4">
           <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
-            Not every model pick becomes a recommended bet. Each venue gets its own{' '}
-            <span className="text-[#22c55e] font-semibold">matchup score threshold</span>{' '}
+            Not every model pick becomes a Best Bet. Each venue gets its own{' '}
+            <span className="text-[#22c55e] font-semibold">Best Bet Matchup Score Threshold</span>{' '}
             &mdash; a numeric edge cutoff derived from how predictable that course is. On the
             most predictable courses (e.g., Augusta National at 0.144) we trust the model down to
             the 0.95 hard floor. On less predictable courses (Aronimink at 0.041, TPC Craig Ranch
             at 0.037) we raise the threshold significantly &mdash; only the strongest edges
-            warrant a recommendation.
+            qualify as Best Bets.
           </p>
           <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
             The threshold formula is backtest-derived: we sweep the entire edge floor across
@@ -272,20 +272,21 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
         <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-5 space-y-4">
           <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
             Every model pick with edge &ge; 0.95 is scored internally and stored in our raw bet
-            log, even if it falls below the venue&rsquo;s tracked-bet threshold. This gives us a
-            clean dataset to backtest sizing rules, threshold formulas, and signal definitions
-            against future tournament results without the bias of after-the-fact filtering.
+            log, even if it falls below the venue&rsquo;s Best Bet Matchup Score Threshold. This
+            gives us a clean dataset to backtest sizing rules, threshold formulas, and signal
+            definitions against future tournament results without the bias of after-the-fact
+            filtering.
           </p>
           <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
-            The matchup score threshold itself was derived from this approach. After the Masters
-            (high predictability, +26.2% ROI at the 0.95 floor) and PGA Championship (low
+            The Best Bet Matchup Score Threshold itself was derived from this approach. After the
+            Masters (high predictability, +26.2% ROI at the 0.95 floor) and PGA Championship (low
             predictability, &minus;8.5% at 0.95), we ran a sweep of every edge floor from 0.95 to
             5.00 to find where each venue actually broke even. The relationship between
             predictability and required floor gave us the linear formula behind the chart above.
           </p>
           <div className="border-l-2 border-[#22c55e]/40 pl-4 mt-2">
             <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed italic">
-              The public record reflects only tracked bets &mdash; the picks we&rsquo;d have
+              The public record reflects only Best Bets &mdash; the picks we&rsquo;d have
               actually recommended at each venue. The raw log preserves everything for ongoing
               backtest work. As the model evolves, only the threshold formula changes &mdash;
               never the historical bet data.

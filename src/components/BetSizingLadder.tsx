@@ -100,10 +100,10 @@ export default function BetSizingLadder() {
           <span className="text-[#22c55e] font-semibold">Read this table as:</span> the edge
           determines the unit size precisely (every 0.50 of edge bumps the size 0.5u), and the
           star rating is a 1:1 visual of the unit size &mdash; half-stars included. So 2.5
-          stars = 2.5 units, no rounding ambiguity. The matchup-score threshold the model uses
-          to decide what&rsquo;s a tracked recommendation is{' '}
+          stars = 2.5 units, no rounding ambiguity. The Best Bet Matchup Score Threshold the
+          model uses to decide what counts as a Best Bet is{' '}
           <span className="text-[#f5f5f5] font-medium">a separate concept</span> &mdash; a
-          venue may require edge &ge; 2.45 before tracking a bet.
+          venue may require edge &ge; 2.45 before a matchup qualifies as a Best Bet.
         </p>
       </div>
     </div>

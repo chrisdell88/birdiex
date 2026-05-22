@@ -53,7 +53,7 @@ export default function PredictabilityBarChart() {
           </h3>
           <p className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mt-0.5">
             How much past performance at the venue predicts future results.
-            The lower the bar, the higher our matchup score threshold rises.
+            The lower the bar, the higher our Best Bet Matchup Score Threshold rises.
           </p>
         </div>
         <span className="text-[10px] uppercase tracking-wider text-[#22c55e] font-medium font-['Inter',system-ui,sans-serif] bg-[#22c55e]/10 border border-[#22c55e]/30 rounded-full px-2.5 py-0.5">
@@ -218,16 +218,17 @@ export default function PredictabilityBarChart() {
           0.144
         </span>
         ) is the highest on the PGA Tour &mdash; past results there are uniquely indicative of
-        future ones, so we recommend every model pick at the 0.95 hard floor. At less-predictable
-        venues, course history is much weaker signal; the model still produces picks, but we raise
-        the matchup score threshold so only high-edge bets become tracked recommendations.
+        future ones, so every model pick clears the 0.95 hard floor and counts as a Best Bet. At
+        less-predictable venues, course history is much weaker signal; the model still produces
+        picks, but we raise the Best Bet Matchup Score Threshold so only high-edge bets
+        qualify as Best Bets.
       </p>
       <p className="text-[10px] text-[#737373] font-['Inter',system-ui,sans-serif] leading-relaxed mt-2">
         Predictability computed from DataGolf player decompositions (mean absolute
         course-history adjustment over the field). DataGolf publishes the same ranking
         across the full PGA schedule on their Course History tool; this chart shows the
-        slice of venues we&rsquo;ve tracked, with the matchup score threshold we apply at
-        each one.
+        slice of venues we&rsquo;ve tracked, with the Best Bet Matchup Score Threshold we
+        apply at each one.
       </p>
     </div>
   );

@@ -34,8 +34,8 @@ export default function RecommendedFloorBadge({
 }: Props) {
   const thresholdLabel = threshold.toFixed(2);
   const titleText = course
-    ? `${course}: only matchups with X-Score edge ≥ ${thresholdLabel} are tracked as recommendations. Stars on each bet show its unit size (a separate concept) — see the Glossary on the Methodology page.`
-    : `Only matchups with X-Score edge ≥ ${thresholdLabel} are tracked.`;
+    ? `${course}: matchups with X-Score edge ≥ ${thresholdLabel} are Best Bets — the recommendations we officially track. Stars on each bet show its unit size (a separate concept) — see the Glossary on the Methodology page.`
+    : `Matchups with X-Score edge ≥ ${thresholdLabel} are Best Bets.`;
 
   if (variant === 'compact') {
     return (
@@ -79,10 +79,10 @@ export default function RecommendedFloorBadge({
         )}
       </div>
       <p className="text-[11px] text-[#999] font-['Inter',system-ui,sans-serif] leading-relaxed mt-1.5">
-        Only matchups at this threshold or above are tracked as recommendations.
-        Lower picks are scored internally for backtesting. The stars on each bet
-        show its unit size (separate concept) &mdash; see the Glossary on the
-        Methodology page.
+        Matchups at or above this threshold are Best Bets &mdash; the
+        recommendations we officially track. Lower picks are scored internally
+        for backtesting. The stars on each bet show its unit size (separate
+        concept) &mdash; see the Glossary on the Methodology page.
       </p>
     </div>
   );

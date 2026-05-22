@@ -992,11 +992,11 @@ function CJCupView() {
         </p>
         <p className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif] leading-relaxed mt-4 max-w-md mx-auto">
           At TPC Craig Ranch&rsquo;s low predictability ({cjCupFloor.predictability.toFixed(3)}),
-          the tracked matchup-score threshold is{' '}
+          the Best Bet Matchup Score Threshold is{' '}
           <span className="text-[#22c55e] font-semibold font-['JetBrains_Mono','SF_Mono',monospace]">
             ≥ {cjCupFloor.floor.toFixed(2)}
           </span>
-          . Tracked bets and graded results will appear here as the weekend
+          . Best Bets and graded results will appear here as the weekend
           unfolds.
         </p>
         <p className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mt-5">

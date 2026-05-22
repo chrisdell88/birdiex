@@ -53,9 +53,22 @@ const SIGNAL_TERMS: Term[] = [
   { label: 'STRONGEST FADE', def: 'X Score ≤ -2.00. Highest-conviction "expect to regress" pick.' },
 ];
 
-const PURITY_TERMS: Term[] = [
-  { label: 'PURE', def: 'The player\'s ball-striking stats (OTT + APP) confirm the signal direction.' },
-  { label: 'CONFLICTED', def: 'Ball-striking stats contradict the signal. Proceed with caution.' },
+// What the visual icons next to each signal mean. Users see the ICONS,
+// not the words "PURE" or "CONFLICTED" anywhere on the page, so describe
+// the icons themselves.
+const ICON_TERMS: Term[] = [
+  {
+    label: '⚠️ Yellow warning',
+    def: 'Ball-striking (OTT + APP) contradicts the signal direction. Proceed with caution. Hover the icon for specifics.',
+  },
+  {
+    label: '✓ Green check',
+    def: 'Ball-striking confirms a buy signal.',
+  },
+  {
+    label: '✓ Red check',
+    def: 'Ball-striking confirms a fade signal.',
+  },
 ];
 
 function Section({ title, terms }: { title: string; terms: Term[] }) {
@@ -91,7 +104,7 @@ export default function RankingsGlossary() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
         <Section title="Column Metrics" terms={COLUMN_TERMS} />
         <Section title="Signal Levels" terms={SIGNAL_TERMS} />
-        <Section title="Signal Purity" terms={PURITY_TERMS} />
+        <Section title="Signal Icons" terms={ICON_TERMS} />
       </div>
     </div>
   );

@@ -247,12 +247,12 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
     ...(currentEvent.isMajor ? [{ field: 'major_adj_l4' as SortField, label: 'Major' }] : []),
   ];
 
-  // Reference blocks (Champions strip + Course Fit Scatter) sit at the TOP
+  // Reference blocks (Course Fit Scatter + Champions strip) sit at the TOP
   // pre-R1 (when the live table is mostly empty) and move to the BOTTOM
   // post-R1 (once the rankings table has real data and becomes the headline).
+  // Chart comes first, then Champions below it.
   const referenceBlocks = (
     <>
-      <PastChampions />
       <div className="mb-6">
         <CourseFitScatter
           onPlayerClick={(p) => {
@@ -263,6 +263,7 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
           }}
         />
       </div>
+      <PastChampions />
     </>
   );
 

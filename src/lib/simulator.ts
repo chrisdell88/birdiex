@@ -247,19 +247,49 @@ export function simulateOneTournament(
     (a, b) => total[a] - total[b],
   );
 
-  const results: SingleTournamentResult[] = finishOrder.map((i, rank) => ({
-    player_name: inputs[i].player_name,
-    dg_skill_estimate: inputs[i].dg_skill_estimate,
-    x_score: inputs[i].x_score,
-    adjusted_sg: inputs[i].adjusted_sg,
-    r1_score: +r1Score[i].toFixed(1),
-    r2_score: +r2Score[i].toFixed(1),
-    r3_score: r3Score[i] == null ? null : +(r3Score[i] as number).toFixed(1),
-    r4_score: r4Score[i] == null ? null : +(r4Score[i] as number).toFixed(1),
-    total: madeCut[i] ? +total[i].toFixed(1) : +totalAfterR2[i].toFixed(1),
-    made_cut: madeCut[i],
-    finish: rank + 1,
-  }));
+  const results: SingleTournamentResult[] = finishOrder.map((i, rank) => {
+    // Per-round display values. In current-leaderboard mode the real
+    // completed rounds aren't sampled, but the cumulative starting_score
+    // IS the player's actual progress through those rounds. We can only
+    // recover the per-round split for completedRounds === 1 (starting_score
+    // == R1 score). For completedRounds >= 2 we don't have the per-round
+    // split, so we surface the cumulative under R1 and 0 under the other
+    // locked slots until we wire per-round score data into the data files.
+    let r1Display: number;
+    let r2Display: number;
+    let r3Display: number | null;
+    if (lock && completedRounds === 1) {
+      r1Display = +inputs[i].starting_score.toFixed(1);
+      r2Display = +r2Score[i].toFixed(1);
+      r3Display = r3Score[i] == null ? null : +(r3Score[i] as number).toFixed(1);
+    } else if (lock && completedRounds === 2) {
+      r1Display = +inputs[i].starting_score.toFixed(1); // cumulative through R2
+      r2Display = 0;
+      r3Display = r3Score[i] == null ? null : +(r3Score[i] as number).toFixed(1);
+    } else if (lock && completedRounds === 3) {
+      r1Display = +inputs[i].starting_score.toFixed(1); // cumulative through R3
+      r2Display = 0;
+      r3Display = 0;
+    } else {
+      r1Display = +r1Score[i].toFixed(1);
+      r2Display = +r2Score[i].toFixed(1);
+      r3Display = r3Score[i] == null ? null : +(r3Score[i] as number).toFixed(1);
+    }
+
+    return {
+      player_name: inputs[i].player_name,
+      dg_skill_estimate: inputs[i].dg_skill_estimate,
+      x_score: inputs[i].x_score,
+      adjusted_sg: inputs[i].adjusted_sg,
+      r1_score: r1Display,
+      r2_score: r2Display,
+      r3_score: r3Display,
+      r4_score: r4Score[i] == null ? null : +(r4Score[i] as number).toFixed(1),
+      total: madeCut[i] ? +total[i].toFixed(1) : +totalAfterR2[i].toFixed(1),
+      made_cut: madeCut[i],
+      finish: rank + 1,
+    };
+  });
   return results;
 }
 

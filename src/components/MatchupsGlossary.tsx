@@ -5,12 +5,12 @@
  *   - Matchup Score
  *   - Best Bet
  *   - Best Bet Matchup Score Threshold
- *   - ★ Stars
  *
  * Do NOT add new entries to this file without asking Chris first.
  * Removed (do not re-add without explicit approval): All Matchups,
  * Best Odds, Purity section, absolute BEST BET / STRONG PLAY / LEAN tier
- * definitions, Lean.
+ * definitions, Lean, Stars (could be misread as recommended bets when
+ * the venue threshold is the actual recommendation cutoff).
  */
 
 interface Term {
@@ -30,10 +30,6 @@ const TERMS: Term[] = [
   {
     label: 'Best Bet Matchup Score Threshold',
     def: 'Venue-specific cutoff above which a model pick counts as a tracked Best Bet. Lower at predictable courses, higher at unpredictable ones.',
-  },
-  {
-    label: '★ Stars',
-    def: 'Encode the unit size of an individual bet. More edge = more stars = bigger play. ★ 0.95–1.95 | ★★ 1.95–2.95 | ★★★ 2.95–3.95 | ★★★★ 3.95–4.95 | ★★★★★ 4.95+',
   },
 ];
 

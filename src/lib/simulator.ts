@@ -54,6 +54,20 @@ export interface SimulationInput {
    * the real cut has been made.
    */
   real_made_cut: boolean | null;
+  /**
+   * The pre-R1 equivalent of x_score: dg_skill_estimate (as L1 baseline)
+   * + L2 + L3 + L4 = dg_skill_estimate + (x_score - sg_score_l1).
+   *
+   * Used as the per-round SG projection for REMAINING rounds in current-
+   * leaderboard mode. This regresses a leader's outlier-good R1 toward
+   * their DG-published skill baseline rather than projecting that lucky
+   * R1 forward for 3 more rounds. The R1 lead itself stays locked in
+   * starting_score — we just don't compound the L1 bump.
+   *
+   * For pre-tournament mode this is unused (we use adjusted_sg = x_score,
+   * which IS the pre-R1 baseline since L1 = dg_skill pre-R1).
+   */
+  pre_r1_x_score: number;
 }
 
 /**
@@ -85,6 +99,19 @@ function randn(): number {
   while (u === 0) u = Math.random();
   while (v === 0) v = Math.random();
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+/**
+ * Which per-round SG projection to use for sampling a round score.
+ *   pre-tournament mode     → x_score (= pre-R1 x_score pre-tournament)
+ *   current-leaderboard pre-R1 → x_score
+ *   current-leaderboard post-R1 → pre_r1_x_score (regress R1 measured-SG bump)
+ */
+function perRoundSg(input: SimulationInput, mode: SimMode, completedRounds: number): number {
+  if (mode === 'current-leaderboard' && completedRounds >= 1) {
+    return input.pre_r1_x_score;
+  }
+  return input.adjusted_sg;
 }
 
 /**
@@ -128,6 +155,9 @@ export function buildSimInputs(
       const pos = (p.position ?? '').toUpperCase();
       realMadeCut = !(pos === 'CUT' || pos === 'WD' || pos === 'MDF' || pos === '');
     }
+    // pre-R1 x_score = dg_skill (as L1) + L2 + L3 + L4.
+    //                = dg_skill + (x_score - sg_score_l1).
+    const preR1X = dgSkill + (p.x_score - (p.sg_score_l1 ?? 0));
     inputs.push({
       dg_id: 0,
       player_name: p.player_name,
@@ -136,6 +166,7 @@ export function buildSimInputs(
       adjusted_sg: p.x_score,
       starting_score: p.score_to_par ?? 0,
       real_made_cut: realMadeCut,
+      pre_r1_x_score: preR1X,
     });
   }
   return inputs;
@@ -198,13 +229,13 @@ export function simulateOneTournament(
   // of starting_score — we model it as 0 here to avoid double-counting.
   for (let i = 0; i < n; i++) {
     if (lock && completedRounds >= 1) r1Score[i] = 0;
-    else r1Score[i] = -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
+    else r1Score[i] = -perRoundSg(inputs[i], mode, completedRounds) + randn() * SIGMA_PER_ROUND;
   }
 
   // ─── R2 ───
   for (let i = 0; i < n; i++) {
     if (lock && completedRounds >= 2) r2Score[i] = 0;
-    else r2Score[i] = -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
+    else r2Score[i] = -perRoundSg(inputs[i], mode, completedRounds) + randn() * SIGMA_PER_ROUND;
   }
 
   // After R2 (locked + simulated), compute 36-hole total per player. For
@@ -232,11 +263,12 @@ export function simulateOneTournament(
   // ─── R3 / R4 ───
   for (let i = 0; i < n; i++) {
     if (madeCut[i]) {
+      const sg = perRoundSg(inputs[i], mode, completedRounds);
       // R3
       if (lock && completedRounds >= 3) r3Score[i] = 0;
-      else r3Score[i] = -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
+      else r3Score[i] = -sg + randn() * SIGMA_PER_ROUND;
       // R4 (no completed-round case — picksRound caps at 3 in this app)
-      r4Score[i] = -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
+      r4Score[i] = -sg + randn() * SIGMA_PER_ROUND;
       total[i] = totalAfterR2[i] + (r3Score[i] ?? 0) + (r4Score[i] ?? 0);
     } else {
       total[i] = totalAfterR2[i] + 999;
@@ -350,10 +382,17 @@ export function runSimChunk(acc: SimAccumulator, nRuns: number): void {
   const totals = new Float64Array(n);
   const indices = new Int32Array(n);
 
+  // Pre-cache the per-round SG projection per player (avoids a function
+  // call inside the hot loop).
+  const sgPerRound = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    sgPerRound[i] = perRoundSg(inputs[i], mode, completedRounds);
+  }
+
   for (let sim = 0; sim < nRuns; sim++) {
     for (let i = 0; i < n; i++) {
-      r1[i] = r1Locked ? 0 : -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
-      r2[i] = r2Locked ? 0 : -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
+      r1[i] = r1Locked ? 0 : -sgPerRound[i] + randn() * SIGMA_PER_ROUND;
+      r2[i] = r2Locked ? 0 : -sgPerRound[i] + randn() * SIGMA_PER_ROUND;
       // Locked rounds (whichever ones) are baked into starting_score.
       totals[i] = (lock ? inputs[i].starting_score : 0) + r1[i] + r2[i];
       indices[i] = i;
@@ -375,8 +414,8 @@ export function runSimChunk(acc: SimAccumulator, nRuns: number): void {
 
     for (let i = 0; i < n; i++) {
       if (survivorMask[i]) {
-        const r3 = r3Locked ? 0 : -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
-        const r4 = -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
+        const r3 = r3Locked ? 0 : -sgPerRound[i] + randn() * SIGMA_PER_ROUND;
+        const r4 = -sgPerRound[i] + randn() * SIGMA_PER_ROUND;
         r34[i] = r3 + r4;
         totals[i] = (lock ? inputs[i].starting_score : 0) + r1[i] + r2[i] + r34[i];
       } else {
@@ -458,12 +497,18 @@ export function runSimulation(
   const totals = new Float64Array(n);
   const indices = new Int32Array(n);
 
+  // Pre-cache per-player per-round SG projection.
+  const sgPerRound = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    sgPerRound[i] = perRoundSg(inputs[i], mode, completedRounds);
+  }
+
   for (let sim = 0; sim < nRuns; sim++) {
     // R1 + R2 for everyone (locked rounds contribute 0; their score is
     // embedded in starting_score).
     for (let i = 0; i < n; i++) {
-      r1[i] = r1Locked ? 0 : -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
-      r2[i] = r2Locked ? 0 : -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
+      r1[i] = r1Locked ? 0 : -sgPerRound[i] + randn() * SIGMA_PER_ROUND;
+      r2[i] = r2Locked ? 0 : -sgPerRound[i] + randn() * SIGMA_PER_ROUND;
       totals[i] = (lock ? inputs[i].starting_score : 0) + r1[i] + r2[i];
       indices[i] = i;
     }
@@ -485,8 +530,8 @@ export function runSimulation(
     // R3 + R4 for survivors only.
     for (let i = 0; i < n; i++) {
       if (survivorMask[i]) {
-        const r3 = r3Locked ? 0 : -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
-        const r4 = -inputs[i].adjusted_sg + randn() * SIGMA_PER_ROUND;
+        const r3 = r3Locked ? 0 : -sgPerRound[i] + randn() * SIGMA_PER_ROUND;
+        const r4 = -sgPerRound[i] + randn() * SIGMA_PER_ROUND;
         r34[i] = r3 + r4;
         totals[i] = (lock ? inputs[i].starting_score : 0) + r1[i] + r2[i] + r34[i];
       } else {

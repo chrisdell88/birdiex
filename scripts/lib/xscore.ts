@@ -96,27 +96,43 @@ export function computeXScore(
   };
 }
 
+/**
+ * Signal tier names (NEW 7-tier system).
+ *
+ * Going forward all classifiers emit names from this union. Historical
+ * data files may still contain legacy names (STRONGEST BUY, LEAN BUY,
+ * LEAN FADE, STRONGEST FADE) — those are mapped to the new tiers at
+ * render time by the SignalBadge component.
+ */
 export type Signal =
-  | 'STRONGEST BUY'
   | 'STRONG BUY'
   | 'BUY'
-  | 'LEAN BUY'
+  | 'SOFT BUY'
   | 'NEUTRAL'
-  | 'LEAN FADE'
+  | 'SOFT FADE'
   | 'FADE'
-  | 'STRONG FADE'
-  | 'STRONGEST FADE';
+  | 'STRONG FADE';
 
-/** Per the formula doc + MEMORY.md signal thresholds. */
+/**
+ * Absolute-threshold classifier — used post-R1 once X Scores have full
+ * spread from real Layer-1 strokes-gained input.
+ *
+ *   STRONG BUY:  X ≥ +1.00
+ *   BUY:         +0.50 to +0.99
+ *   SOFT BUY:    +0.00 to +0.49
+ *   NEUTRAL:     -0.50 to -0.01
+ *   SOFT FADE:   -1.00 to -0.50
+ *   FADE:        -1.50 to -1.00
+ *   STRONG FADE: ≤ -1.50
+ */
 export function computeSignal(x_score: number): Signal {
-  if (x_score >= 1.5) return 'STRONGEST BUY';
   if (x_score >= 1.0) return 'STRONG BUY';
   if (x_score >= 0.5) return 'BUY';
-  if (x_score >= 0.0) return 'LEAN BUY';
+  if (x_score >= 0.0) return 'SOFT BUY';
   if (x_score > -0.5) return 'NEUTRAL';
-  if (x_score >= -1.0) return 'FADE';
-  if (x_score >= -1.5) return 'STRONG FADE';
-  return 'STRONGEST FADE';
+  if (x_score > -1.0) return 'SOFT FADE';
+  if (x_score > -1.5) return 'FADE';
+  return 'STRONG FADE';
 }
 
 /**
@@ -124,36 +140,32 @@ export function computeSignal(x_score: number): Signal {
  * X Score has small spread (Layer 1 = 0). Maps each player's X Score to a
  * signal based on its z-score relative to the field's mean and stdev.
  *
- *   z ≥ +1.65  →  STRONGEST BUY   (top ~5%)
  *   z ≥ +1.00  →  STRONG BUY      (top ~16%)
  *   z ≥ +0.50  →  BUY             (top ~31%)
- *   z ≥ +0.20  →  LEAN BUY
+ *   z ≥ +0.20  →  SOFT BUY
  *   |z| < 0.20 →  NEUTRAL
- *   z ≤ -0.20  →  LEAN FADE
+ *   z ≤ -0.20  →  SOFT FADE
  *   z ≤ -0.50  →  FADE
  *   z ≤ -1.00  →  STRONG FADE
- *   z ≤ -1.65  →  STRONGEST FADE
  *
- * This gives meaningful direction even when X Score range is tiny. Caller
- * should pass the full field's X Score array so mean + stdev are correct.
+ * Caller should pass the full field's X Score array so mean + stdev are
+ * computed across the whole field.
  */
 export function computeSignalFieldRelative(x_score: number, fieldXScores: number[]): Signal {
   const n = fieldXScores.length;
-  if (n < 5) return 'NEUTRAL'; // not enough data to be meaningful
+  if (n < 5) return 'NEUTRAL';
   const mean = fieldXScores.reduce((a, b) => a + b, 0) / n;
   const variance = fieldXScores.reduce((a, b) => a + (b - mean) ** 2, 0) / n;
   const stdev = Math.sqrt(variance);
-  if (stdev < 1e-6) return 'NEUTRAL'; // degenerate field
+  if (stdev < 1e-6) return 'NEUTRAL';
   const z = (x_score - mean) / stdev;
-  if (z >= 1.65) return 'STRONGEST BUY';
   if (z >= 1.00) return 'STRONG BUY';
   if (z >= 0.50) return 'BUY';
-  if (z >= 0.20) return 'LEAN BUY';
+  if (z >= 0.20) return 'SOFT BUY';
   if (z > -0.20) return 'NEUTRAL';
-  if (z >= -0.50) return 'LEAN FADE';
-  if (z >= -1.00) return 'FADE';
-  if (z >= -1.65) return 'STRONG FADE';
-  return 'STRONGEST FADE';
+  if (z > -0.50) return 'SOFT FADE';
+  if (z > -1.00) return 'FADE';
+  return 'STRONG FADE';
 }
 
 export type Purity = 'PURE BUY' | 'PURE FADE' | 'CONFLICTED' | 'NEUTRAL';

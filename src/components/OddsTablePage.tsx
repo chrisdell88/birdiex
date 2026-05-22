@@ -5,6 +5,7 @@ import { starsForEdge } from '../lib/sizing';
 import DataSetToggle from './DataSetToggle';
 import RecommendedFloorBadge from './RecommendedFloorBadge';
 import OutrightsTable from './OutrightsTable';
+import { isBuy } from '../lib/signalDisplay';
 
 interface OddsTablePageProps {
   data: PlayerData[];
@@ -52,7 +53,8 @@ function parseOdds(odds: string): number {
 }
 
 function isBuySide(p: PlayerData): boolean {
-  return ['STRONGEST BUY', 'STRONG BUY', 'BUY', 'LEAN BUY'].includes(p.signal);
+  // Uses normalized 7-tier display so legacy + new signals collapse correctly.
+  return isBuy(p.signal);
 }
 
 interface H2HRow {

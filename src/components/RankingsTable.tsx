@@ -8,6 +8,7 @@ import PlayerSearch from './PlayerSearch';
 import Avatar from './Avatar';
 import DataSetToggle from './DataSetToggle';
 import RankingsGlossary from './RankingsGlossary';
+import { normalizeSignal, isFade } from '../lib/signalDisplay';
 import CourseFitScatter from './CourseFitScatter';
 import PastChampions from './PastChampions';
 import { currentEvent } from '../config/event';
@@ -37,21 +38,28 @@ function formatUpdated(iso: string): string {
   return `${t} ET`;
 }
 
+// Sort order for the signal column. Lower = ranked higher (strongest BUY
+// first → strongest FADE last). Both legacy and new tier names map to the
+// same buckets so historical data sorts correctly alongside new data.
 const signalOrder: Record<Signal, number> = {
+  // New 7-tier names
+  'STRONG BUY': 1,
+  'BUY': 2,
+  'SOFT BUY': 3,
+  'NEUTRAL': 4,
+  'SOFT FADE': 5,
+  'FADE': 6,
+  'STRONG FADE': 7,
+  // Legacy names — collapsed into the matching new tier rank
   'STRONGEST BUY': 1,
-  'STRONG BUY': 2,
-  'BUY': 3,
-  'LEAN BUY': 4,
-  'HOLD': 5,
-  'NEUTRAL': 5,
-  'LEAN FADE': 6,
-  'LEAN SELL': 6,
-  'FADE': 7,
-  'SELL': 7,
-  'STRONG FADE': 8,
-  'STRONG SELL': 8,
-  'STRONGEST FADE': 9,
-  'STRONGEST SELL': 9,
+  'LEAN BUY': 3,
+  'HOLD': 4,
+  'LEAN FADE': 5,
+  'STRONGEST FADE': 7,
+  'LEAN SELL': 5,
+  'SELL': 6,
+  'STRONG SELL': 6,
+  'STRONGEST SELL': 7,
 };
 
 function parsePosition(pos: string): number {
@@ -148,13 +156,12 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
 
     if (signalFilter !== 'ALL') {
       if (signalFilter === 'BUYS') {
-        result = result.filter((p) =>
-          ['STRONGEST BUY', 'STRONG BUY', 'BUY'].includes(p.signal)
-        );
+        result = result.filter((p) => {
+          const d = normalizeSignal(p.signal);
+          return d === 'STRONG BUY' || d === 'BUY';
+        });
       } else if (signalFilter === 'SELLS') {
-        result = result.filter((p) =>
-          ['FADE', 'STRONG FADE', 'STRONGEST FADE', 'SELL', 'STRONG SELL', 'STRONGEST SELL', 'LEAN SELL', 'LEAN FADE'].includes(p.signal)
-        );
+        result = result.filter((p) => isFade(p.signal));
       }
     }
 

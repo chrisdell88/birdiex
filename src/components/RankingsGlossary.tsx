@@ -4,7 +4,7 @@
  * like POS / Player / SCORE are common sense and intentionally omitted.
  *
  * Two sections: Column metrics (the BirdieX-specific ones) and Signal
- * tiers (the 9 BUY/FADE levels + Pure/Conflicted purity).
+ * tiers (the 7 BUY/FADE levels + Pure/Conflicted purity).
  */
 
 interface Term {
@@ -42,15 +42,13 @@ const COLUMN_TERMS: Term[] = [
 ];
 
 const SIGNAL_TERMS: Term[] = [
-  { label: 'STRONGEST BUY', def: 'X Score ≥ 1.50. Highest-conviction "expect to improve" pick.' },
-  { label: 'STRONG BUY', def: 'X Score 1.00 to 1.49.' },
-  { label: 'BUY', def: 'X Score 0.50 to 0.99.' },
-  { label: 'LEAN BUY', def: 'X Score 0.00 to 0.49.' },
+  { label: 'STRONG BUY', def: 'X Score ≥ +1.00. Highest-conviction "expect to improve" pick.' },
+  { label: 'BUY', def: 'X Score +0.50 to +0.99.' },
+  { label: 'SOFT BUY', def: 'X Score 0.00 to +0.49. Lean toward improvement.' },
   { label: 'NEUTRAL', def: 'X Score between -0.50 and 0.00. No directional opinion.' },
-  { label: 'LEAN FADE', def: 'X Score -0.50 to -1.00.' },
-  { label: 'FADE', def: 'X Score -1.00 to -1.50.' },
-  { label: 'STRONG FADE', def: 'X Score -1.50 to -2.00.' },
-  { label: 'STRONGEST FADE', def: 'X Score ≤ -2.00. Highest-conviction "expect to regress" pick.' },
+  { label: 'SOFT FADE', def: 'X Score -1.00 to -0.50. Lean toward regression.' },
+  { label: 'FADE', def: 'X Score -1.50 to -1.00.' },
+  { label: 'STRONG FADE', def: 'X Score ≤ -1.50. Highest-conviction "expect to regress" pick.' },
 ];
 
 // What the visual icons next to each signal mean. Users see the ICONS,

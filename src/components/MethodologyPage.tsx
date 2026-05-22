@@ -318,7 +318,7 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
           <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
             Each golfer receives a directional signal based on their X Score. Buy signals indicate
             positive regression is expected -- the golfer is likely playing better than their
-            scorecard shows. Sell signals indicate negative regression -- the golfer is
+            scorecard shows. Fade signals indicate negative regression -- the golfer is
             benefiting from unsustainable putting and is likely to fall back.
           </p>
 
@@ -329,31 +329,31 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm font-['Inter',system-ui,sans-serif]">
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-[#22c55e]"></span>
-                <span className="text-[#d4d4d4]">{'STRONGEST BUY -- X Score >= 1.50'}</span>
+                <span className="text-[#d4d4d4]">{'STRONG BUY -- X Score >= +1.00'}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-green-600"></span>
-                <span className="text-[#d4d4d4]">{'STRONG BUY -- X Score >= 1.00'}</span>
+                <span className="text-[#d4d4d4]">{'BUY -- X Score +0.50 to +0.99'}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-[#22c55e]/50"></span>
-                <span className="text-[#d4d4d4]">{'BUY -- X Score >= 0.50'}</span>
+                <span className="text-[#d4d4d4]">{'SOFT BUY -- X Score 0.00 to +0.49'}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-gray-500"></span>
-                <span className="text-[#d4d4d4]">NEUTRAL -- X Score between -0.50 and 0.50</span>
+                <span className="text-[#d4d4d4]">NEUTRAL -- X Score between -0.50 and 0.00</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-red-400/50"></span>
-                <span className="text-[#d4d4d4]">FADE -- X Score &lt;= -0.50</span>
+                <span className="text-[#d4d4d4]">SOFT FADE -- X Score -1.00 to -0.50</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-red-600"></span>
-                <span className="text-[#d4d4d4]">STRONG FADE -- X Score &lt;= -1.00</span>
+                <span className="text-[#d4d4d4]">FADE -- X Score -1.50 to -1.00</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-red-500"></span>
-                <span className="text-[#d4d4d4]">STRONGEST FADE -- X Score &lt;= -1.50</span>
+                <span className="text-[#d4d4d4]">STRONG FADE -- X Score &lt;= -1.50</span>
               </div>
             </div>
           </div>

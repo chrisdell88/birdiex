@@ -1,4 +1,5 @@
 import type { PlayerData } from '../types';
+import { normalizeSignal, isFade } from '../lib/signalDisplay';
 
 interface SummaryCardsProps {
   data: PlayerData[];
@@ -7,12 +8,13 @@ interface SummaryCardsProps {
 }
 
 export default function SummaryCards({ data, activeFilter = 'ALL', onFilterChange }: SummaryCardsProps) {
-  const buys = data.filter((p) =>
-    ['STRONGEST BUY', 'STRONG BUY', 'BUY'].includes(p.signal)
-  ).length;
-  const sells = data.filter((p) =>
-    ['FADE', 'STRONG FADE', 'STRONGEST FADE', 'SELL', 'STRONG SELL', 'STRONGEST SELL', 'LEAN SELL', 'LEAN FADE'].includes(p.signal)
-  ).length;
+  // BUYS = the meaningful buys (drop SOFT BUY, which is essentially noise).
+  // SELLS = any fade tier (legacy SELL names included via normalizeSignal).
+  const buys = data.filter((p) => {
+    const d = normalizeSignal(p.signal);
+    return d === 'STRONG BUY' || d === 'BUY';
+  }).length;
+  const sells = data.filter((p) => isFade(p.signal)).length;
 
   const cards = [
     { label: 'PLAYERS', value: data.length, color: 'text-[#f5f5f5]', borderColor: 'border-[#262626]', filterValue: 'ALL' },

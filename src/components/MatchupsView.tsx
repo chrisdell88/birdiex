@@ -7,6 +7,9 @@ import Avatar from './Avatar';
 import DataSetToggle from './DataSetToggle';
 import RecommendedFloorBadge from './RecommendedFloorBadge';
 import { starsForEdge } from '../lib/sizing';
+import { isBuy, isFade } from '../lib/signalDisplay';
+import MatchupsGlossary from './MatchupsGlossary';
+import OutrightsTable from './OutrightsTable';
 
 interface MatchupsViewProps {
   data: PlayerData[];
@@ -23,11 +26,13 @@ function parseOdds(odds: string): number {
 }
 
 function isBuySide(p: PlayerData): boolean {
-  return ['STRONGEST BUY', 'STRONG BUY', 'BUY', 'LEAN BUY'].includes(p.signal);
+  // Normalized 7-tier: any buy tier (STRONG BUY / BUY / SOFT BUY).
+  return isBuy(p.signal);
 }
 
 function isFadeSide(p: PlayerData): boolean {
-  return ['LEAN FADE', 'FADE', 'STRONG FADE', 'STRONGEST FADE', 'LEAN SELL', 'SELL', 'STRONG SELL', 'STRONGEST SELL'].includes(p.signal);
+  // Normalized 7-tier: any fade tier (SOFT FADE / FADE / STRONG FADE).
+  return isFade(p.signal);
 }
 
 function getBucket(pick: PlayerData, opponent: PlayerData): BucketType {
@@ -326,8 +331,8 @@ function MatchupDefinitionsModal({ onClose }: { onClose: () => void }) {
             <p className="text-[#d4d4d4] mt-1">OTT and APP both support the buy signal (neither below -0.45)</p>
           </div>
           <div className="border-b border-[#1a1a1a] pb-3">
-            <span className="text-[#22c55e] font-semibold">Pure Sell</span>
-            <p className="text-[#d4d4d4] mt-1">OTT and APP both support the sell signal (neither above +0.45)</p>
+            <span className="text-[#22c55e] font-semibold">Pure Fade</span>
+            <p className="text-[#d4d4d4] mt-1">OTT and APP both support the fade signal (neither above +0.45)</p>
           </div>
           <div className="border-b border-[#1a1a1a] pb-3">
             <span className="text-[#22c55e] font-semibold">Conflicted</span>
@@ -358,15 +363,24 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
   const [sortBy, setSortBy] = useState<MatchupSort>('edge-high');
   const [showDefinitions, setShowDefinitions] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
-  // Default view: TRACKED only (matchups at or above the venue threshold).
-  // Toggle to "all" exposes the full model output below the threshold for
-  // research / transparency.
-  // PRE-R1: we don't track anything, so default to showing all and hide the
-  // toggle entirely — no decision needed from the user.
   const isPreTournament = currentEvent.picksRound <= 1;
-  const [showAll, setShowAll] = useState<boolean>(isPreTournament);
 
   const rawMatchups = useMemo(() => generateMatchups(data, currentEvent.matchups), [data]);
+
+  // Best Bets = matchups at or above the venue threshold (the bets we track).
+  // All Matchups = the full model output (edge ≥ 0.95) for research/transparency.
+  //
+  // Default behavior:
+  //   • PRE-R1 → All Matchups (we don't track anything pre-tournament)
+  //   • POST-R1 with at least one bet ≥ threshold → Best Bets
+  //   • POST-R1 with zero bets ≥ threshold → All Matchups (don't strand the
+  //     user on an empty view)
+  const hasBestBets = useMemo(
+    () => rawMatchups.some((m) => m.matchupScore >= currentEvent.recommendedFloor),
+    [rawMatchups],
+  );
+  const defaultShowAll = isPreTournament || !hasBestBets;
+  const [showAll, setShowAll] = useState<boolean>(defaultShowAll);
 
   // All unique player names that appear in qualifying matchups
   const matchupPlayerNames = useMemo(() => {
@@ -420,7 +434,7 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
             ROUND {currentEvent.picksRound}
           </span>
           <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
-            {currentEvent.name} · {currentEvent.course}
+            {currentEvent.name}
           </span>
           {currentEvent.picksRound > 1 && (
             <RecommendedFloorBadge
@@ -485,19 +499,27 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
           </button>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          {/* Tracked / Show All toggle — hidden pre-R1 since we don't track
-              anything there; default is "show all" then. */}
+          {/* Best Bets / All Matchups toggle — hidden pre-R1 since we don't
+              track anything there; default is "All Matchups" then. Post-R1
+              we default to Best Bets, unless there are zero bets meeting the
+              threshold, in which case we fall back to All Matchups so the
+              user never lands on an empty view. */}
           {!isPreTournament && (
             <div className="flex border border-[#22c55e]/50 rounded-full p-0.5">
               <button
                 type="button"
                 onClick={() => setShowAll(false)}
-                className={`px-3 py-1 text-[10px] uppercase tracking-wider font-medium rounded-full font-['Inter',system-ui,sans-serif] cursor-pointer transition-colors ${
+                disabled={!hasBestBets}
+                className={`px-3 py-1 text-[10px] uppercase tracking-wider font-medium rounded-full font-['Inter',system-ui,sans-serif] transition-colors ${
                   !showAll ? 'bg-[#22c55e] text-[#0a0a0a]' : 'text-[#d4d4d4] hover:text-white'
-                }`}
-                title={`Show only matchups at or above the venue threshold (≥ ${currentEvent.recommendedFloor.toFixed(2)})`}
+                } ${!hasBestBets ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                title={
+                  hasBestBets
+                    ? `Tracked bets — matchups at or above the venue threshold (≥ ${currentEvent.recommendedFloor.toFixed(2)})`
+                    : 'No bets currently meet the venue threshold'
+                }
               >
-                Tracked Only
+                Best Bets
               </button>
               <button
                 type="button"
@@ -505,9 +527,9 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
                 className={`px-3 py-1 text-[10px] uppercase tracking-wider font-medium rounded-full font-['Inter',system-ui,sans-serif] cursor-pointer transition-colors ${
                   showAll ? 'bg-[#22c55e] text-[#0a0a0a]' : 'text-[#d4d4d4] hover:text-white'
                 }`}
-                title="Show all model picks (edge ≥ 0.95) — includes below-threshold picks for full transparency"
+                title="All model picks (edge ≥ 0.95) — includes below-threshold picks for full transparency"
               >
-                Show All
+                All Matchups
               </button>
             </div>
           )}
@@ -646,6 +668,26 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
             ))}
           </div>
         </div>
+
+      {/* Outright winner odds — mirrored from the Odds page so matchup users
+          can see tournament context without changing tabs. Reference only;
+          we don't track outrights as bets. */}
+      {currentEvent.outrights && currentEvent.outrights.length > 0 && (
+        <div className="mt-10">
+          <div className="mb-4">
+            <h2 className="text-xl font-bold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
+              Outright Winner Odds
+            </h2>
+            <p className="text-sm text-[#d4d4d4] mt-1 font-['Inter',system-ui,sans-serif]">
+              Reference only — the model targets H2H matchups, not outrights.
+            </p>
+          </div>
+          <OutrightsTable outrights={currentEvent.outrights} />
+        </div>
+      )}
+
+      {/* Glossary — always at the bottom, mirrors the Rankings page. */}
+      <MatchupsGlossary />
     </div>
   );
 }

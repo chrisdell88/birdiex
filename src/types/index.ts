@@ -21,16 +21,40 @@ export interface PlayerData {
   rank: number;
 }
 
+/**
+ * Signal tier names.
+ *
+ * NEW 7-tier system (used by all classifiers going forward):
+ *   STRONG BUY → BUY → SOFT BUY → NEUTRAL → SOFT FADE → FADE → STRONG FADE
+ *
+ * Thresholds (absolute, post-R1):
+ *   STRONG BUY:  X Score ≥ +1.00
+ *   BUY:         +0.50 to +0.99
+ *   SOFT BUY:    +0.00 to +0.49
+ *   NEUTRAL:     -0.50 to -0.01
+ *   SOFT FADE:   -0.50 to -0.99
+ *   FADE:        -1.00 to -1.49
+ *   STRONG FADE: ≤ -1.50
+ *
+ * Legacy names (STRONGEST BUY / LEAN BUY / LEAN FADE / STRONGEST FADE /
+ * HOLD / SELL family) stay in the union for backwards compatibility with
+ * historical Masters / PGA Championship data files. SignalBadge maps
+ * legacy → new for display.
+ */
 export type Signal =
-  | 'STRONGEST BUY'
+  // New 7-tier names
   | 'STRONG BUY'
   | 'BUY'
-  | 'LEAN BUY'
-  | 'HOLD'
+  | 'SOFT BUY'
   | 'NEUTRAL'
-  | 'LEAN FADE'
+  | 'SOFT FADE'
   | 'FADE'
   | 'STRONG FADE'
+  // Legacy — historical data only; mapped to new tiers at render time
+  | 'STRONGEST BUY'
+  | 'LEAN BUY'
+  | 'HOLD'
+  | 'LEAN FADE'
   | 'STRONGEST FADE'
   | 'LEAN SELL'
   | 'SELL'

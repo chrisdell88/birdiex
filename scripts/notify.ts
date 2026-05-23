@@ -101,21 +101,31 @@ async function sendEmails(subs: Subscriber[], eventName: string, round: number, 
   console.log(`  ✓ emailed ${sent} subscriber(s)`);
 }
 
-async function postDiscord(eventName: string, round: number, dryRun: boolean) {
+type NotifyMode = 'round-picks' | 'new-bets';
+
+function discordMessage(mode: NotifyMode, eventName: string, round: number, newBetsAdded: number): string {
+  if (mode === 'new-bets') {
+    const count = newBetsAdded > 0 ? `${newBetsAdded} ` : '';
+    return `🚨 **${count}new matchup${newBetsAdded === 1 ? '' : 's'} just posted** for Round ${round} at the ${eventName}.\nCheck the board: ${SITE_URL}/matchups`;
+  }
+  return `🏌️ **Round ${round} picks are live** for the ${eventName}.\nView them: ${SITE_URL}`;
+}
+
+async function postDiscord(mode: NotifyMode, eventName: string, round: number, newBetsAdded: number, dryRun: boolean) {
   const webhook = process.env.DISCORD_WEBHOOK_URL;
   if (!webhook) {
     console.log('  • Discord skipped (DISCORD_WEBHOOK_URL not set)');
     return;
   }
   if (dryRun) {
-    console.log('  [dry-run] would post to Discord');
+    console.log(`  [dry-run] would post to Discord (mode=${mode})`);
     return;
   }
   const res = await fetch(webhook, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      content: `🏌️ **Round ${round} picks are live** for the ${eventName}.\nView them: ${SITE_URL}`,
+      content: discordMessage(mode, eventName, round, newBetsAdded),
     }),
   });
   if (!res.ok) {
@@ -129,6 +139,12 @@ async function main() {
   const argv = process.argv.slice(2);
   const dryRun = argv.includes('--dry-run');
   const roundFlag = argv.indexOf('--round');
+  const modeFlag = argv.indexOf('--mode');
+  const newBetsFlag = argv.indexOf('--new-bets');
+
+  const mode: NotifyMode =
+    modeFlag !== -1 && argv[modeFlag + 1] === 'new-bets' ? 'new-bets' : 'round-picks';
+  const newBetsAdded = newBetsFlag !== -1 ? Number(argv[newBetsFlag + 1]) : 0;
 
   // Pull event name + round from the single event config.
   const { currentEvent } = await import(
@@ -140,25 +156,32 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`\n▶ BirdieX alerts — ${currentEvent.name}, Round ${round}${dryRun ? '  (DRY RUN)' : ''}\n`);
+  console.log(`\n▶ BirdieX alerts — ${currentEvent.name}, Round ${round} [${mode}]${dryRun ? '  (DRY RUN)' : ''}\n`);
 
-  const supabase = createClient(
-    requireEnv('SUPABASE_URL'),
-    requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
-  );
-  const { data, error } = await supabase
-    .from('subscribers')
-    .select('email, unsubscribe_token')
-    .is('unsubscribed_at', null);
-  if (error) {
-    console.error(`✖ Could not read subscribers: ${error.message}`);
-    process.exit(1);
+  // For new-bets mode skip the email blast — Discord-only. Email is a
+  // bigger interrupt and we don't want to spam subscribers every time a
+  // few new matchups appear.
+  if (mode === 'round-picks') {
+    const supabase = createClient(
+      requireEnv('SUPABASE_URL'),
+      requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
+    );
+    const { data, error } = await supabase
+      .from('subscribers')
+      .select('email, unsubscribe_token')
+      .is('unsubscribed_at', null);
+    if (error) {
+      console.error(`✖ Could not read subscribers: ${error.message}`);
+      process.exit(1);
+    }
+    const subs = (data ?? []) as Subscriber[];
+    console.log(`  ${subs.length} active subscriber(s)`);
+    await sendEmails(subs, currentEvent.name, round, dryRun);
+  } else {
+    console.log('  (new-bets mode — Discord only, no email blast)');
   }
-  const subs = (data ?? []) as Subscriber[];
-  console.log(`  ${subs.length} active subscriber(s)`);
 
-  await sendEmails(subs, currentEvent.name, round, dryRun);
-  await postDiscord(currentEvent.name, round, dryRun);
+  await postDiscord(mode, currentEvent.name, round, newBetsAdded, dryRun);
 
   console.log(`\n✅ Alerts ${dryRun ? 'dry-run' : 'sent'}.\n`);
 }

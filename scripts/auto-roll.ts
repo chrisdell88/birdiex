@@ -46,13 +46,29 @@ interface AutoRollState {
   lastTransitionAt: string | null;
   /** The completed round number at that transition (0 = pre-tournament). */
   lastCompletedRoundAtTransition: number;
+  /**
+   * Matchup count after the last refresh — lets us detect when sportsbooks
+   * post new bets mid-window and fire a "new bets posted" Discord ping.
+   */
+  lastMatchupCount: number;
 }
 
 async function readState(): Promise<AutoRollState> {
   if (!existsSync(STATE_PATH)) {
-    return { lastTransitionAt: null, lastCompletedRoundAtTransition: -1 };
+    return { lastTransitionAt: null, lastCompletedRoundAtTransition: -1, lastMatchupCount: 0 };
   }
-  return JSON.parse(await readFile(STATE_PATH, 'utf8'));
+  const parsed = JSON.parse(await readFile(STATE_PATH, 'utf8'));
+  // Migrate older state files that predate lastMatchupCount.
+  if (typeof parsed.lastMatchupCount !== 'number') parsed.lastMatchupCount = 0;
+  return parsed;
+}
+
+async function countMatchupsInFile(picksRound: number): Promise<number> {
+  const path = join(ROOT, `src/data/${SLUG_PREFIX}R${picksRound}Matchups.ts`);
+  if (!existsSync(path)) return 0;
+  const content = await readFile(path, 'utf8');
+  const m = content.match(/"p1_player_name":/g);
+  return m ? m.length : 0;
 }
 
 async function writeState(state: AutoRollState): Promise<void> {
@@ -258,12 +274,15 @@ async function main(): Promise<void> {
       await refreshCurrentRound(picksRound);
       state.lastTransitionAt = new Date().toISOString();
       state.lastCompletedRoundAtTransition = 4;
+      state.lastMatchupCount = await countMatchupsInFile(picksRound);
       await writeState(state);
       return;
     }
     await doAutoAdvance(picksRound, detected);
     state.lastTransitionAt = new Date().toISOString();
     state.lastCompletedRoundAtTransition = detected;
+    // Picks round just advanced — read matchup count from the NEW file.
+    state.lastMatchupCount = await countMatchupsInFile(detected + 1);
     await writeState(state);
     return;
   }
@@ -274,6 +293,8 @@ async function main(): Promise<void> {
     state.lastCompletedRoundAtTransition = currentCompleted;
     await writeState(state);
     await refreshCurrentRound(picksRound);
+    state.lastMatchupCount = await countMatchupsInFile(picksRound);
+    await writeState(state);
     sendNotifyOnTransition(picksRound);
     return;
   }
@@ -281,7 +302,20 @@ async function main(): Promise<void> {
   if (isInActiveWindow(state)) {
     const ageMin = Math.round((Date.now() - new Date(state.lastTransitionAt!).getTime()) / 60000);
     console.log(`In active window (${ageMin} min since transition). Refreshing odds in place.`);
+    const prevCount = state.lastMatchupCount;
     await refreshCurrentRound(picksRound);
+    const newCount = await countMatchupsInFile(picksRound);
+    if (newCount > prevCount) {
+      const delta = newCount - prevCount;
+      console.log(`New matchups posted: ${prevCount} → ${newCount} (+${delta}). Sending Discord ping.`);
+      state.lastMatchupCount = newCount;
+      await writeState(state);
+      sendNotifyOnNewBets(picksRound, delta);
+    } else {
+      // Update count even if equal/lower so we track current state.
+      state.lastMatchupCount = newCount;
+      await writeState(state);
+    }
     return;
   }
 
@@ -289,15 +323,24 @@ async function main(): Promise<void> {
 }
 
 function sendNotifyOnTransition(newPicksRound: number): void {
-  // Discord + email subscribers. Only fires on actual transitions, never
-  // on in-window odds refreshes. Env vars (DISCORD_WEBHOOK_URL,
-  // SUPABASE_*, RESEND_*) must be set in GitHub Actions secrets.
+  // Discord + email blast for a brand-new round of picks.
   try {
-    exec(`npx tsx scripts/notify.ts --round ${newPicksRound}`);
-    console.log(`✓ notify sent for picksRound=${newPicksRound}`);
+    exec(`npx tsx scripts/notify.ts --round ${newPicksRound} --mode round-picks`);
+    console.log(`✓ notify (round-picks) sent for picksRound=${newPicksRound}`);
   } catch (e) {
-    // Notification failure shouldn't break the auto-roll itself. Log + move on.
+    // Notification failure shouldn't break the auto-roll itself.
     console.error(`✖ notify failed: ${(e as Error).message}`);
+  }
+}
+
+function sendNotifyOnNewBets(picksRound: number, newBetsAdded: number): void {
+  // Discord-only ping when sportsbooks post additional matchups within the
+  // active window. No email blast (would be spammy).
+  try {
+    exec(`npx tsx scripts/notify.ts --round ${picksRound} --mode new-bets --new-bets ${newBetsAdded}`);
+    console.log(`✓ notify (new-bets) sent — ${newBetsAdded} new matchup(s) for R${picksRound}`);
+  } catch (e) {
+    console.error(`✖ notify (new-bets) failed: ${(e as Error).message}`);
   }
 }
 

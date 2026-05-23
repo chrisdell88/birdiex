@@ -158,28 +158,24 @@ async function main() {
 
   console.log(`\n▶ BirdieX alerts — ${currentEvent.name}, Round ${round} [${mode}]${dryRun ? '  (DRY RUN)' : ''}\n`);
 
-  // For new-bets mode skip the email blast — Discord-only. Email is a
-  // bigger interrupt and we don't want to spam subscribers every time a
-  // few new matchups appear.
-  if (mode === 'round-picks') {
-    const supabase = createClient(
-      requireEnv('SUPABASE_URL'),
-      requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
-    );
-    const { data, error } = await supabase
-      .from('subscribers')
-      .select('email, unsubscribe_token')
-      .is('unsubscribed_at', null);
-    if (error) {
-      console.error(`✖ Could not read subscribers: ${error.message}`);
-      process.exit(1);
-    }
-    const subs = (data ?? []) as Subscriber[];
-    console.log(`  ${subs.length} active subscriber(s)`);
-    await sendEmails(subs, currentEvent.name, round, dryRun);
-  } else {
-    console.log('  (new-bets mode — Discord only, no email blast)');
+  // Both Discord and email fire in every mode — notifications are
+  // strictly Best Bet announcements per Chris. Don't ping the channels
+  // for raw matchup/odds volume.
+  const supabase = createClient(
+    requireEnv('SUPABASE_URL'),
+    requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
+  );
+  const { data, error } = await supabase
+    .from('subscribers')
+    .select('email, unsubscribe_token')
+    .is('unsubscribed_at', null);
+  if (error) {
+    console.error(`✖ Could not read subscribers: ${error.message}`);
+    process.exit(1);
   }
+  const subs = (data ?? []) as Subscriber[];
+  console.log(`  ${subs.length} active subscriber(s)`);
+  await sendEmails(subs, currentEvent.name, round, dryRun);
 
   await postDiscord(mode, currentEvent.name, round, newBetsAdded, dryRun);
 

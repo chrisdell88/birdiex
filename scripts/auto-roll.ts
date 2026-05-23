@@ -47,28 +47,37 @@ interface AutoRollState {
   /** The completed round number at that transition (0 = pre-tournament). */
   lastCompletedRoundAtTransition: number;
   /**
-   * Matchup count after the last refresh — lets us detect when sportsbooks
-   * post new bets mid-window and fire a "new bets posted" Discord ping.
+   * Best Bet count after the last refresh — Best Bet = matchup whose
+   * X-Score edge ≥ venue floor. Notifications fire only when this count
+   * increases (new Best Bets) — never on raw sportsbook matchup volume.
    */
-  lastMatchupCount: number;
+  lastBestBetCount: number;
 }
 
 async function readState(): Promise<AutoRollState> {
   if (!existsSync(STATE_PATH)) {
-    return { lastTransitionAt: null, lastCompletedRoundAtTransition: -1, lastMatchupCount: 0 };
+    return { lastTransitionAt: null, lastCompletedRoundAtTransition: -1, lastBestBetCount: 0 };
   }
   const parsed = JSON.parse(await readFile(STATE_PATH, 'utf8'));
-  // Migrate older state files that predate lastMatchupCount.
-  if (typeof parsed.lastMatchupCount !== 'number') parsed.lastMatchupCount = 0;
+  // Migrate older state files to the new Best Bet count field.
+  if (typeof parsed.lastBestBetCount !== 'number') parsed.lastBestBetCount = 0;
+  delete parsed.lastMatchupCount;
   return parsed;
 }
 
-async function countMatchupsInFile(picksRound: number): Promise<number> {
-  const path = join(ROOT, `src/data/${SLUG_PREFIX}R${picksRound}Matchups.ts`);
-  if (!existsSync(path)) return 0;
-  const content = await readFile(path, 'utf8');
-  const m = content.match(/"p1_player_name":/g);
-  return m ? m.length : 0;
+/**
+ * Count current Best Bets by shelling out to scripts/count-best-bets.ts.
+ * Separate process is intentional — guarantees a fresh module load so
+ * we read the most recent files (Node caches dynamic imports otherwise).
+ */
+function countBestBets(): number {
+  const out = execSync('npx tsx scripts/count-best-bets.ts', { cwd: ROOT, encoding: 'utf8' });
+  const n = parseInt(out.trim(), 10);
+  if (!Number.isFinite(n)) {
+    console.error(`count-best-bets returned non-numeric: "${out}"`);
+    return 0;
+  }
+  return n;
 }
 
 async function writeState(state: AutoRollState): Promise<void> {
@@ -274,16 +283,22 @@ async function main(): Promise<void> {
       await refreshCurrentRound(picksRound);
       state.lastTransitionAt = new Date().toISOString();
       state.lastCompletedRoundAtTransition = 4;
-      state.lastMatchupCount = await countMatchupsInFile(picksRound);
+      state.lastBestBetCount = countBestBets();
       await writeState(state);
       return;
     }
     await doAutoAdvance(picksRound, detected);
     state.lastTransitionAt = new Date().toISOString();
     state.lastCompletedRoundAtTransition = detected;
-    // Picks round just advanced — read matchup count from the NEW file.
-    state.lastMatchupCount = await countMatchupsInFile(detected + 1);
+    const newBestBets = countBestBets();
+    state.lastBestBetCount = newBestBets;
     await writeState(state);
+    // Fire round-picks notification ONLY if there are Best Bets to announce.
+    if (newBestBets > 0) {
+      sendNotifyOnTransition(detected + 1);
+    } else {
+      console.log(`Round advanced but 0 Best Bets at the venue threshold. No notification.`);
+    }
     return;
   }
 
@@ -293,28 +308,33 @@ async function main(): Promise<void> {
     state.lastCompletedRoundAtTransition = currentCompleted;
     await writeState(state);
     await refreshCurrentRound(picksRound);
-    state.lastMatchupCount = await countMatchupsInFile(picksRound);
+    const newBestBets = countBestBets();
+    state.lastBestBetCount = newBestBets;
     await writeState(state);
-    sendNotifyOnTransition(picksRound);
+    if (newBestBets > 0) {
+      sendNotifyOnTransition(picksRound);
+    } else {
+      console.log(`Manual sync recorded but 0 Best Bets. No notification.`);
+    }
     return;
   }
 
   if (isInActiveWindow(state)) {
     const ageMin = Math.round((Date.now() - new Date(state.lastTransitionAt!).getTime()) / 60000);
-    console.log(`In active window (${ageMin} min since transition). Refreshing odds in place.`);
-    const prevCount = state.lastMatchupCount;
+    console.log(`In active window (${ageMin} min since transition). Refreshing data.`);
+    const prevCount = state.lastBestBetCount;
     await refreshCurrentRound(picksRound);
-    const newCount = await countMatchupsInFile(picksRound);
+    const newCount = countBestBets();
     if (newCount > prevCount) {
       const delta = newCount - prevCount;
-      console.log(`New matchups posted: ${prevCount} → ${newCount} (+${delta}). Sending Discord ping.`);
-      state.lastMatchupCount = newCount;
+      console.log(`New Best Bets: ${prevCount} → ${newCount} (+${delta}). Sending Discord + email.`);
+      state.lastBestBetCount = newCount;
       await writeState(state);
       sendNotifyOnNewBets(picksRound, delta);
     } else {
-      // Update count even if equal/lower so we track current state.
-      state.lastMatchupCount = newCount;
+      state.lastBestBetCount = newCount;
       await writeState(state);
+      console.log(`Best Bet count: ${prevCount} → ${newCount}. No notification.`);
     }
     return;
   }

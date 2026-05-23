@@ -206,10 +206,10 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
         </div>
       </section>
 
-      {/* Section 3.5: From X Score to Tracked Bet */}
+      {/* Section 3.5: From X Score to Best Bet */}
       <section className="mb-12">
         <h2 className="text-xl font-bold text-[#f5f5f5] mb-4 font-['Inter',system-ui,sans-serif]">
-          From X Score to Tracked Bet
+          From X Score to Best Bet
         </h2>
 
         <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-5 space-y-4 mb-6">
@@ -364,18 +364,18 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
               Purity
             </h4>
             <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed mb-3">
-              Purity measures whether a golfer's ball-striking stats confirm the signal. We use
-              a <span className="text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace] font-medium">+/-0.45</span> threshold
+              Purity flags signals where ball-striking <em>contradicts</em> the X Score direction.
+              We use a <span className="text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace] font-medium">+/-0.45</span> threshold
               on OTT and APP strokes gained:
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm font-['Inter',system-ui,sans-serif]">
               <div className="flex items-start gap-2">
                 <span className="text-[#22c55e] font-bold mt-0.5">PURE</span>
-                <span className="text-[#d4d4d4]">OTT and APP both support the signal direction (both above +0.45 for buys, both below -0.45 for fades)</span>
+                <span className="text-[#d4d4d4]">Ball-striking doesn&rsquo;t contradict the signal. For a buy: neither OTT nor APP is at or below -0.45. For a fade: neither OTT nor APP is at or above +0.45.</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="text-yellow-400 font-bold mt-0.5">CONFLICTED</span>
-                <span className="text-[#d4d4d4]">Ball-striking stats contradict the signal -- proceed with caution</span>
+                <span className="text-[#d4d4d4]">A buy where OTT or APP is &le; -0.45, or a fade where OTT or APP is &ge; +0.45 &mdash; proceed with caution.</span>
               </div>
             </div>
           </div>

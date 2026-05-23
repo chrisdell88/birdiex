@@ -137,11 +137,11 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
               </h3>
             </div>
             <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
-              The foundation of the X Score. We apply a course-weighted putting regression across
-              all four strokes gained categories -- rewarding ball striking (OTT, APP) and penalizing
-              putting dependency. Putting is subtracted, not added -- a golfer gaining strokes via
-              ball striking scores higher than one gaining the same strokes via putting. Weights adjust
-              per course based on the venue's historical predictability score.
+              The foundation. Course-weighted strokes-gained where putting is
+              <span className="text-[#22c55e] font-medium"> subtracted</span> &mdash; a golfer
+              gaining via ball striking scores higher than one gaining the same strokes via
+              putting. Per-category weights blend toward each venue&rsquo;s coefficients based
+              on its historical predictability.
             </p>
           </div>
 
@@ -155,16 +155,12 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
               </h3>
             </div>
             <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
-              Some players consistently outperform at specific courses. This layer adjusts the X Score
-              using a golfer's historical performance at the venue. Courses with longer track records
-              produce stronger signals -- Augusta's predictability score
-              of <span className="text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace] font-medium">0.144</span> is
-              the highest on Tour, meaning past performance there is more indicative of future results
-              than at any other venue. At the other extreme, less-established or weather-volatile
-              venues like Aronimink (<span className="text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace] font-medium">0.041</span>)
-              or TPC Craig Ranch (<span className="text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace] font-medium">0.037</span>)
-              carry far less course-specific signal &mdash; the X Score there leans more on overall
-              skill, and our Best Bet Matchup Score Threshold rises accordingly.
+              Per-player venue track record. Stronger at highly predictable courses (Augusta
+              at <span className="text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace] font-medium">0.144</span>,
+              the highest on Tour) and weaker at low-predictability venues
+              (Aronimink <span className="text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace] font-medium">0.041</span>,
+              TPC Craig Ranch <span className="text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace] font-medium">0.037</span>),
+              where the Best Bet Matchup Score Threshold rises to compensate.
             </p>
           </div>
 
@@ -178,11 +174,9 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
               </h3>
             </div>
             <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
-              Different courses reward different skill profiles. This layer measures how well a
-              golfer's strengths align with what the course demands. At Augusta, driving distance
-              matters roughly 2x more than the Tour average, while at a tight, tree-lined course
-              like Harbour Town, accuracy dominates. A long hitter at Augusta gets a boost here; the
-              same player at Harbour Town gets penalized.
+              Skill-profile match. Long hitters get a boost at distance-rewarding venues like
+              Augusta and a penalty at accuracy-first venues like Harbour Town. Calibrated per
+              course from DataGolf fit research.
             </p>
           </div>
 
@@ -196,11 +190,8 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
               </h3>
             </div>
             <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
-              Majors are different. The pressure is higher, the setups are tougher, and some players
-              consistently elevate while others shrink. This layer adjusts for a player's major
-              championship track record -- rewarding golfers who historically perform above their
-              baseline at majors and penalizing those who underperform. This layer is zeroed out
-              at non-major tournaments.
+              Per-player major track record. Rewards consistent over-performers at majors,
+              penalizes consistent under-performers. Zeroed out at non-major tournaments.
             </p>
           </div>
         </div>
@@ -416,56 +407,6 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
         </div>
       </section>
 
-      {/* Section 6: Why BirdieX? */}
-      <section className="mb-8">
-        <h2 className="text-xl font-bold text-[#f5f5f5] mb-4 font-['Inter',system-ui,sans-serif]">
-          Why BirdieX?
-        </h2>
-        <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-5 space-y-4">
-          <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
-            Most golf betting tools show you odds, projections, and ownership percentages. BirdieX
-            does something different: it tells you <span className="text-[#f5f5f5] font-medium italic">why</span> a
-            golfer's score is misleading and which direction it's likely to move.
-          </p>
-          <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <span className="text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace] text-xs mt-1 shrink-0">01</span>
-              <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
-                <span className="text-[#f5f5f5] font-medium">Regression-first approach.</span>{' '}
-                No other public golf betting tool applies a putting regression model as its core
-                thesis. The X Score is built on the statistical fact that putting is the least
-                persistent skill in professional golf.
-              </p>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace] text-xs mt-1 shrink-0">02</span>
-              <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
-                <span className="text-[#f5f5f5] font-medium">Backed by data, not vibes.</span>{' '}
-                The putting regression thesis is supported by years of PGA Tour strokes gained
-                research. DataGolf's own model weights putting at roughly half the value of
-                off-the-tee performance when predicting future rounds.
-              </p>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace] text-xs mt-1 shrink-0">03</span>
-              <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
-                <span className="text-[#f5f5f5] font-medium">Transparent results.</span>{' '}
-                Every signal is logged, every bet tracked, every unit recorded. No cherry-picked
-                screenshots -- just an honest ledger of what the model said and what happened.
-              </p>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace] text-xs mt-1 shrink-0">04</span>
-              <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
-                <span className="text-[#f5f5f5] font-medium">Actionable, not academic.</span>{' '}
-                BirdieX translates strokes gained regression analysis into clear Buy, Fade, and
-                Neutral signals with purity grades -- so you know exactly where to look and how
-                confident the model is.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

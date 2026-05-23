@@ -1,44 +1,67 @@
 name: DataGolf pull (auto-update event data)
 
-# Runs the DataGolf pipeline, regenerates the active event's TS data file, and
-# commits + pushes any changes. Vercel auto-deploys on push to main.
+# Auto-refreshes the active event's data files every 30 minutes during play.
+# Pulls round data, matchups, outrights, and skill estimates — then commits
+# any changes. Vercel auto-deploys on push to main.
 #
 # Triggers:
-#   - workflow_dispatch — manual run via GitHub UI, with slug/phase/course inputs
-#   - schedule         — disabled by default. Uncomment the cron block when an
-#                        event is active to auto-pull every 30 min during play.
+#   - schedule         — every 30 min. Runs even on weekends/overnight; if the
+#                        upstream data hasn't changed, the commit step is a
+#                        no-op and nothing pushes.
+#   - workflow_dispatch — manual run via GitHub UI, with overrides if needed.
+#
+# Active event configuration:
+#   Edit the `env` block below when rolling to a new tournament OR a new round
+#   within the same tournament. The same values mirror src/config/event.ts and
+#   the build script export names.
 #
 # Secrets required:
 #   DATAGOLF_API_KEY — DataGolf API key (Repo Settings → Secrets → Actions)
 
 on:
+  schedule:
+    # Every 30 minutes. GitHub cron is best-effort — actual firing may drift
+    # by a few minutes during high load. That's fine for our use case.
+    - cron: '*/30 * * * *'
   workflow_dispatch:
     inputs:
       slug:
-        description: Event slug (e.g. pga-championship-2026)
-        required: true
-        default: pga-championship-2026
+        description: Event slug override (defaults to active event in env block)
+        required: false
+        default: ''
       phase:
-        description: Tournament phase (pre, r1, r2, r3, r4, final)
-        required: true
-        default: pre
+        description: Phase override (defaults to active phase)
+        required: false
+        default: ''
         type: choice
-        options: [pre, r1, r2, r3, r4, final]
-      course:
-        description: Course slug (must exist in scripts/lib/courses.ts)
-        required: true
-        default: aronimink
-      out_file:
-        description: Output filename in src/data/ (no extension)
-        required: true
-        default: pgaChampPreData
+        options: ['', pre, r1, r2, r3, r4, final]
 
-  # Schedule: enable when a tournament is live. Polls every 30 min.
-  # schedule:
-  #   - cron: '*/30 * * * *'
+# ─── Active event configuration ──────────────────────────────────────────
+# Update these when rolling to a new round/tournament. Keep in sync with
+# src/config/event.ts. PHASE = the latest COMPLETED round (or "pre" for
+# pre-tournament). MATCHUPS_/OUTRIGHTS_ refer to the NEXT round we're
+# picking — e.g. PHASE=r2 + MATCHUPS_OUT=cjCupR3Matchups means "R2 data,
+# R3 picks." Export names must match what src/config/event.ts imports.
+env:
+  SLUG: cj-cup-byron-nelson-2026
+  COURSE: tpc-craig-ranch
+  PHASE: r2
+  ROUND_DATA_OUT: cjCupR2Data
+  MATCHUPS_OUT: cjCupR3Matchups
+  MATCHUPS_EXPORT: r3MatchupOddsData
+  OUTRIGHTS_OUT: cjCupR3Outrights
+  OUTRIGHTS_EXPORT: r3OutrightsData
+  SKILL_OUT: cjCupSkillEstimates
+  SKILL_EXPORT: skillEstimatesData
 
 permissions:
   contents: write
+
+# Single in-flight run at a time — if a previous run is still going,
+# cancel it. Avoids commit collisions.
+concurrency:
+  group: datagolf-auto-update
+  cancel-in-progress: false
 
 jobs:
   pull-and-build:
@@ -54,28 +77,65 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Pull DataGolf data
+      - name: Resolve effective inputs
+        id: cfg
+        run: |
+          # workflow_dispatch overrides win; otherwise fall back to env block.
+          SLUG="${{ github.event.inputs.slug }}"
+          PHASE="${{ github.event.inputs.phase }}"
+          if [ -z "$SLUG" ]; then SLUG="${{ env.SLUG }}"; fi
+          if [ -z "$PHASE" ]; then PHASE="${{ env.PHASE }}"; fi
+          echo "slug=$SLUG"   >> "$GITHUB_OUTPUT"
+          echo "phase=$PHASE" >> "$GITHUB_OUTPUT"
+          echo "Pulling slug=$SLUG  phase=$PHASE"
+
+      - name: Pull DataGolf raw data
         env:
           DATAGOLF_API_KEY: ${{ secrets.DATAGOLF_API_KEY }}
         run: |
           npm run pull:event -- \
-            --slug "${{ inputs.slug }}" \
-            --phase "${{ inputs.phase }}"
+            --slug "${{ steps.cfg.outputs.slug }}" \
+            --phase "${{ steps.cfg.outputs.phase }}"
 
-      - name: Rebuild TS data file
+      - name: Rebuild round data TS file
         env:
           DATAGOLF_API_KEY: ${{ secrets.DATAGOLF_API_KEY }}
         run: |
           npm run build:event -- \
-            --slug "${{ inputs.slug }}" \
-            --phase "${{ inputs.phase }}" \
-            --course "${{ inputs.course }}" \
-            --out "${{ inputs.out_file }}"
+            --slug "${{ steps.cfg.outputs.slug }}" \
+            --phase "${{ steps.cfg.outputs.phase }}" \
+            --course "${{ env.COURSE }}" \
+            --out "${{ env.ROUND_DATA_OUT }}"
 
-      - name: Verify TypeScript build still passes
+      - name: Rebuild matchups TS file (for next-round picks)
+        run: |
+          npx tsx scripts/build-matchups.ts \
+            --slug "${{ steps.cfg.outputs.slug }}" \
+            --phase "${{ steps.cfg.outputs.phase }}" \
+            --market round_matchups \
+            --export "${{ env.MATCHUPS_EXPORT }}" \
+            --out "${{ env.MATCHUPS_OUT }}"
+
+      - name: Rebuild outrights TS file
+        run: |
+          npx tsx scripts/build-outrights.ts \
+            --slug "${{ steps.cfg.outputs.slug }}" \
+            --phase "${{ steps.cfg.outputs.phase }}" \
+            --export "${{ env.OUTRIGHTS_EXPORT }}" \
+            --out "${{ env.OUTRIGHTS_OUT }}"
+
+      - name: Rebuild skill estimates TS file
+        run: |
+          npx tsx scripts/build-skill-estimates.ts \
+            --slug "${{ steps.cfg.outputs.slug }}" \
+            --phase "${{ steps.cfg.outputs.phase }}" \
+            --export "${{ env.SKILL_EXPORT }}" \
+            --out "${{ env.SKILL_OUT }}"
+
+      - name: Verify build still passes
         run: npm run build
 
-      - name: Commit changes if any
+      - name: Commit + push if anything changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -83,6 +143,6 @@ jobs:
             echo "No changes to src/data — skipping commit."
           else
             git add src/data/
-            git commit -m "data: refresh ${{ inputs.slug }} (${{ inputs.phase }})"
+            git commit -m "data: auto-refresh ${{ steps.cfg.outputs.slug }} (${{ steps.cfg.outputs.phase }})"
             git push
           fi

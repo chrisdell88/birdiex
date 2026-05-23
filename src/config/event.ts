@@ -8,14 +8,14 @@
  * edits needed.
  */
 import type { PlayerData, MatchupOddsEntry, OutrightEntry, PlayerSkillEstimate } from '../types';
-import { roundOnlyData, cumulativeData, generatedAt } from '../data/cjCupR1Data';
+import { roundOnlyData, cumulativeData, generatedAt } from '../data/cjCupR2Data';
 // Pre-tournament rankings — used as a FROZEN snapshot for the Course Fit
 // Scatter chart. The chart is meant to be a pre-tournament reference, not
 // updated round-by-round. Stays pointed at the pre-tournament file even
 // once the main rankings advance.
 import { roundOnlyData as preTournamentRoundOnly } from '../data/cjCupPreData';
-import { r2MatchupOddsData } from '../data/cjCupR2Matchups';
-import { r2OutrightsData } from '../data/cjCupR2Outrights';
+import { r3MatchupOddsData } from '../data/cjCupR3Matchups';
+import { r3OutrightsData } from '../data/cjCupR3Outrights';
 import { skillEstimatesData } from '../data/cjCupSkillEstimates';
 import { recommendedFloorForPredictability, floorTierLabel } from '../lib/sizing';
 
@@ -63,13 +63,13 @@ export const currentEvent: CurrentEvent = {
   predictability: CRAIG_RANCH_PREDICTABILITY,
   recommendedFloor: recommendedFloorForPredictability(CRAIG_RANCH_PREDICTABILITY),
   recommendedFloorLabel: floorTierLabel(recommendedFloorForPredictability(CRAIG_RANCH_PREDICTABILITY)),
-  picksRound: 2,
-  headerBanner: 'R1 FINAL · ROUND 2 PICKS',
+  picksRound: 3,
+  headerBanner: 'R2 FINAL · ROUND 3 PICKS',
   dataUpdatedAt: generatedAt,
   rankingsRound: roundOnlyData,
   rankingsCumulative: cumulativeData,
   preTournamentRankings: preTournamentRoundOnly,
-  matchups: r2MatchupOddsData,
-  outrights: r2OutrightsData,
+  matchups: r3MatchupOddsData,
+  outrights: r3OutrightsData,
   skillEstimates: skillEstimatesData,
 };

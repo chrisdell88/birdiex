@@ -1,10 +1,10 @@
 # BirdieX — Project Memory
 
-**Last updated:** 2026-05-21
+**Last updated:** 2026-05-23
 **Repo:** https://github.com/chrisdell88/birdiex
 **Live:** https://birdiex.co
 **Project path:** ~/Projects/birdiex
-**Current event:** CJ Cup Byron Nelson 2026 at TPC Craig Ranch — pre-tournament. Recommended threshold: edge ≥ 2.45 (formula → snap-to-NEAREST tier).
+**Current event:** CJ Cup Byron Nelson 2026 at TPC Craig Ranch — **R2 final, R3 picks live**. Best Bet Matchup Score Threshold: edge ≥ 2.45 (formula → snap-to-NEAREST tier).
 **All-Time tracked record (venue-aware floor):** 135-70-21 · +85.30u · +28.4% ROI (Masters + PGA Champ).
 
 ## 🚨 READ THIS FIRST (any new Claude session)
@@ -78,11 +78,20 @@ Never change the formula without Chris's explicit approval.
 
 **Final X Score = L1 + L2 + L3 + L4**
 
-### Signal Thresholds
-- X Score ≥ 1.50: STRONGEST BUY / SELL
-- X Score ≥ 1.00: STRONG BUY / SELL
-- X Score ≥ 0.50: BUY / SELL
-- X Score > -0.50 to < 0.50: NEUTRAL (not HOLD — renamed)
+### Signal Thresholds (7-tier system — locked 2026-05-22)
+- X Score ≥ +1.00: STRONG BUY
+- X Score +0.50 to +0.99: BUY
+- X Score 0.00 to +0.49: SOFT BUY
+- X Score -0.50 to -0.01: NEUTRAL
+- X Score -1.00 to -0.50: SOFT FADE
+- X Score -1.50 to -1.00: FADE
+- X Score ≤ -1.50: STRONG FADE
+
+The old 9-tier system (STRONGEST BUY / LEAN BUY / LEAN FADE / STRONGEST FADE
+plus the legacy SELL family) is mapped to the new tiers at render time by
+`src/lib/signalDisplay.ts::normalizeSignal` — historical data files still
+load correctly. New classifiers in `scripts/lib/xscore.ts` emit only the
+7-tier names.
 
 ### Purity Rules (critical)
 - Buy is CONFLICTED if SG_OTT ≤ -0.45 OR SG_APP ≤ -0.45
@@ -381,7 +390,7 @@ Raw DataGolf JSON pulls from the Masters 2026 run: `masters_final_tracking.json`
       venue-specific adjustments — burying overall skill. Now Scheffler
       correctly ranks #1 at the CJ Cup pre-tournament (X = 2.97, STRONGEST
       BUY).
-- [x] **Predictability-aware matchup score threshold** — venue floor formula:
+- [x] **Predictability-aware Best Bet Matchup Score Threshold** — venue floor formula:
       `floor = clamp(3.05 − 14.62 × predictability, 0.95, 2.95)`, then snap to
       the **NEAREST** tier in {0.95, 1.45, 1.95, 2.45, 2.95}. Source of truth:
       `src/lib/sizing.ts` (`recommendedFloorForPredictability`). Backtest sweep in
@@ -397,18 +406,18 @@ Raw DataGolf JSON pulls from the Masters 2026 run: `masters_final_tracking.json`
       Currently: Masters/Augusta 0.144, PGA Champ/Aronimink 0.0413, CJ Cup/Craig Ranch 0.0373.
 - [x] **Tracked vs Scored separation** — every 0.95+ pick is scored internally for
       backtesting; only picks ≥ venue threshold appear in public "tracked" record.
-- [x] **CJ Cup Byron Nelson 2026 wired up** — pre-tournament data + R1 matchups
-      pulled, currentEvent flipped to `cjCupPreData` + `cjCupR1Matchups`. Floor
-      ★★★+ (edge ≥ 2.95) at TPC Craig Ranch pending real DataGolf Course Fit
-      coefficients (currently neutral placeholders in `scripts/lib/courses.ts`).
+- [x] **CJ Cup Byron Nelson 2026 wired up** — initial data wired in. Threshold
+      settled at **2.45 (★★+)** once snap-to-NEAREST tier replaced the earlier
+      snap-up logic (predictability 0.0373 → raw 2.50 → nearest tier 2.45).
+      As of 2026-05-23 we're at R3 picks (R2 final).
 - [x] **All-Time record now reflects venue-aware floor** — Masters unchanged
       (130-70-21, +74.80u, +26.2%); PGA Champ recut from 117 bets / -9.51u /
       -8.5% to 5-0-0 / +10.50u / +70.4%; All-Time: **135-70-21, +85.30u, +28.4% ROI**.
 - [x] **Shared all-time lib** — `src/lib/allTimeStats.ts` so MethodologyPage banner
       and ResultsPage hero render identical numbers.
 - [x] **Glossary section** + **Bet Sizing Ladder** — top of Methodology page.
-      Five terms defined: X-Score Edge, Star Rating, Matchup Score Threshold,
-      Course Predictability, Tracked vs Scored.
+      Current five terms (audited 2026-05-23): X-Score Edge, Star Rating,
+      Best Bet Matchup Score Threshold, Course Predictability, Best Bet vs Scored Bet.
 - [x] **Stars vs Threshold separation** — Stars = unit size of an individual bet
       (NOT a quality tier). Threshold = numeric edge cutoff (NO stars involved).
       Two independent concepts, glossary nails it. Badge dropped the tier hint.
@@ -440,7 +449,7 @@ Raw DataGolf JSON pulls from the Masters 2026 run: `masters_final_tracking.json`
       OTT R²=0.134.
 - [x] **PredictabilityBarChart** (Methodology) — tracked venues ranked.
       DataGolf has a similar all-Tour ranking; ours is differentiated by the
-      matchup score threshold overlay.
+      Best Bet Matchup Score Threshold overlay.
 - [x] **EquityCurve** (Results / All-Time top) — cumulative units across every
       tracked bet, Masters→PGA boundary marked, peak/trough/count footer.
 - [x] **CourseFitScatter** (Home / Rankings top) — MARQUEE chart. Player

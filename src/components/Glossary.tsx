@@ -35,7 +35,7 @@ const terms: Term[] = [
     term: 'Best Bet Matchup Score Threshold',
     short: 'A numeric edge cutoff. No stars involved.',
     detail:
-      'The threshold is the minimum X-Score Edge we require before treating a matchup as a Best Bet (the recommendations we officially track). It is a number (e.g. 2.45 at Aronimink, 2.95 at TPC Craig Ranch, 0.95 at Augusta). It is venue-specific: a less-predictable course gets a higher threshold. Picks below the threshold are still scored internally for backtesting, but are not Best Bets. Star ratings are unrelated to this — a ★★ bet may or may not clear a given threshold, depending on the venue.',
+      'The threshold is the minimum X-Score Edge we require before treating a matchup as a Best Bet (the recommendations we officially track). It snaps to one of five tiers — 0.95, 1.45, 1.95, 2.45, or 2.95 — chosen per venue from course predictability. Augusta (most predictable course on Tour) sits at 0.95; mid-range venues like TPC Craig Ranch and Aronimink sit at 2.45. Picks below the threshold are still scored internally for backtesting, but are not Best Bets. Star ratings are unrelated to this — a ★★ bet may or may not clear a given threshold, depending on the venue.',
   },
   {
     term: 'Course Predictability',

@@ -34,6 +34,37 @@ const SLUG = process.env.SLUG ?? 'cj-cup-byron-nelson-2026';
 const COURSE = process.env.COURSE ?? 'tpc-craig-ranch';
 const SLUG_PREFIX = process.env.SLUG_PREFIX ?? 'cjCup';
 
+// How long after a round transition we keep refreshing odds. ~6 hours
+// covers "30 min after round-done through midnight ET" for typical 5-7pm
+// ET round-ends without needing real timezone math.
+const ACTIVE_WINDOW_MS = 6 * 60 * 60 * 1000;
+
+const STATE_PATH = join(ROOT, 'src/data/auto-roll-state.json');
+
+interface AutoRollState {
+  /** ISO time of when auto-roll last recognized a round transition. */
+  lastTransitionAt: string | null;
+  /** The completed round number at that transition (0 = pre-tournament). */
+  lastCompletedRoundAtTransition: number;
+}
+
+async function readState(): Promise<AutoRollState> {
+  if (!existsSync(STATE_PATH)) {
+    return { lastTransitionAt: null, lastCompletedRoundAtTransition: -1 };
+  }
+  return JSON.parse(await readFile(STATE_PATH, 'utf8'));
+}
+
+async function writeState(state: AutoRollState): Promise<void> {
+  await writeFile(STATE_PATH, JSON.stringify(state, null, 2) + '\n');
+}
+
+function isInActiveWindow(state: AutoRollState): boolean {
+  if (!state.lastTransitionAt) return false;
+  const txAt = new Date(state.lastTransitionAt).getTime();
+  return Date.now() - txAt < ACTIVE_WINDOW_MS;
+}
+
 interface InPlayPlayer {
   dg_id: number;
   player_name: string;
@@ -194,36 +225,76 @@ async function main(): Promise<void> {
   // 1. Read current state
   const { picksRound } = await readEventConfig();
   const currentCompleted = picksRound - 1;
-  console.log(`Config: picksRound=${picksRound} (latest completed=R${currentCompleted})`);
+  const state = await readState();
+  console.log(`Config: picksRound=${picksRound} (R${currentCompleted} complete) | state: lastTx=${state.lastTransitionAt ?? '—'}`);
 
-  // 2. Pull fresh data for the current phase
+  // 2. Pull fresh DataGolf data for the current phase (cheap, gitignored)
   const currentPhase = currentCompleted === 0 ? 'pre' : `r${currentCompleted}`;
   exec(`npm run pull:event -- --slug ${SLUG} --phase ${currentPhase}`);
 
   // 3. Detect what the upstream says about round completion
   const players = await readInPlay(currentPhase);
   const detected = detectMaxCompletedRound(players);
-  console.log(`Detected max completed round from DataGolf: R${detected}`);
+  console.log(`DataGolf: max completed round = R${detected}`);
 
-  if (detected <= currentCompleted) {
-    console.log('No round transition. Refreshing current files in place.');
+  // 4. Decide what to do.
+  //
+  // Three gates control whether the site actually updates:
+  //   a) Auto-advance — DataGolf says a new round just finished
+  //   b) Manual sync — user manually advanced picksRound, state hasn't
+  //                    caught up yet. Treat as a transition.
+  //   c) Active window — within ACTIVE_WINDOW_MS of last transition →
+  //                      refresh odds in place.
+  //
+  // Anything else: exit no-op. NO files modified, NO commit, site stays
+  // frozen on what the user last saw.
+
+  const isAutoAdvance = detected > currentCompleted;
+  const isManualSync = !isAutoAdvance && state.lastCompletedRoundAtTransition < currentCompleted;
+
+  if (isAutoAdvance) {
+    if (detected >= 4) {
+      console.log('Tournament finished (R4 complete). Final refresh, then stop auto-roll.');
+      await refreshCurrentRound(picksRound);
+      state.lastTransitionAt = new Date().toISOString();
+      state.lastCompletedRoundAtTransition = 4;
+      await writeState(state);
+      return;
+    }
+    await doAutoAdvance(picksRound, detected);
+    state.lastTransitionAt = new Date().toISOString();
+    state.lastCompletedRoundAtTransition = detected;
+    await writeState(state);
+    return;
+  }
+
+  if (isManualSync) {
+    console.log(`Manual advance detected (state=R${state.lastCompletedRoundAtTransition}, config=R${currentCompleted}). Syncing state + entering active window.`);
+    state.lastTransitionAt = new Date().toISOString();
+    state.lastCompletedRoundAtTransition = currentCompleted;
+    await writeState(state);
     await refreshCurrentRound(picksRound);
     return;
   }
 
-  // 4. Round transition. If the tournament is over (R4 done), do a final
-  // refresh and stop.
-  if (detected >= 4) {
-    console.log('Tournament finished (R4 complete). Doing final refresh; auto-roll done.');
+  if (isInActiveWindow(state)) {
+    const ageMin = Math.round((Date.now() - new Date(state.lastTransitionAt!).getTime()) / 60000);
+    console.log(`In active window (${ageMin} min since transition). Refreshing odds in place.`);
     await refreshCurrentRound(picksRound);
     return;
   }
 
+  console.log('No round transition + not in active window. Site stays frozen. Exiting no-op.');
+}
+
+async function doAutoAdvance(currentPicks: number, detected: number): Promise<void> {
+  const currentCompleted = currentPicks - 1;
+  const currentPhase = currentCompleted === 0 ? 'pre' : `r${currentCompleted}`;
   const newCompleted = detected;
   const newPicks = newCompleted + 1;
-  console.log(`Advancing: picksRound ${picksRound} → ${newPicks}`);
+  console.log(`Advancing: picksRound ${currentPicks} → ${newPicks}`);
 
-  // Pull data for the newly-completed round if it differs
+  // Pull data for the newly-completed round if different phase
   const newPhase = `r${newCompleted}`;
   if (newPhase !== currentPhase) {
     exec(`npm run pull:event -- --slug ${SLUG} --phase ${newPhase}`);

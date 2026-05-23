@@ -68,6 +68,16 @@ export interface SimulationInput {
    * which IS the pre-R1 baseline since L1 = dg_skill pre-R1).
    */
   pre_r1_x_score: number;
+  /**
+   * Actual per-round scores from real life. Optional — present only for
+   * rounds that have already finished in the live tournament. Used by the
+   * single-tournament view to display locked rounds with their REAL scores
+   * (instead of placeholder zeros / cumulative-in-r1-slot).
+   */
+  r1_actual?: number;
+  r2_actual?: number;
+  r3_actual?: number;
+  r4_actual?: number;
 }
 
 /**
@@ -167,6 +177,10 @@ export function buildSimInputs(
       starting_score: p.score_to_par ?? 0,
       real_made_cut: realMadeCut,
       pre_r1_x_score: preR1X,
+      r1_actual: p.r1_score_to_par,
+      r2_actual: p.r2_score_to_par,
+      r3_actual: p.r3_score_to_par,
+      r4_actual: p.r4_score_to_par,
     });
   }
   return inputs;
@@ -280,33 +294,22 @@ export function simulateOneTournament(
   );
 
   const results: SingleTournamentResult[] = finishOrder.map((i, rank) => {
-    // Per-round display values. In current-leaderboard mode the real
-    // completed rounds aren't sampled, but the cumulative starting_score
-    // IS the player's actual progress through those rounds. We can only
-    // recover the per-round split for completedRounds === 1 (starting_score
-    // == R1 score). For completedRounds >= 2 we don't have the per-round
-    // split, so we surface the cumulative under R1 and 0 under the other
-    // locked slots until we wire per-round score data into the data files.
-    let r1Display: number;
-    let r2Display: number;
-    let r3Display: number | null;
-    if (lock && completedRounds === 1) {
-      r1Display = +inputs[i].starting_score.toFixed(1);
-      r2Display = +r2Score[i].toFixed(1);
-      r3Display = r3Score[i] == null ? null : +(r3Score[i] as number).toFixed(1);
-    } else if (lock && completedRounds === 2) {
-      r1Display = +inputs[i].starting_score.toFixed(1); // cumulative through R2
-      r2Display = 0;
-      r3Display = r3Score[i] == null ? null : +(r3Score[i] as number).toFixed(1);
-    } else if (lock && completedRounds === 3) {
-      r1Display = +inputs[i].starting_score.toFixed(1); // cumulative through R3
-      r2Display = 0;
-      r3Display = 0;
-    } else {
-      r1Display = +r1Score[i].toFixed(1);
-      r2Display = +r2Score[i].toFixed(1);
-      r3Display = r3Score[i] == null ? null : +(r3Score[i] as number).toFixed(1);
-    }
+    // Per-round display values. In current-leaderboard mode we display the
+    // REAL actual round scores for locked rounds (from PlayerData's
+    // r{N}_score_to_par populated by build-event.ts). Unlocked rounds show
+    // the simulated values. If actual data is missing we fall back to 0 so
+    // the columns still render — but build-event.ts populates these from
+    // live-stats-rN.json so missing should be rare.
+    const inp = inputs[i];
+    const r1Display = lock && completedRounds >= 1 && inp.r1_actual != null
+      ? +inp.r1_actual.toFixed(1)
+      : +r1Score[i].toFixed(1);
+    const r2Display = lock && completedRounds >= 2 && inp.r2_actual != null
+      ? +inp.r2_actual.toFixed(1)
+      : +r2Score[i].toFixed(1);
+    const r3Display = lock && completedRounds >= 3 && inp.r3_actual != null
+      ? +inp.r3_actual.toFixed(1)
+      : r3Score[i] == null ? null : +(r3Score[i] as number).toFixed(1);
 
     return {
       player_name: inputs[i].player_name,

@@ -19,6 +19,18 @@ export interface PlayerData {
   purity: Purity;
   dg_matched: boolean;
   rank: number;
+  /**
+   * Per-round actual score-to-par. Optional for backwards compat with
+   * historical data files generated before this field existed. Populated
+   * by build-event.ts from DataGolf's live-stats-rN.json files.
+   *
+   * Used by the simulator's Current Leaderboard mode to display the
+   * actual round scores for locked rounds (instead of 0).
+   */
+  r1_score_to_par?: number;
+  r2_score_to_par?: number;
+  r3_score_to_par?: number;
+  r4_score_to_par?: number;
 }
 
 /**

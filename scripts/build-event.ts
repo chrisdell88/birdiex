@@ -66,7 +66,14 @@ interface LiveStatsPlayer {
   dg_id: number;
   player_name: string;
   position: string;
-  total: number; // score to par
+  total: number; // cumulative score to par
+  /**
+   * In live-stats-rN.json, `round` is the player's score-to-par for THAT
+   * specific round (not the round number). In other files this field may
+   * be absent or carry a different meaning — only trust it when reading
+   * a per-round file.
+   */
+  round?: number;
   sg_ott: number;
   sg_app: number;
   sg_arg: number;
@@ -140,9 +147,29 @@ async function main() {
 
   console.log(`Round-only: ${roundPlayers.length} players. Cumulative: ${cumPlayers.length} players.\n`);
 
+  // Per-round score-to-par lookup. live-stats-rN.json has each player's
+  // `round` field = their score-to-par for THAT round. We index by dg_id
+  // (and player_name fallback) so the simulator can display actual round
+  // scores in Current Leaderboard mode instead of placeholder zeros.
+  const roundScoreMap = (live: LiveStatsFile | null) => {
+    const m = new Map<number, number>();
+    const n = new Map<string, number>();
+    for (const p of live?.live_stats ?? []) {
+      if (typeof p.round === 'number') {
+        if (p.dg_id) m.set(p.dg_id, p.round);
+        if (p.player_name) n.set(normalizeName(p.player_name), p.round);
+      }
+    }
+    return { byId: m, byName: n };
+  };
+  const r1Scores = roundScoreMap(liveR1);
+  const r2Scores = roundScoreMap(liveR2);
+  const r3Scores = roundScoreMap(liveR3);
+  const r4Scores = roundScoreMap(liveR4);
+
   // Build rows for both datasets
-  const roundOnlyRows = buildRows(roundPlayers, decompByDgId, decompByName, courseProfile);
-  const cumulativeRows = buildRows(cumPlayers, decompByDgId, decompByName, courseProfile);
+  const roundOnlyRows = buildRows(roundPlayers, decompByDgId, decompByName, courseProfile, {r1Scores, r2Scores, r3Scores, r4Scores});
+  const cumulativeRows = buildRows(cumPlayers, decompByDgId, decompByName, courseProfile, {r1Scores, r2Scores, r3Scores, r4Scores});
 
   // For pre-tournament: no live data — emit a single set sorted by L2+L3+L4 baseline
   const isPre = phase === 'pre' || (roundPlayers.length === 0 && cumPlayers.length === 0);
@@ -251,11 +278,32 @@ async function main() {
   console.log(`✅ Wrote src/data/${out}.ts (${finalRoundOnly.length} round / ${finalCumulative.length} cumulative)\n`);
 }
 
+type RoundScoreMap = { byId: Map<number, number>; byName: Map<string, number> };
+type RoundScoreMaps = {
+  r1Scores: RoundScoreMap;
+  r2Scores: RoundScoreMap;
+  r3Scores: RoundScoreMap;
+  r4Scores: RoundScoreMap;
+};
+
+function lookupRoundScore(map: RoundScoreMap, dgId: number, name: string): number | undefined {
+  if (dgId && map.byId.has(dgId)) return map.byId.get(dgId);
+  const key = normalizeName(name);
+  if (map.byName.has(key)) return map.byName.get(key);
+  return undefined;
+}
+
 function buildRows(
   livePlayers: LiveStatsPlayer[],
   decompByDgId: Map<number, DecompPlayer>,
   decompByName: Map<string, DecompPlayer>,
-  course: typeof DEFAULT_LOW_PREDICTABILITY_COURSE
+  course: typeof DEFAULT_LOW_PREDICTABILITY_COURSE,
+  roundScores: RoundScoreMaps = {
+    r1Scores: { byId: new Map(), byName: new Map() },
+    r2Scores: { byId: new Map(), byName: new Map() },
+    r3Scores: { byId: new Map(), byName: new Map() },
+    r4Scores: { byId: new Map(), byName: new Map() },
+  },
 ) {
   const rows = livePlayers.map((p) => {
     const dec = decompByDgId.get(p.dg_id) ?? decompByName.get(normalizeName(p.player_name));
@@ -274,6 +322,10 @@ function buildRows(
     const breakdown = computeXScore(sg, decomp, course);
     const signal = computeSignal(breakdown.x_score);
     const purity = computePurity(signal, sg);
+    const r1stp = lookupRoundScore(roundScores.r1Scores, p.dg_id, p.player_name);
+    const r2stp = lookupRoundScore(roundScores.r2Scores, p.dg_id, p.player_name);
+    const r3stp = lookupRoundScore(roundScores.r3Scores, p.dg_id, p.player_name);
+    const r4stp = lookupRoundScore(roundScores.r4Scores, p.dg_id, p.player_name);
     return {
       player_name: p.player_name,
       position: p.position ?? '--',
@@ -293,6 +345,10 @@ function buildRows(
       purity,
       dg_matched: !!dec,
       rank: 0,
+      ...(r1stp != null ? { r1_score_to_par: r1stp } : {}),
+      ...(r2stp != null ? { r2_score_to_par: r2stp } : {}),
+      ...(r3stp != null ? { r3_score_to_par: r3stp } : {}),
+      ...(r4stp != null ? { r4_score_to_par: r4stp } : {}),
     };
   });
   rows.sort((a, b) => b.x_score - a.x_score);

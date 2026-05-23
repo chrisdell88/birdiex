@@ -20,9 +20,11 @@ name: DataGolf pull (auto-update event data)
 
 on:
   schedule:
-    # Every 30 minutes. GitHub cron is best-effort — actual firing may drift
-    # by a few minutes during high load. That's fine for our use case.
-    - cron: '*/30 * * * *'
+    # Once per hour from 6pm to 12am ET (EDT = UTC-4 → 22:00, 23:00, 00:00,
+    # 01:00, 02:00, 03:00, 04:00 UTC). This catches round-end states on the
+    # PGA Tour (rounds typically wrap by 6-7pm ET). Note: during EST (Nov-
+    # Mar), shift these UTC hours by +1 (23-23,0-5).
+    - cron: '0 22,23,0,1,2,3,4 * * *'
   workflow_dispatch:
     inputs:
       slug:

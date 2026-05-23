@@ -288,34 +288,26 @@ async function main(): Promise<void> {
       return;
     }
     await doAutoAdvance(picksRound, detected);
+    const prevBb = state.lastBestBetCount;
     state.lastTransitionAt = new Date().toISOString();
     state.lastCompletedRoundAtTransition = detected;
-    const newBestBets = countBestBets();
-    state.lastBestBetCount = newBestBets;
+    state.lastBestBetCount = countBestBets();
     await writeState(state);
-    // Fire round-picks notification ONLY if there are Best Bets to announce.
-    if (newBestBets > 0) {
-      sendNotifyOnTransition(detected + 1);
-    } else {
-      console.log(`Round advanced but 0 Best Bets at the venue threshold. No notification.`);
-    }
+    // notify.ts will gate on Best Bet count internally — safe to call.
+    callNotify(detected + 1, 'round-picks', prevBb);
     return;
   }
 
   if (isManualSync) {
     console.log(`Manual advance detected (state=R${state.lastCompletedRoundAtTransition}, config=R${currentCompleted}). Syncing state + entering active window.`);
+    const prevBb = state.lastBestBetCount;
     state.lastTransitionAt = new Date().toISOString();
     state.lastCompletedRoundAtTransition = currentCompleted;
     await writeState(state);
     await refreshCurrentRound(picksRound);
-    const newBestBets = countBestBets();
-    state.lastBestBetCount = newBestBets;
+    state.lastBestBetCount = countBestBets();
     await writeState(state);
-    if (newBestBets > 0) {
-      sendNotifyOnTransition(picksRound);
-    } else {
-      console.log(`Manual sync recorded but 0 Best Bets. No notification.`);
-    }
+    callNotify(picksRound, 'round-picks', prevBb);
     return;
   }
 
@@ -325,42 +317,23 @@ async function main(): Promise<void> {
     const prevCount = state.lastBestBetCount;
     await refreshCurrentRound(picksRound);
     const newCount = countBestBets();
-    if (newCount > prevCount) {
-      const delta = newCount - prevCount;
-      console.log(`New Best Bets: ${prevCount} → ${newCount} (+${delta}). Sending Discord + email.`);
-      state.lastBestBetCount = newCount;
-      await writeState(state);
-      sendNotifyOnNewBets(picksRound, delta);
-    } else {
-      state.lastBestBetCount = newCount;
-      await writeState(state);
-      console.log(`Best Bet count: ${prevCount} → ${newCount}. No notification.`);
-    }
+    state.lastBestBetCount = newCount;
+    await writeState(state);
+    callNotify(picksRound, 'new-bets', prevCount);
     return;
   }
 
   console.log('No round transition + not in active window. Site stays frozen. Exiting no-op.');
 }
 
-function sendNotifyOnTransition(newPicksRound: number): void {
-  // Discord + email blast for a brand-new round of picks.
+function callNotify(picksRound: number, mode: 'round-picks' | 'new-bets', previousBbCount: number): void {
+  // notify.ts enforces the Best Bet gate internally. Just invoke it —
+  // it will silently skip if there are no Best Bets / count didn't grow.
   try {
-    exec(`npx tsx scripts/notify.ts --round ${newPicksRound} --mode round-picks`);
-    console.log(`✓ notify (round-picks) sent for picksRound=${newPicksRound}`);
+    exec(`npx tsx scripts/notify.ts --round ${picksRound} --mode ${mode} --previous-bb-count ${previousBbCount}`);
   } catch (e) {
     // Notification failure shouldn't break the auto-roll itself.
     console.error(`✖ notify failed: ${(e as Error).message}`);
-  }
-}
-
-function sendNotifyOnNewBets(picksRound: number, newBetsAdded: number): void {
-  // Discord-only ping when sportsbooks post additional matchups within the
-  // active window. No email blast (would be spammy).
-  try {
-    exec(`npx tsx scripts/notify.ts --round ${picksRound} --mode new-bets --new-bets ${newBetsAdded}`);
-    console.log(`✓ notify (new-bets) sent — ${newBetsAdded} new matchup(s) for R${picksRound}`);
-  } catch (e) {
-    console.error(`✖ notify (new-bets) failed: ${(e as Error).message}`);
   }
 }
 

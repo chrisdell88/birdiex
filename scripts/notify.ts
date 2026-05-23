@@ -135,16 +135,39 @@ async function postDiscord(mode: NotifyMode, eventName: string, round: number, n
   console.log('  ✓ posted to Discord');
 }
 
+/**
+ * Compute the current Best Bet count INSIDE notify so the gate cannot be
+ * bypassed by a buggy caller. Best Bet = matchup whose X-Score edge
+ * (cumulative — same data the matchups page shows) ≥ venue floor.
+ */
+function computeBestBetCount(currentEvent: {
+  rankingsCumulative: { player_name: string; x_score: number }[];
+  matchups: { p1_player_name: string; p2_player_name: string }[];
+  recommendedFloor: number;
+}): number {
+  const map = new Map<string, number>();
+  for (const p of currentEvent.rankingsCumulative) map.set(p.player_name, p.x_score);
+  let n = 0;
+  for (const m of currentEvent.matchups) {
+    const x1 = map.get(m.p1_player_name);
+    const x2 = map.get(m.p2_player_name);
+    if (x1 == null || x2 == null) continue;
+    if (Math.abs(x1 - x2) >= currentEvent.recommendedFloor) n++;
+  }
+  return n;
+}
+
 async function main() {
   const argv = process.argv.slice(2);
   const dryRun = argv.includes('--dry-run');
+  const forceFlag = argv.includes('--force');
   const roundFlag = argv.indexOf('--round');
   const modeFlag = argv.indexOf('--mode');
-  const newBetsFlag = argv.indexOf('--new-bets');
+  const prevBbFlag = argv.indexOf('--previous-bb-count');
 
   const mode: NotifyMode =
     modeFlag !== -1 && argv[modeFlag + 1] === 'new-bets' ? 'new-bets' : 'round-picks';
-  const newBetsAdded = newBetsFlag !== -1 ? Number(argv[newBetsFlag + 1]) : 0;
+  const previousBbCount = prevBbFlag !== -1 ? Number(argv[prevBbFlag + 1]) : 0;
 
   // Pull event name + round from the single event config.
   const { currentEvent } = await import(
@@ -156,11 +179,27 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`\n▶ BirdieX alerts — ${currentEvent.name}, Round ${round} [${mode}]${dryRun ? '  (DRY RUN)' : ''}\n`);
+  // ─── BEST BET GATE ───────────────────────────────────────────────
+  // Notifications are STRICTLY Best Bet announcements per Chris. This
+  // gate lives inside notify.ts (not the caller) so no future caller
+  // can bypass it. Override only with --force (use sparingly).
+  const currentBb = computeBestBetCount(currentEvent);
+  const newBb = Math.max(0, currentBb - previousBbCount);
 
-  // Both Discord and email fire in every mode — notifications are
-  // strictly Best Bet announcements per Chris. Don't ping the channels
-  // for raw matchup/odds volume.
+  if (!forceFlag) {
+    if (mode === 'round-picks' && currentBb === 0) {
+      console.log(`\n• No Best Bets at venue threshold (≥ ${currentEvent.recommendedFloor}). Skipping notification.\n`);
+      return;
+    }
+    if (mode === 'new-bets' && currentBb <= previousBbCount) {
+      console.log(`\n• Best Bet count did not increase (prev=${previousBbCount}, current=${currentBb}). Skipping notification.\n`);
+      return;
+    }
+  }
+
+  console.log(`\n▶ BirdieX alerts — ${currentEvent.name}, Round ${round} [${mode}]  bb=${currentBb}${mode === 'new-bets' ? ` (+${newBb})` : ''}${dryRun ? '  (DRY RUN)' : ''}${forceFlag ? '  (FORCED)' : ''}\n`);
+
+  // Discord + email always fire together when the gate passes.
   const supabase = createClient(
     requireEnv('SUPABASE_URL'),
     requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
@@ -177,7 +216,7 @@ async function main() {
   console.log(`  ${subs.length} active subscriber(s)`);
   await sendEmails(subs, currentEvent.name, round, dryRun);
 
-  await postDiscord(mode, currentEvent.name, round, newBetsAdded, dryRun);
+  await postDiscord(mode, currentEvent.name, round, newBb, dryRun);
 
   console.log(`\n✅ Alerts ${dryRun ? 'dry-run' : 'sent'}.\n`);
 }

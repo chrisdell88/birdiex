@@ -4,6 +4,19 @@ Read `MEMORY.md` first for project context, model methodology, results history, 
 
 ---
 
+## 📣 Notifications — Hard Rules
+
+1. **Discord + email notifications fire ONLY for Best Bets.** Never for raw matchups posted by sportsbooks, raw odds movements, or anything else.
+2. **Best Bet = matchup whose X-Score edge (cumulative) ≥ venue `recommendedFloor`.** Use `currentEvent.rankingsCumulative`, NOT `rankingsRound`. The matchups page displays cumulative — notifications must match.
+3. **Discord + email always fire TOGETHER.** Never one without the other. If one channel breaks, log + continue, don't skip the other.
+4. **The Best Bet gate lives INSIDE `scripts/notify.ts`** (`computeBestBetCount`). Never trust callers to gate correctly. The script silently exits if:
+   - `--mode round-picks` and current Best Bet count is 0
+   - `--mode new-bets` and current count did not exceed `--previous-bb-count`
+5. **`--force` bypasses the gate.** Only use it when explicitly told by Chris (e.g., backfilling a missed announcement). Default off.
+6. **If you change notification logic**, verify the gate still holds. A misfire pings real users — there's no undo.
+
+---
+
 ## 🔒 Secrets — Hard Rules
 
 1. **Never commit API keys, tokens, or credentials.** No exceptions.

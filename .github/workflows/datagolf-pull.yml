@@ -54,6 +54,15 @@ jobs:
       - name: Run auto-roll
         env:
           DATAGOLF_API_KEY: ${{ secrets.DATAGOLF_API_KEY }}
+          # Secrets used by scripts/notify.ts when auto-roll fires on a
+          # transition. Missing secrets cause that step to log + skip
+          # gracefully — auto-roll itself doesn't fail.
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM: ${{ secrets.RESEND_FROM }}
+          SITE_URL: ${{ secrets.SITE_URL }}
           SLUG: ${{ env.SLUG }}
           COURSE: ${{ env.COURSE }}
           SLUG_PREFIX: ${{ env.SLUG_PREFIX }}

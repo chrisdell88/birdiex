@@ -274,6 +274,7 @@ async function main(): Promise<void> {
     state.lastCompletedRoundAtTransition = currentCompleted;
     await writeState(state);
     await refreshCurrentRound(picksRound);
+    sendNotifyOnTransition(picksRound);
     return;
   }
 
@@ -285,6 +286,19 @@ async function main(): Promise<void> {
   }
 
   console.log('No round transition + not in active window. Site stays frozen. Exiting no-op.');
+}
+
+function sendNotifyOnTransition(newPicksRound: number): void {
+  // Discord + email subscribers. Only fires on actual transitions, never
+  // on in-window odds refreshes. Env vars (DISCORD_WEBHOOK_URL,
+  // SUPABASE_*, RESEND_*) must be set in GitHub Actions secrets.
+  try {
+    exec(`npx tsx scripts/notify.ts --round ${newPicksRound}`);
+    console.log(`✓ notify sent for picksRound=${newPicksRound}`);
+  } catch (e) {
+    // Notification failure shouldn't break the auto-roll itself. Log + move on.
+    console.error(`✖ notify failed: ${(e as Error).message}`);
+  }
 }
 
 async function doAutoAdvance(currentPicks: number, detected: number): Promise<void> {
@@ -329,6 +343,9 @@ async function doAutoAdvance(currentPicks: number, detected: number): Promise<vo
     outrightsOut,
     outrightsExport,
   });
+
+  // Discord + email blast for the new round's picks.
+  sendNotifyOnTransition(newPicks);
 
   console.log(`Advance complete. Next cron will pull phase=${newPhase}.`);
 }

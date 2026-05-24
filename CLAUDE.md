@@ -4,6 +4,34 @@ Read `MEMORY.md` first for project context, model methodology, results history, 
 
 ---
 
+## 🔁 Round-Transition Checklist — EVERY surface that must update per round
+
+When a round finishes (auto-roll or manual), EVERY one of these must be
+refreshed. Skip any single item and the public site goes stale. Source of
+truth: `scripts/auto-roll.ts::doAutoAdvance` — it executes all of these.
+If you find a surface missing, add it here AND to that function.
+
+| # | Surface | How |
+|---|---------|------|
+| 1 | Round data file (cjCup<R{N}>Data.ts)         | `build:event` |
+| 2 | Next-round matchups (cjCup<R{N+1}>Matchups)  | `build-matchups.ts` |
+| 3 | Outrights (cjCup<R{N+1}>Outrights)           | `build-outrights.ts` |
+| 4 | Skill estimates (cjCupSkillEstimates)        | `build-skill-estimates.ts` |
+| 5 | Graded results (cjCup<R{N}>Results.ts)       | `grade-round.ts` ← gate to Best Bets at venue floor |
+| 6 | Ticker (src/data/ticker.ts)                  | `build-ticker.ts` ← tee times + scores for the new round |
+| 7 | event.ts config (picksRound, banner, imports)| `patchEventConfig` |
+| 8 | auto-roll state (lastTransitionAt, BB count) | state file write |
+| 9 | Notify Discord + email                        | `notify.ts` ← gated on Best Bets only |
+
+**If a surface is hardcoded** (like the old CJCupView showing "Awaiting Round 1"
+forever), it must be made data-reactive so the round transition propagates.
+
+**Before declaring a transition done**, verify the deployed site at all
+relevant pages: Rankings, Matchups, Odds, Results, ticker visible across.
+Just shipping data files is not enough.
+
+---
+
 ## 📣 Best Bets — Hard Rules (applies to ALL public reporting)
 
 **Best Bet = matchup whose X-Score edge ≥ venue `recommendedFloor`, computed

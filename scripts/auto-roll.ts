@@ -305,6 +305,22 @@ function callNotify(picksRound: number, mode: 'round-picks' | 'new-bets', previo
   }
 }
 
+/**
+ * Round-transition checklist. EVERY surface that must update when a
+ * round completes. Adding a surface? Add it here AND in CLAUDE.md.
+ *
+ *   1. Round data file        — cjCup<R{N}>Data.ts via build:event
+ *   2. Matchups for next round — cjCup<R{N+1}>Matchups.ts
+ *   3. Outrights                — cjCup<R{N+1}>Outrights.ts
+ *   4. Skill estimates          — cjCupSkillEstimates.ts (post-cut field shrinks)
+ *   5. Graded results           — cjCup<R{N}>Results.ts via grade-round
+ *   6. Ticker                   — src/data/ticker.ts (tee times + scores)
+ *   7. event.ts config          — picksRound, banner, imports
+ *   8. auto-roll-state.json     — lastTransitionAt, lastBestBetCount
+ *   9. Notify Discord + email   — gated on Best Bets via scripts/notify.ts
+ *
+ * If you skip any of these the public site goes stale. No exceptions.
+ */
 async function doAutoAdvance(currentPicks: number, detected: number): Promise<void> {
   const currentCompleted = currentPicks - 1;
   const currentPhase = currentCompleted === 0 ? 'pre' : `r${currentCompleted}`;
@@ -328,6 +344,27 @@ async function doAutoAdvance(currentPicks: number, detected: number): Promise<vo
   exec(`npx tsx scripts/build-matchups.ts --slug ${SLUG} --phase ${newPhase} --market round_matchups --export ${matchupsExport} --out ${matchupsOut}`);
   exec(`npx tsx scripts/build-outrights.ts --slug ${SLUG} --phase ${newPhase} --export ${outrightsExport} --out ${outrightsOut}`);
   exec(`npx tsx scripts/build-skill-estimates.ts --slug ${SLUG} --phase ${newPhase} --export skillEstimatesData --out ${SLUG_PREFIX}SkillEstimates`);
+
+  // Step 5: grade the round that just finished (Best Bets land in Results page).
+  // picksPhase is the phase whose X scores drove the picks (= previous phase),
+  // xscores file is the round data file from that previous phase.
+  const prevCompleted = newCompleted - 1; // round that produced the picks for what just ran
+  const picksPhase = prevCompleted === 0 ? 'pre' : `r${prevCompleted}`;
+  const xscoresFile = prevCompleted === 0 ? `${SLUG_PREFIX}PreData` : `${SLUG_PREFIX}R${prevCompleted}Data`;
+  try {
+    exec(`npx tsx scripts/grade-round.ts --slug ${SLUG} --round ${newCompleted} --picks-phase ${picksPhase} --results-phase ${newPhase} --xscores ${xscoresFile} --out ${SLUG_PREFIX}R${newCompleted}Results`);
+  } catch (e) {
+    // Grading is best-effort — bad odds data or skipped matchups shouldn't
+    // block the advance. Log + continue.
+    console.error(`✖ grade-round failed for R${newCompleted}: ${(e as Error).message}`);
+  }
+
+  // Step 6: rebuild the ticker for the new picks round.
+  try {
+    exec(`npx tsx scripts/build-ticker.ts --slug ${SLUG} --phase ${newPhase} --round ${newPicks}`);
+  } catch (e) {
+    console.error(`✖ build-ticker failed: ${(e as Error).message}`);
+  }
 
   await patchEventConfig({
     picksRound: newPicks,

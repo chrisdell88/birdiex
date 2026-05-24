@@ -624,51 +624,52 @@ export default function MatchupsView(_: MatchupsViewProps) {
               key={idx}
               className={`bg-[#0a0a0a] border border-[#262626] border-l-4 ${CARD_BORDER} rounded-lg p-4 hover:bg-[#111111] transition-colors`}
             >
-              {/* Top meta row: dataset chip + double-signal flag */}
-              {(dsLabel || m.doubleSignal) && (
-                <div className="flex items-center gap-2 mb-2 flex-wrap">
-                  {dsLabel && (
-                    <span className="text-[9px] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif] bg-[#1a1a1a] text-[#a1a1aa] rounded-full px-2 py-0.5">
-                      {dsLabel}
-                    </span>
-                  )}
-                  {m.doubleSignal && (
-                    <span
-                      className="text-[9px] uppercase tracking-wider font-bold font-['Inter',system-ui,sans-serif] bg-[#22c55e]/15 text-[#22c55e] border border-[#22c55e]/40 rounded-full px-2 py-0.5"
-                      title="Both round-only AND cumulative datasets flagged this matchup — the model's two views agree."
-                    >
-                      Double Signal
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {/* Header row */}
-              <div className="flex items-center justify-between mb-3">
-                {(() => {
-                  const stars = starsForEdge(m.matchupScore);
-                  return (
-                    <span
-                      className={`text-[#22c55e] text-sm tracking-tight ${stars === 5 ? 'star-glow' : ''}`}
-                      title={`${stars}-star play`}
-                      aria-label={`${stars} star play`}
-                    >
-                      {'★'.repeat(stars)}
-                    </span>
-                  );
-                })()}
-                <span className="text-xs text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">
-                  Edge:{' '}
-                  <span className="text-[#22c55e] font-bold font-['JetBrains_Mono','SF_Mono',monospace]">
-                    {m.matchupScore.toFixed(2)}
-                  </span>
-                </span>
-              </div>
+              {/* Top row: matchup score + stars (left) · double signal · dataset chip (right) — all one line */}
+              {(() => {
+                const stars = starsForEdge(m.matchupScore);
+                return (
+                  <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-medium font-['Inter',system-ui,sans-serif]">
+                        Matchup Score
+                      </span>
+                      <span className="text-sm font-bold font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">
+                        {m.matchupScore.toFixed(2)}
+                      </span>
+                      <span
+                        className={`text-[#22c55e] text-sm tracking-tight ${stars === 5 ? 'star-glow' : ''}`}
+                        title={`${stars}-star play`}
+                        aria-label={`${stars} star play`}
+                      >
+                        {'★'.repeat(stars)}
+                      </span>
+                      {m.doubleSignal && (
+                        <span
+                          className="text-[9px] uppercase tracking-wider font-bold font-['Inter',system-ui,sans-serif] bg-[#22c55e]/15 text-[#22c55e] border border-[#22c55e]/40 rounded-full px-2 py-0.5"
+                          title="Both round-only AND cumulative datasets flagged this matchup — the model's two views agree."
+                        >
+                          Double Signal
+                        </span>
+                      )}
+                    </div>
+                    {dsLabel && (
+                      <span className="text-[9px] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif] bg-[#1a1a1a] text-[#a1a1aa] rounded-full px-2 py-0.5">
+                        {dsLabel}
+                      </span>
+                    )}
+                  </div>
+                );
+              })()}
 
               <div className="border-t border-[#1a1a1a] mb-3" />
 
-              {/* Players row */}
-              <div className="flex items-center justify-between gap-4">
+              {/* Players row.
+                  Both sides use the SAME vertical stack order:
+                    1. Name
+                    2. X Score (own line — never inline with signal)
+                    3. SignalBadge + PurityIcon (own line — same order each side)
+                  Only difference is text alignment (left vs right). */}
+              <div className="flex items-start justify-between gap-4">
                 {/* Pick (left) */}
                 <div className="flex-1 flex items-start gap-2 min-w-0">
                   <Avatar playerName={m.pick.player_name} size="sm" />
@@ -678,25 +679,23 @@ export default function MatchupsView(_: MatchupsViewProps) {
                         {m.pick.player_name}
                       </ClickablePlayerName>
                     </div>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <span className="text-xs font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">
-                        X Score: {fmtXScore(m.pick.x_score)}
-                      </span>
-                      {!hideSignal && (
-                        <>
-                          <SignalBadge signal={m.pick.signal} compact conflicted={m.pick.purity === 'CONFLICTED'} />
-                          <PurityIcon player={m.pick} />
-                        </>
-                      )}
+                    <div className="mt-1 text-xs font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">
+                      X Score: {fmtXScore(m.pick.x_score)}
                     </div>
+                    {!hideSignal && (
+                      <div className="mt-1 flex items-center gap-2">
+                        <SignalBadge signal={m.pick.signal} compact conflicted={m.pick.purity === 'CONFLICTED'} />
+                        <PurityIcon player={m.pick} />
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="text-[#d4d4d4] text-xs font-bold font-['Inter',system-ui,sans-serif] shrink-0">
+                <div className="text-[#d4d4d4] text-xs font-bold font-['Inter',system-ui,sans-serif] shrink-0 mt-1">
                   vs
                 </div>
 
-                {/* Opponent (right) */}
+                {/* Opponent (right) — mirrored container, identical stack order inside */}
                 <div className="flex-1 flex items-start gap-2 justify-end min-w-0">
                   <div className="min-w-0 text-right">
                     <div className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif] leading-snug">
@@ -704,17 +703,15 @@ export default function MatchupsView(_: MatchupsViewProps) {
                         {m.opponent.player_name}
                       </ClickablePlayerName>
                     </div>
-                    <div className="flex items-center justify-end gap-2 mt-1 flex-wrap">
-                      {!hideSignal && (
-                        <>
-                          <PurityIcon player={m.opponent} />
-                          <SignalBadge signal={m.opponent.signal} compact conflicted={m.opponent.purity === 'CONFLICTED'} />
-                        </>
-                      )}
-                      <span className="text-xs font-['JetBrains_Mono','SF_Mono',monospace] text-red-400">
-                        X Score: {fmtXScore(m.opponent.x_score)}
-                      </span>
+                    <div className="mt-1 text-xs font-['JetBrains_Mono','SF_Mono',monospace] text-red-400">
+                      X Score: {fmtXScore(m.opponent.x_score)}
                     </div>
+                    {!hideSignal && (
+                      <div className="mt-1 flex items-center justify-end gap-2">
+                        <SignalBadge signal={m.opponent.signal} compact conflicted={m.opponent.purity === 'CONFLICTED'} />
+                        <PurityIcon player={m.opponent} />
+                      </div>
+                    )}
                   </div>
                   <Avatar playerName={m.opponent.player_name} size="sm" />
                 </div>

@@ -583,7 +583,6 @@ export default function MatchupsView(_: MatchupsViewProps) {
                 className={`px-3 py-1 text-[10px] uppercase tracking-wider font-medium rounded-full font-['Inter',system-ui,sans-serif] cursor-pointer transition-colors ${
                   !showAll ? 'bg-[#22c55e] text-[#0a0a0a]' : 'text-[#d4d4d4] hover:text-white'
                 }`}
-                title={`Best Bets — matchups at or above the Best Bet Matchup Score Threshold (≥ ${currentEvent.recommendedFloor.toFixed(2)}). If none, the next tier down (Leans) is shown.`}
               >
                 Best Bets
               </button>
@@ -593,7 +592,6 @@ export default function MatchupsView(_: MatchupsViewProps) {
                 className={`px-3 py-1 text-[10px] uppercase tracking-wider font-medium rounded-full font-['Inter',system-ui,sans-serif] cursor-pointer transition-colors ${
                   showAll ? 'bg-[#22c55e] text-[#0a0a0a]' : 'text-[#d4d4d4] hover:text-white'
                 }`}
-                title="All model picks (edge ≥ 0.95) — includes below-threshold picks for full transparency"
               >
                 All Matchups
               </button>

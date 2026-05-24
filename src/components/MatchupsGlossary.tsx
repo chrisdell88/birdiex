@@ -7,6 +7,8 @@
  *   - Best Bet Matchup Score Threshold
  *   - Cumulative Data (added 2026-05-24)
  *   - Round-Only Data (added 2026-05-24)
+ *   - Conflicted Signal (added 2026-05-24)
+ *   - All seven signal tiers (added 2026-05-24)
  *
  * Do NOT add new entries to this file without asking Chris first.
  * Removed (do not re-add without explicit approval): All Matchups,
@@ -40,6 +42,38 @@ const TERMS: Term[] = [
   {
     label: 'Round-Only Data',
     def: 'X Scores computed from a player\'s strokes-gained in JUST the most-recently completed round. The "what just happened" view — useful when a player heats up or cools off mid-event.',
+  },
+  {
+    label: 'Conflicted Signal',
+    def: 'The yellow warning icon next to a signal badge. Means the player\'s ball-striking (OTT or APP) contradicts the signal direction — e.g. a STRONG BUY where the player is gaining a lot off-the-tee but losing strokes on approach. Proceed with caution.',
+  },
+  {
+    label: 'STRONG BUY',
+    def: 'X Score ≥ +1.00. Highest-conviction "expect to improve" pick.',
+  },
+  {
+    label: 'BUY',
+    def: 'X Score +0.50 to +0.99. Moderate-conviction improvement pick.',
+  },
+  {
+    label: 'SOFT BUY',
+    def: 'X Score 0.00 to +0.49. Slight lean toward improvement.',
+  },
+  {
+    label: 'NEUTRAL',
+    def: 'X Score between -0.50 and 0.00. No directional opinion.',
+  },
+  {
+    label: 'SOFT FADE',
+    def: 'X Score -1.00 to -0.50. Slight lean toward regression.',
+  },
+  {
+    label: 'FADE',
+    def: 'X Score -1.50 to -1.00. Moderate-conviction regression pick.',
+  },
+  {
+    label: 'STRONG FADE',
+    def: 'X Score ≤ -1.50. Highest-conviction "expect to regress" pick.',
   },
 ];
 

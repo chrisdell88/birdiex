@@ -5,7 +5,6 @@ import { currentEvent } from '../config/event';
 import SignalBadge from './SignalBadge';
 import PlayerSearch from './PlayerSearch';
 import Avatar from './Avatar';
-import DataSetToggle from './DataSetToggle';
 import RecommendedFloorBadge from './RecommendedFloorBadge';
 import { starsForEdge } from '../lib/sizing';
 import { isBuy, isFade } from '../lib/signalDisplay';
@@ -342,13 +341,55 @@ function MatchupDefinitionsModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-export default function MatchupsView({ data, dataSet, onDataSetChange }: MatchupsViewProps) {
+export default function MatchupsView(_: MatchupsViewProps) {
+  // Props are kept for API parity with the rest of the app but no longer
+  // used here — we read both datasets directly from currentEvent and
+  // combine them, with each card labelled by source.
+  void _;
   const [sortBy, setSortBy] = useState<MatchupSort>('edge-high');
   const [showDefinitions, setShowDefinitions] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const isPreTournament = currentEvent.picksRound <= 1;
 
-  const rawMatchups = useMemo(() => generateMatchups(data, currentEvent.matchups), [data]);
+  // Build matchups for BOTH datasets and combine. Cards display a chip
+  // for the dataset they came from; duplicates (same pick+opp in both)
+  // get a 'DOUBLE SIGNAL' marker so the user can see when round-only and
+  // cumulative agree. Tracking treats each as its own bet — when both
+  // signals fire, the pick is implicitly bet 2x (per Chris's rule).
+  //
+  // Pre-tournament + R2 picks: round-only == cumulative (only one round of
+  // data exists), so we skip the duplicate combine and just show one set.
+  const datasetsIdentical = currentEvent.picksRound <= 2;
+
+  const roundMatchups = useMemo(
+    () => generateMatchups(currentEvent.rankingsRound, currentEvent.matchups),
+    [],
+  );
+  const cumulativeMatchups = useMemo(
+    () => generateMatchups(currentEvent.rankingsCumulative, currentEvent.matchups),
+    [],
+  );
+
+  const rawMatchups = useMemo(() => {
+    if (datasetsIdentical) {
+      return cumulativeMatchups.map((m) => ({
+        ...m,
+        dataSet: 'cumulative' as const,
+        doubleSignal: false,
+      }));
+    }
+    const keyOf = (m: Matchup) => `${m.pick.player_name}::${m.opponent.player_name}`;
+    const roundKeys = new Set(roundMatchups.map(keyOf));
+    const cumKeys = new Set(cumulativeMatchups.map(keyOf));
+    const tagged: Array<Matchup & { dataSet: 'round-only' | 'cumulative'; doubleSignal: boolean }> = [];
+    for (const m of roundMatchups) {
+      tagged.push({ ...m, dataSet: 'round-only', doubleSignal: cumKeys.has(keyOf(m)) });
+    }
+    for (const m of cumulativeMatchups) {
+      tagged.push({ ...m, dataSet: 'cumulative', doubleSignal: roundKeys.has(keyOf(m)) });
+    }
+    return tagged;
+  }, [roundMatchups, cumulativeMatchups, datasetsIdentical]);
 
   const floor = currentEvent.recommendedFloor;
 
@@ -416,11 +457,6 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
 
   return (
     <div>
-      {/* Cumulative vs Round-Only toggle: only meaningful from R2 onward
-          (pre-R1 there's only one dataset). */}
-      {!isPreTournament && (
-        <DataSetToggle dataSet={dataSet} onChange={onDataSetChange} />
-      )}
       {/* Round picks banner */}
       <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-lg p-5 mb-6">
         <div className="flex items-center gap-3 flex-wrap">
@@ -548,12 +584,36 @@ export default function MatchupsView({ data, dataSet, onDataSetChange }: Matchup
 
       {/* Card renderer — used for both Best Bets and the Leans fallback. */}
       {(() => {
-        const renderCard = (m: Matchup, idx: number) => {
+        const renderCard = (m: Matchup & { dataSet?: 'round-only' | 'cumulative'; doubleSignal?: boolean }, idx: number) => {
+          const dsLabel = m.dataSet === 'round-only'
+            ? `Round ${currentEvent.picksRound - 1} data`
+            : m.dataSet === 'cumulative'
+              ? 'Cumulative data'
+              : null;
           return (
             <div
               key={idx}
               className={`bg-[#0a0a0a] border border-[#262626] border-l-4 ${CARD_BORDER} rounded-lg p-4 hover:bg-[#111111] transition-colors`}
             >
+              {/* Top meta row: dataset chip + double-signal flag */}
+              {(dsLabel || m.doubleSignal) && (
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  {dsLabel && (
+                    <span className="text-[9px] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif] bg-[#1a1a1a] text-[#a1a1aa] rounded-full px-2 py-0.5">
+                      {dsLabel}
+                    </span>
+                  )}
+                  {m.doubleSignal && (
+                    <span
+                      className="text-[9px] uppercase tracking-wider font-bold font-['Inter',system-ui,sans-serif] bg-[#22c55e]/15 text-[#22c55e] border border-[#22c55e]/40 rounded-full px-2 py-0.5"
+                      title="Both round-only AND cumulative datasets flagged this matchup — the model's two views agree."
+                    >
+                      ★ Double Signal
+                    </span>
+                  )}
+                </div>
+              )}
+
               {/* Header row */}
               <div className="flex items-center justify-between mb-3">
                 {(() => {

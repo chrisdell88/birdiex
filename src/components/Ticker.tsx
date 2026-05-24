@@ -33,6 +33,9 @@ export default function Ticker() {
                   key={i}
                   className="flex items-center gap-2 px-4 py-2 whitespace-nowrap border-r border-[#1a1a1a]"
                 >
+                  <span className="text-[10px] font-bold text-[#22c55e] font-['JetBrains_Mono','SF_Mono',monospace] tabular-nums">
+                    {e.pos}
+                  </span>
                   <span className="text-xs font-medium text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
                     {e.player}
                   </span>

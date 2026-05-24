@@ -10,6 +10,7 @@ import { r3Results, r3Summary as pgaR3SummaryRaw } from '../data/pgaChampR3Resul
 import { r4Results, r4Summary as pgaR4SummaryRaw } from '../data/pgaChampR4Results';
 import { starsForEdge, unitsForEdge, stakeToWin1, isTrackedBet } from '../lib/sizing';
 import { floorForEvent } from '../config/venues';
+import { currentEvent } from '../config/event';
 import {
   overallRecord,
   overallUnits,
@@ -957,15 +958,25 @@ function PGAView() {
   );
 }
 
-// --- CJ Cup Byron Nelson View (in-progress, no graded bets yet) ---
+// --- CJ Cup Byron Nelson View (in-progress, grading not yet wired) ---
 function CJCupView() {
+  const picksRound = currentEvent.picksRound;
+  const completedRounds = Math.max(0, picksRound - 1);
+  const isPreR1 = completedRounds === 0;
+  const statusLabel = isPreR1
+    ? 'PRE-TOURNAMENT'
+    : `R${completedRounds} FINAL · ROUND ${picksRound} PICKS`;
+  const headlineLabel = isPreR1
+    ? 'Pre-Tournament — Awaiting Round 1'
+    : `Rounds 1${completedRounds >= 2 ? '–' + completedRounds : ''} complete — Round ${picksRound} picks live`;
+
   return (
     <div>
       {/* Tournament header */}
       <div className="bg-[#0a0a0a] border border-[#a1a1aa]/20 rounded-lg p-4 mb-6">
         <div className="flex flex-wrap items-center gap-3">
           <span className="bg-[#22c55e]/15 text-[#22c55e] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
-            IN PROGRESS
+            {statusLabel}
           </span>
           <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
             CJ Cup Byron Nelson 2026
@@ -980,24 +991,31 @@ function CJCupView() {
         </div>
       </div>
 
-      {/* Pre-tournament message */}
+      {/* In-progress message — adapts to current round state */}
       <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-6 text-center">
         <div className="text-[10px] uppercase tracking-wider text-[#22c55e] font-medium font-['Inter',system-ui,sans-serif] mb-3">
-          Pre-Tournament — Awaiting Round 1
+          {headlineLabel}
         </div>
-        <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed max-w-md mx-auto">
-          Picks for Round 1 generate from pre-tournament data. The X Score model uses
-          Layer 2 (course history), Layer 3 (course fit), and Layer 4 (major adjustment)
-          pre-round &mdash; Layer 1 (strokes-gained) lights up after Round 1 completes.
-        </p>
+        {isPreR1 ? (
+          <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed max-w-md mx-auto">
+            Picks for Round 1 generate from pre-tournament data. The X Score model uses
+            Layer 2 (course history), Layer 3 (course fit), and Layer 4 (major adjustment)
+            pre-round &mdash; Layer 1 (strokes-gained) lights up after Round 1 completes.
+          </p>
+        ) : (
+          <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed max-w-md mx-auto">
+            Round {picksRound} Best Bets are live on the Matchups page. Per-round graded
+            results for this tournament post once the weekend wraps &mdash; we grade the
+            whole event together to keep the bet log consistent.
+          </p>
+        )}
         <p className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif] leading-relaxed mt-4 max-w-md mx-auto">
           At TPC Craig Ranch&rsquo;s low predictability ({cjCupFloor.predictability.toFixed(3)}),
           the Best Bet Matchup Score Threshold is{' '}
           <span className="text-[#22c55e] font-semibold font-['JetBrains_Mono','SF_Mono',monospace]">
             ≥ {cjCupFloor.floor.toFixed(2)}
           </span>
-          . Best Bets and graded results will appear here as the weekend
-          unfolds.
+          .
         </p>
         <p className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mt-5">
           Check the <span className="text-[#22c55e]">Matchups</span> or{' '}

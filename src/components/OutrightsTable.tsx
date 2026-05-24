@@ -258,10 +258,6 @@ export default function OutrightsTable({ outrights, players = [] }: Props) {
           </tbody>
         </table>
       </div>
-      <div className="px-4 py-2 border-t border-[#262626] text-[10px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
-        BirdieX doesn&rsquo;t recommend outrights &mdash; the model targets H2H matchups. This
-        section is reference-only for scoping the field.
-      </div>
     </div>
   );
 }

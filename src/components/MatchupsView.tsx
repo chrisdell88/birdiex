@@ -218,19 +218,13 @@ function PlayerStatPopup({ player, onClose, dataSet }: { player: PlayerData; onC
     : dataSet === 'cumulative'
       ? 'Cumulative data'
       : null;
-  const dsExplanation = dataSet === 'round-only'
-    ? `Just R${completedRound} — the most recently played round only.`
-    : dataSet === 'cumulative'
-      ? `Through R${completedRound} — totals across all completed rounds.`
-      : '';
 
   return (
     <div
       ref={popupRef}
-      // Responsive: w-72 preferred, but never exceed viewport - 2rem of
-      // margin so the popup never overflows on narrow screens. left-0 keeps
-      // it anchored to the player name on desktop; max-w cap handles mobile.
-      className="absolute z-50 bg-[#111111] border border-[#262626] rounded-lg p-4 shadow-xl w-72 max-w-[calc(100vw-2rem)] left-0 top-full mt-1"
+      // Pure black background + green border for active-selection feel.
+      // w-72 preferred, capped to viewport so it never overflows mobile.
+      className="absolute z-50 bg-[#0a0a0a] border border-[#22c55e]/40 rounded-lg p-4 shadow-xl w-72 max-w-[calc(100vw-2rem)] left-0 top-full mt-1"
     >
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif] truncate pr-2">
@@ -238,16 +232,6 @@ function PlayerStatPopup({ player, onClose, dataSet }: { player: PlayerData; onC
         </span>
         <button onClick={onClose} className="text-[#a1a1aa] hover:text-white text-xs cursor-pointer shrink-0">X</button>
       </div>
-      {dsLabel && (
-        <div className="mb-3">
-          <span className="text-[9px] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif] bg-[#1a1a1a] text-[#a1a1aa] rounded-full px-2 py-0.5">
-            {dsLabel}
-          </span>
-          <p className="text-[10px] text-[#737373] font-['Inter',system-ui,sans-serif] mt-1.5 leading-snug">
-            {dsExplanation}
-          </p>
-        </div>
-      )}
       {!hideSignal && (
         <div className="flex items-center gap-2 mb-3 flex-wrap">
           <SignalBadge signal={player.signal} conflicted={player.purity === 'CONFLICTED'} />
@@ -267,13 +251,13 @@ function PlayerStatPopup({ player, onClose, dataSet }: { player: PlayerData; onC
           X Score Breakdown
         </span>
         <div className="grid grid-cols-2 gap-1 mt-1 text-xs font-['JetBrains_Mono','SF_Mono',monospace]">
-          <span className="text-[#a1a1aa]">SG Score (L1) <span className="text-[9px] text-[#525252]">live</span></span>
+          <span className="text-[#a1a1aa]">SG Score (L1)</span>
           <span className={scoreColor(player.sg_score_l1)}>{fmtScore(player.sg_score_l1)}</span>
-          <span className="text-[#a1a1aa]">History (L2) <span className="text-[9px] text-[#525252]">historical</span></span>
+          <span className="text-[#a1a1aa]">History (L2)</span>
           <span className={scoreColor(player.course_history_l2)}>{fmtScore(player.course_history_l2)}</span>
-          <span className="text-[#a1a1aa]">Fit (L3) <span className="text-[9px] text-[#525252]">profile</span></span>
+          <span className="text-[#a1a1aa]">Fit (L3)</span>
           <span className={scoreColor(player.fit_plus_category_l3)}>{fmtScore(player.fit_plus_category_l3)}</span>
-          <span className="text-[#a1a1aa]">Major (L4) <span className="text-[9px] text-[#525252]">historical</span></span>
+          <span className="text-[#a1a1aa]">Major (L4)</span>
           <span className={scoreColor(player.major_adj_l4)}>{fmtScore(player.major_adj_l4)}</span>
         </div>
       </div>

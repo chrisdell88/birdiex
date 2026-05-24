@@ -398,7 +398,7 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
                   <td className="px-3 py-2.5 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       <Avatar playerName={player.player_name} size="sm" />
-                      <span className="text-[#f5f5f5] font-medium font-['Inter',system-ui,sans-serif] text-sm truncate max-w-[120px] md:max-w-none">
+                      <span className="text-[#f5f5f5] font-medium font-['Inter',system-ui,sans-serif] text-sm whitespace-nowrap">
                         {formatPlayerName(player.player_name)}
                       </span>
                     </div>

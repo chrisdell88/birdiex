@@ -45,22 +45,21 @@ export default function DataSetToggle({ dataSet, onChange }: DataSetToggleProps)
         <div className="flex border border-[#22c55e]/50 rounded-full p-0.5">
           <button
             type="button"
-            onClick={() => onChange('round')}
-            className={pillBtn(dataSet === 'round', false)}
-            aria-pressed={dataSet === 'round'}
-          >
-            Round {completedRound}
-          </button>
-          <button
-            type="button"
             onClick={cumulativeEnabled ? () => onChange('cumulative') : undefined}
             disabled={!cumulativeEnabled}
             className={pillBtn(dataSet === 'cumulative', !cumulativeEnabled)}
             aria-pressed={dataSet === 'cumulative'}
             aria-disabled={!cumulativeEnabled}
-            title={cumulativeEnabled ? undefined : 'Cumulative becomes available after Round 2 completes'}
           >
-            Cumulative
+            Cumulative Data
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange('round')}
+            className={pillBtn(dataSet === 'round', false)}
+            aria-pressed={dataSet === 'round'}
+          >
+            Round {completedRound} Only Data
           </button>
         </div>
         {!cumulativeEnabled && (

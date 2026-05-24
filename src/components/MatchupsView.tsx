@@ -7,7 +7,7 @@ import PlayerSearch from './PlayerSearch';
 import Avatar from './Avatar';
 import RecommendedFloorBadge from './RecommendedFloorBadge';
 import { starsForEdge } from '../lib/sizing';
-import { isBuy, isFade } from '../lib/signalDisplay';
+import { isBuy, isFade, signalTextColorClass } from '../lib/signalDisplay';
 import MatchupsGlossary from './MatchupsGlossary';
 import { formatPlayerName } from '../lib/formatName';
 import PurityIcon from './PurityIcon';
@@ -678,7 +678,7 @@ export default function MatchupsView(_: MatchupsViewProps) {
                         {formatPlayerName(m.pick.player_name)}
                       </ClickablePlayerName>
                     </div>
-                    <div className={`mt-1 text-xs font-['JetBrains_Mono','SF_Mono',monospace] ${m.pick.purity === 'CONFLICTED' ? 'text-yellow-400' : 'text-[#22c55e]'}`}>
+                    <div className={`mt-1 text-xs font-['JetBrains_Mono','SF_Mono',monospace] ${signalTextColorClass(m.pick.signal, m.pick.purity === 'CONFLICTED')}`}>
                       X Score: {fmtXScore(m.pick.x_score)}
                     </div>
                     {!hideSignal && (
@@ -702,7 +702,7 @@ export default function MatchupsView(_: MatchupsViewProps) {
                         {formatPlayerName(m.opponent.player_name)}
                       </ClickablePlayerName>
                     </div>
-                    <div className={`mt-1 text-xs font-['JetBrains_Mono','SF_Mono',monospace] ${m.opponent.purity === 'CONFLICTED' ? 'text-yellow-400' : 'text-red-400'}`}>
+                    <div className={`mt-1 text-xs font-['JetBrains_Mono','SF_Mono',monospace] ${signalTextColorClass(m.opponent.signal, m.opponent.purity === 'CONFLICTED')}`}>
                       X Score: {fmtXScore(m.opponent.x_score)}
                     </div>
                     {!hideSignal && (

@@ -82,3 +82,22 @@ export function isFade(signal: Signal): boolean {
   const d = normalizeSignal(signal);
   return d === 'STRONG FADE' || d === 'FADE' || d === 'SOFT FADE';
 }
+
+/**
+ * Tailwind text-color class for a signal tier — used so X-Score text on
+ * matchup cards matches the SignalBadge color (per-tier intensity, not
+ * pick-vs-opponent role). CONFLICTED always renders yellow.
+ */
+export function signalTextColorClass(signal: Signal, conflicted = false): string {
+  if (conflicted) return 'text-yellow-400';
+  const d = normalizeSignal(signal);
+  switch (d) {
+    case 'STRONG BUY':  return 'text-[#4ade80]';   // bright green
+    case 'BUY':         return 'text-[#22c55e]';   // green-500
+    case 'SOFT BUY':    return 'text-[#16a34a]';   // dim green
+    case 'NEUTRAL':     return 'text-[#a1a1aa]';   // gray
+    case 'SOFT FADE':   return 'text-[#fca5a5]';   // dim red
+    case 'FADE':        return 'text-red-400';     // red-400
+    case 'STRONG FADE': return 'text-red-500';     // bright red
+  }
+}

@@ -679,7 +679,7 @@ export default function MatchupsView(_: MatchupsViewProps) {
                         {m.pick.player_name}
                       </ClickablePlayerName>
                     </div>
-                    <div className="mt-1 text-xs font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">
+                    <div className={`mt-1 text-xs font-['JetBrains_Mono','SF_Mono',monospace] ${m.pick.purity === 'CONFLICTED' ? 'text-yellow-400' : 'text-[#22c55e]'}`}>
                       X Score: {fmtXScore(m.pick.x_score)}
                     </div>
                     {!hideSignal && (
@@ -703,7 +703,7 @@ export default function MatchupsView(_: MatchupsViewProps) {
                         {m.opponent.player_name}
                       </ClickablePlayerName>
                     </div>
-                    <div className="mt-1 text-xs font-['JetBrains_Mono','SF_Mono',monospace] text-red-400">
+                    <div className={`mt-1 text-xs font-['JetBrains_Mono','SF_Mono',monospace] ${m.opponent.purity === 'CONFLICTED' ? 'text-yellow-400' : 'text-red-400'}`}>
                       X Score: {fmtXScore(m.opponent.x_score)}
                     </div>
                     {!hideSignal && (

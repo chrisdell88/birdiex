@@ -250,15 +250,25 @@ function PlayerStatPopup({ player, onClose, dataSet }: { player: PlayerData; onC
         <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
           X Score Breakdown
         </span>
-        <div className="grid grid-cols-2 gap-1 mt-1 text-xs font-['JetBrains_Mono','SF_Mono',monospace]">
+        {/* 3-col grid: label | source tag | value. The dedicated tag
+            column means 'historical' / 'profile' / 'live' never wrap
+            into a second line. */}
+        <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] gap-x-2 gap-y-1 mt-1 text-xs font-['JetBrains_Mono','SF_Mono',monospace] items-baseline">
           <span className="text-[#a1a1aa]">SG Score (L1)</span>
-          <span className={scoreColor(player.sg_score_l1)}>{fmtScore(player.sg_score_l1)}</span>
+          <span className="text-[9px] text-[#525252] font-['Inter',system-ui,sans-serif] normal-case tracking-normal">live</span>
+          <span className={`text-right ${scoreColor(player.sg_score_l1)}`}>{fmtScore(player.sg_score_l1)}</span>
+
           <span className="text-[#a1a1aa]">History (L2)</span>
-          <span className={scoreColor(player.course_history_l2)}>{fmtScore(player.course_history_l2)}</span>
+          <span className="text-[9px] text-[#525252] font-['Inter',system-ui,sans-serif] normal-case tracking-normal">historical</span>
+          <span className={`text-right ${scoreColor(player.course_history_l2)}`}>{fmtScore(player.course_history_l2)}</span>
+
           <span className="text-[#a1a1aa]">Fit (L3)</span>
-          <span className={scoreColor(player.fit_plus_category_l3)}>{fmtScore(player.fit_plus_category_l3)}</span>
+          <span className="text-[9px] text-[#525252] font-['Inter',system-ui,sans-serif] normal-case tracking-normal">profile</span>
+          <span className={`text-right ${scoreColor(player.fit_plus_category_l3)}`}>{fmtScore(player.fit_plus_category_l3)}</span>
+
           <span className="text-[#a1a1aa]">Major (L4)</span>
-          <span className={scoreColor(player.major_adj_l4)}>{fmtScore(player.major_adj_l4)}</span>
+          <span className="text-[9px] text-[#525252] font-['Inter',system-ui,sans-serif] normal-case tracking-normal">historical</span>
+          <span className={`text-right ${scoreColor(player.major_adj_l4)}`}>{fmtScore(player.major_adj_l4)}</span>
         </div>
       </div>
       <div className="border-t border-[#1a1a1a] pt-2">

@@ -101,7 +101,7 @@ function buildH2HRows(data: PlayerData[], oddsData: MatchupOddsEntry[]): H2HRow[
     const oppXScore = pickIsP1 ? p2XScore : p1XScore;
 
     const edge = +(pickXScore - oppXScore).toFixed(4);
-    if (edge < 0.95) continue;
+    // No floor — every H2H matchup DataGolf returns is listed here.
 
     let tier: H2HRow['tier'] = 'LEAN';
     if (edge >= 1.95) tier = 'BEST BET';
@@ -157,11 +157,9 @@ type OddsTab = 'matchups' | 'outrights';
 
 export default function OddsTablePage({ data, dataSet, onDataSetChange }: OddsTablePageProps) {
   const [activeTab, setActiveTab] = useState<OddsTab>('outrights');
-  // Default: show ALL matchups (≥ 0.95 hard floor). Odds page is a price-
-  // comparison tool — users may want to shop a non-Best-Bet matchup that
-  // happens to have great odds at a specific book. They can narrow to a
-  // higher tier via the dropdown.
-  const [minEdge, setMinEdge] = useState<number>(0.95);
+  // Default: show every matchup DataGolf provides — no floor. Users can
+  // narrow to a tier via the dropdown.
+  const [minEdge, setMinEdge] = useState<number>(0);
   const [sortField, setSortField] = useState<OddsSortField>('edge');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
 
@@ -304,7 +302,8 @@ export default function OddsTablePage({ data, dataSet, onDataSetChange }: OddsTa
             onChange={(e) => setMinEdge(parseFloat(e.target.value))}
             className="bg-[#0a0a0a] border border-[#262626] rounded-lg px-3 py-2 text-xs text-[#d4d4d4] font-['Inter',system-ui,sans-serif] focus:border-[#22c55e]/50 focus:outline-none cursor-pointer"
           >
-            <option value={0.95}>All Matchups (≥ 0.95)</option>
+            <option value={0}>All Matchups</option>
+            <option value={0.95}>Min Matchup Score: 0.95</option>
             <option value={1.45}>Min Matchup Score: 1.45</option>
             <option value={1.95}>Min Matchup Score: 1.95</option>
             <option value={2.45}>Min Matchup Score: 2.45</option>

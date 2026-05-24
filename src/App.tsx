@@ -24,6 +24,8 @@ import SimulatorPage from './components/SimulatorPage';
 // them out of the main bundle avoids shipping it to every visitor.
 const SignupPage = lazy(() => import('./components/SignupPage'));
 const UnsubscribePage = lazy(() => import('./components/UnsubscribePage'));
+// Private backtest page (#lab). Unlinked from nav — direct URL only.
+const BacktestLab = lazy(() => import('./components/BacktestLab'));
 
 function App() {
   // Tab persists across reloads via URL hash (#matchups, #results, etc).
@@ -47,6 +49,28 @@ function App() {
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
+
+  // Private backtest page — direct URL only (#lab). Never linked from nav.
+  // Check hash directly so the page doesn't appear as a normal tab.
+  const hash = typeof window !== 'undefined' ? window.location.hash.replace(/^#/, '') : '';
+  if (hash === 'lab') {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-6">
+          <div className="flex items-baseline">
+            <span className="text-2xl font-extrabold tracking-tight text-white">BIRDIE</span>
+            <span className="text-2xl font-extrabold tracking-tight text-[#22c55e]">X</span>
+            <span className="ml-3 text-[10px] uppercase tracking-wider text-[#737373]">lab</span>
+          </div>
+        </div>
+        <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
+          <Suspense fallback={<div className="text-center text-sm text-[#a1a1aa] py-16">Loading…</div>}>
+            <BacktestLab />
+          </Suspense>
+        </main>
+      </div>
+    );
+  }
 
   // Email alert footers link to `/?unsubscribe=<token>` — handle that before
   // rendering the normal app so the link works as a standalone confirmation.

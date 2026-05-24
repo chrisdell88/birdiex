@@ -62,3 +62,43 @@ $$;
 revoke all on table public.subscribers from anon;
 grant execute on function public.subscribe(text)   to anon;
 grant execute on function public.unsubscribe(uuid) to anon;
+
+-- ─── Lab (private backtest page) auth ─────────────────────────────────
+-- Server-side password gate for /lab. Same pattern as the subscribers
+-- table: the secret lives in a public table with RLS denying anon all
+-- access, and the only thing anon can do is call a SECURITY DEFINER
+-- verify function. The function uses pgcrypto's bcrypt to compare.
+create extension if not exists pgcrypto;
+
+create table if not exists public.lab_secrets (
+  id            smallint primary key default 1,
+  password_hash text     not null,
+  constraint lab_secrets_single_row check (id = 1)
+);
+
+alter table public.lab_secrets enable row level security;
+-- No policies for anon/authenticated → only service role can read.
+
+-- Verify a password against the stored bcrypt hash. Returns true/false.
+-- Defense-in-depth: if no hash is set yet, always returns false.
+create or replace function public.verify_lab_password(pw text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  stored_hash text;
+begin
+  select password_hash into stored_hash from public.lab_secrets where id = 1;
+  if stored_hash is null then
+    return false;
+  end if;
+  return stored_hash = crypt(pw, stored_hash);
+end;
+$$;
+
+-- anon can ONLY call the verify function — not read the table.
+revoke all on table public.lab_secrets from anon;
+revoke all on function public.verify_lab_password(text) from public;
+grant execute on function public.verify_lab_password(text) to anon;

@@ -36,3 +36,15 @@ export async function unsubscribeToken(token: string): Promise<'ok' | 'error'> {
   const { error } = await supabase.rpc('unsubscribe', { token });
   return error ? 'error' : 'ok';
 }
+
+/**
+ * Verify the /lab page password. Runs server-side via a SECURITY DEFINER
+ * Postgres function; the anon client cannot read the stored hash. Returns
+ * true only on a successful bcrypt match.
+ */
+export async function verifyLabPassword(pw: string): Promise<boolean> {
+  if (!supabase) return false;
+  const { data, error } = await supabase.rpc('verify_lab_password', { pw });
+  if (error) return false;
+  return data === true;
+}

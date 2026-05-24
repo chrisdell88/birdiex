@@ -14,6 +14,10 @@ import type { PlayerData } from '../types';
  */
 interface PurityIconProps {
   player: PlayerData;
+  /** Which edge of the icon the popover anchors to. Use 'right' when the
+   *  icon sits on the right side of its container (e.g. opp player on a
+   *  matchup card) so the popover opens leftward and stays on-screen. */
+  align?: 'left' | 'right';
 }
 
 function getConflictReason(player: PlayerData): string {
@@ -28,7 +32,7 @@ function getConflictReason(player: PlayerData): string {
   return reasons.join(', ');
 }
 
-export default function PurityIcon({ player }: PurityIconProps) {
+export default function PurityIcon({ player, align = 'left' }: PurityIconProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
 
@@ -72,7 +76,7 @@ export default function PurityIcon({ player }: PurityIconProps) {
       {open && (
         <span
           role="tooltip"
-          className="absolute z-50 left-0 top-full mt-1 w-64 max-w-[calc(100vw-2rem)] bg-[#0a0a0a] border border-[#22c55e]/40 rounded-md p-3 shadow-xl text-[11px] text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-snug whitespace-normal normal-case tracking-normal"
+          className={`absolute z-50 top-full mt-1 w-64 max-w-[calc(100vw-2rem)] bg-[#0a0a0a] border border-[#22c55e]/40 rounded-md p-3 shadow-xl text-[11px] text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-snug whitespace-normal normal-case tracking-normal ${align === 'right' ? 'right-0' : 'left-0'}`}
           onClick={(e) => e.stopPropagation()}
         >
           {message}

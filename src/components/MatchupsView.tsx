@@ -709,7 +709,7 @@ export default function MatchupsView(_: MatchupsViewProps) {
                     {!hideSignal && (
                       <div className="mt-1 flex items-center justify-end gap-2">
                         <SignalBadge signal={m.opponent.signal} compact conflicted={m.opponent.purity === 'CONFLICTED'} />
-                        <PurityIcon player={m.opponent} />
+                        <PurityIcon player={m.opponent} align="right" />
                       </div>
                     )}
                   </div>

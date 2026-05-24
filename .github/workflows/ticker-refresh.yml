@@ -1,0 +1,85 @@
+name: Ticker refresh (live scoreboard every 30 min)
+
+# Pulls DataGolf field-updates + in-play, rebuilds src/data/ticker.ts,
+# commits + pushes if anything changed. Light-touch — does NOT run the
+# full round-data / matchups / outrights pipeline (that's the separate
+# auto-roll workflow).
+#
+# The script itself self-gates on whether any player has actually started
+# the current round (thru > 0). If no rounds in progress, no commit → no
+# deploy.
+
+on:
+  schedule:
+    # Every 30 minutes during a wide play window: 5am ET (9:00 UTC EDT)
+    # to 11pm ET (3:00 UTC next-day EDT). 18-hour daily window covers
+    # any PGA Tour start. Outside the window: silent (no firing).
+    - cron: '*/30 9-23,0-3 * * *'
+  workflow_dispatch: {}
+
+env:
+  SLUG: cj-cup-byron-nelson-2026
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ticker-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh-ticker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Determine current picks round from event.ts
+        id: cfg
+        run: |
+          PICKS=$(node -e "import('./src/config/event.ts').then(m=>console.log(m.currentEvent.picksRound))" 2>/dev/null || echo "1")
+          COMPLETED=$((PICKS - 1))
+          if [ "$COMPLETED" -lt 1 ]; then COMPLETED=1; fi
+          PHASE="r$COMPLETED"
+          if [ "$COMPLETED" -eq 0 ]; then PHASE="pre"; fi
+          echo "picks=$PICKS"        >> "$GITHUB_OUTPUT"
+          echo "phase=$PHASE"        >> "$GITHUB_OUTPUT"
+          echo "completed=$COMPLETED">> "$GITHUB_OUTPUT"
+
+      - name: Pull just field-updates + in-play
+        env:
+          DATAGOLF_API_KEY: ${{ secrets.DATAGOLF_API_KEY }}
+        run: |
+          # Lightweight pull. Reuses the full pull:event script which
+          # fetches more than we need but is the existing reliable path.
+          # If this becomes a cost issue we'll write a slim variant.
+          npm run pull:event -- --slug "${{ env.SLUG }}" --phase "${{ steps.cfg.outputs.phase }}"
+
+      - name: Rebuild ticker
+        run: |
+          npx tsx scripts/build-ticker.ts \
+            --slug "${{ env.SLUG }}" \
+            --phase "${{ steps.cfg.outputs.phase }}" \
+            --round "${{ steps.cfg.outputs.picks }}"
+
+      - name: Verify build still passes
+        run: npm run build
+
+      - name: Commit + push if ticker changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet src/data/ticker.ts; then
+            echo "Ticker unchanged — skipping commit."
+          else
+            git add src/data/ticker.ts
+            git commit -m "ticker: refresh live scores"
+            git push
+          fi

@@ -43,11 +43,12 @@ async function main() {
     await readFile(join(PROJECT_ROOT, 'data', 'raw', slug, phase, 'in-play.json'), 'utf8')
   );
 
-  const scoreByName = new Map<string, { score: number | null; pos: string }>();
+  const scoreByName = new Map<string, { score: number | null; pos: string; thru: number | null }>();
   for (const p of inplay.data ?? []) {
     scoreByName.set(p.player_name, {
       score: typeof p.current_score === 'number' ? p.current_score : null,
       pos: p.current_pos ?? '--',
+      thru: typeof p.thru === 'number' ? p.thru : null,
     });
   }
 
@@ -57,8 +58,23 @@ async function main() {
     startHole: number;
     score: number | null;
     pos: string;
-    sortKey: string;
+    thru: number | null;
+    sortKey: number;
   }
+
+  /** Parse position like 'T1', '12', 'CUT' → numeric sort key. CUT/WD/MDF → 999. */
+  const parsePosForSort = (pos: string): number => {
+    const clean = (pos ?? '').toUpperCase().replace('T', '').trim();
+    if (!clean || clean === 'CUT' || clean === 'WD' || clean === 'MDF') return 999;
+    const n = parseInt(clean, 10);
+    return isNaN(n) ? 999 : n;
+  };
+
+  /** Cut / WD / MDF players are hidden from the ticker entirely. */
+  const isActive = (pos: string): boolean => {
+    const clean = (pos ?? '').toUpperCase().trim();
+    return clean !== 'CUT' && clean !== 'WD' && clean !== 'MDF' && clean !== '';
+  };
 
   const entries: TickerEntry[] = [];
   for (const p of field.field ?? []) {
@@ -66,17 +82,24 @@ async function main() {
       (t: { round_num: number }) => t.round_num === roundNum
     );
     if (!tt) continue; // missed the cut / not in this round
-    const sc = scoreByName.get(p.player_name) ?? { score: null, pos: '--' };
+    const sc = scoreByName.get(p.player_name) ?? { score: null, pos: '--', thru: null };
+    if (!isActive(sc.pos)) continue; // skip cut / WD / MDF
     entries.push({
       player: p.player_name,
       teeTime: formatTime(tt.teetime),
       startHole: tt.start_hole,
       score: sc.score,
       pos: sc.pos,
-      sortKey: tt.teetime,
+      thru: sc.thru,
+      sortKey: parsePosForSort(sc.pos),
     });
   }
-  entries.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+  // Sort by current leaderboard position (T1 first), then score as
+  // tiebreak so within a tie group the lowest scorer surfaces first.
+  entries.sort((a, b) => {
+    if (a.sortKey !== b.sortKey) return a.sortKey - b.sortKey;
+    return (a.score ?? 999) - (b.score ?? 999);
+  });
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const clean = entries.map(({ sortKey: _sortKey, ...e }) => e);
 
@@ -90,6 +113,7 @@ async function main() {
     `  startHole: number;`,
     `  score: number | null;`,
     `  pos: string;`,
+    `  thru: number | null;`,
     `}`,
     ``,
     `export const tickerRound = ${roundNum};`,

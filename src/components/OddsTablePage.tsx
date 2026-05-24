@@ -234,7 +234,7 @@ export default function OddsTablePage({ data, dataSet, onDataSetChange }: OddsTa
             <p className="text-sm text-[#d4d4d4] mt-1 font-['Inter',system-ui,sans-serif]">
               {activeTab === 'matchups'
                 ? 'H2H matchup odds across 11 sportsbooks. Best odds highlighted.'
-                : 'Outright winner odds across 11 sportsbooks. Reference only — model targets H2H matchups, not outrights.'}
+                : 'Outright winner odds across 11 sportsbooks.'}
             </p>
           </div>
           {activeTab === 'matchups' && (

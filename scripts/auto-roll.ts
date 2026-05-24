@@ -294,14 +294,24 @@ async function main(): Promise<void> {
   console.log('No round transition + not in active window. Site stays frozen. Exiting no-op.');
 }
 
+/**
+ * Write a 'pending-notify' marker file. Workflow reads this AFTER
+ * successfully committing + pushing the data and only then fires
+ * notify. Guarantees: site shows new data BEFORE users get pinged.
+ *
+ * Stored under data/ which is gitignored, so the marker never enters
+ * source control.
+ */
 function callNotify(picksRound: number, mode: 'round-picks' | 'new-bets', previousBbCount: number): void {
-  // notify.ts enforces the Best Bet gate internally. Just invoke it —
-  // it will silently skip if there are no Best Bets / count didn't grow.
+  const path = join(ROOT, 'data', '.pending-notify.json');
+  const payload = { picksRound, mode, previousBbCount, queuedAt: new Date().toISOString() };
   try {
-    exec(`npx tsx scripts/notify.ts --round ${picksRound} --mode ${mode} --previous-bb-count ${previousBbCount}`);
+    // Ensure data/ exists.
+    execSync('mkdir -p data', { cwd: ROOT });
+    execSync(`cat > "${path}" <<'NOTIFY_EOF'\n${JSON.stringify(payload, null, 2)}\nNOTIFY_EOF`, { cwd: ROOT });
+    console.log(`✓ queued notify (mode=${mode}, picksRound=${picksRound}, prev=${previousBbCount}). Workflow will fire it after a successful push.`);
   } catch (e) {
-    // Notification failure shouldn't break the auto-roll itself.
-    console.error(`✖ notify failed: ${(e as Error).message}`);
+    console.error(`✖ failed to queue notify: ${(e as Error).message}`);
   }
 }
 

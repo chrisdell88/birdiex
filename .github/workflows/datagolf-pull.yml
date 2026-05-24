@@ -72,13 +72,51 @@ jobs:
         run: npm run build
 
       - name: Commit + push if anything changed
+        id: push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git diff --quiet; then
             echo "No changes — skipping commit."
-          else
-            git add src/ .github/workflows/datagolf-pull.yml
-            git commit -m "data: auto-roll ${{ env.SLUG }}"
-            git push
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          git add src/ .github/workflows/datagolf-pull.yml
+          git commit -m "data: auto-roll ${{ env.SLUG }}"
+          # Pull --rebase before push to handle the case where another
+          # workflow / manual push landed on main during this run.
+          # Retries the push once after rebase. If both fail we exit
+          # with an error — the pending-notify marker stays so notify
+          # NEVER fires before the data is actually on the site.
+          if git push; then
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Push failed — rebasing on origin/main and retrying."
+            git pull --rebase origin main
+            if git push; then
+              echo "pushed=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "Push still failing after rebase. Aborting before notify."
+              exit 1
+            fi
+          fi
+
+      - name: Fire queued notify (only after successful push)
+        if: steps.push.outputs.pushed == 'true'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM: ${{ secrets.RESEND_FROM }}
+          SITE_URL: ${{ secrets.SITE_URL }}
+        run: |
+          if [ ! -f data/.pending-notify.json ]; then
+            echo "No pending notify queued."
+            exit 0
+          fi
+          ROUND=$(jq -r '.picksRound' data/.pending-notify.json)
+          MODE=$(jq -r '.mode' data/.pending-notify.json)
+          PREV=$(jq -r '.previousBbCount' data/.pending-notify.json)
+          npx tsx scripts/notify.ts --round "$ROUND" --mode "$MODE" --previous-bb-count "$PREV"
+          rm -f data/.pending-notify.json

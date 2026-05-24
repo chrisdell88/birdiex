@@ -355,7 +355,7 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
                   className="px-3 py-3 text-left text-[10px] uppercase tracking-wider text-[#d4d4d4] font-medium cursor-pointer hover:text-[#f5f5f5] transition-colors whitespace-nowrap font-['Inter',system-ui,sans-serif]"
                 >
                   {col.label}{sortArrow(col.field)}
-                  {col.field === 'signal' && (
+                  {col.field === 'x_score' && (
                     <span
                       className="ml-1 text-[#22c55e]/70"
                       title="Scroll right for full stats"

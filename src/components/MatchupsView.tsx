@@ -608,7 +608,7 @@ export default function MatchupsView(_: MatchupsViewProps) {
                       className="text-[9px] uppercase tracking-wider font-bold font-['Inter',system-ui,sans-serif] bg-[#22c55e]/15 text-[#22c55e] border border-[#22c55e]/40 rounded-full px-2 py-0.5"
                       title="Both round-only AND cumulative datasets flagged this matchup — the model's two views agree."
                     >
-                      ★ Double Signal
+                      Double Signal
                     </span>
                   )}
                 </div>

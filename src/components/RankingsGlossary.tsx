@@ -40,6 +40,14 @@ const COLUMN_TERMS: Term[] = [
     label: 'SG Score',
     def: 'Layer 1 of the model — course-weighted strokes-gained from the latest completed round.',
   },
+  {
+    label: 'Cumulative Data',
+    def: 'X Scores computed from a player\'s strokes-gained TOTAL across every round played so far. The whole-tournament view of a player\'s form.',
+  },
+  {
+    label: 'Round-Only Data',
+    def: 'X Scores computed from a player\'s strokes-gained in JUST the most-recently completed round. The "what just happened" view — useful when a player heats up or cools off mid-event.',
+  },
 ];
 
 const SIGNAL_TERMS: Term[] = [

@@ -284,7 +284,9 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
         <span className="text-[11px] text-[#d4d4d4] uppercase tracking-wider font-['Inter',system-ui,sans-serif]">
           Last Updated: {formatUpdated(currentEvent.dataUpdatedAt)} —{' '}
           {currentEvent.picksRound > 1
-            ? `RD${currentEvent.picksRound - 1} Results Below`
+            ? dataSet === 'cumulative'
+              ? 'Cumulative Data Below'
+              : `Round ${currentEvent.picksRound - 1} Data Below`
             : 'Pre-Tournament Rankings Below'}
         </span>
       </div>

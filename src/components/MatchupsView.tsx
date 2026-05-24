@@ -9,6 +9,7 @@ import RecommendedFloorBadge from './RecommendedFloorBadge';
 import { starsForEdge } from '../lib/sizing';
 import { isBuy, isFade } from '../lib/signalDisplay';
 import MatchupsGlossary from './MatchupsGlossary';
+import { formatPlayerName } from '../lib/formatName';
 import PurityIcon from './PurityIcon';
 
 // All matchup cards get the same bright green left border. Conviction is
@@ -231,7 +232,7 @@ function PlayerStatPopup({ player, onClose, dataSet, align = 'left' }: { player:
     >
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif] truncate pr-2">
-          {player.player_name}
+          {formatPlayerName(player.player_name)}
         </span>
         <button onClick={onClose} className="text-[#a1a1aa] hover:text-white text-xs cursor-pointer shrink-0">X</button>
       </div>
@@ -312,7 +313,7 @@ function ClickablePlayerName({
         onClick={() => setShowPopup(!showPopup)}
         className={`cursor-pointer hover:underline decoration-[#22c55e]/50 underline-offset-2 ${className || ''}`}
       >
-        {children || player.player_name}
+        {children || formatPlayerName(player.player_name)}
       </span>
       {showPopup && <PlayerStatPopup player={player} onClose={() => setShowPopup(false)} dataSet={dataSet} align={align} />}
     </span>
@@ -674,7 +675,7 @@ export default function MatchupsView(_: MatchupsViewProps) {
                   <div className="min-w-0">
                     <div className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif] leading-snug">
                       <ClickablePlayerName player={m.pick} dataSet={m.dataSet}>
-                        {m.pick.player_name}
+                        {formatPlayerName(m.pick.player_name)}
                       </ClickablePlayerName>
                     </div>
                     <div className={`mt-1 text-xs font-['JetBrains_Mono','SF_Mono',monospace] ${m.pick.purity === 'CONFLICTED' ? 'text-yellow-400' : 'text-[#22c55e]'}`}>
@@ -698,7 +699,7 @@ export default function MatchupsView(_: MatchupsViewProps) {
                   <div className="min-w-0 text-right">
                     <div className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif] leading-snug">
                       <ClickablePlayerName player={m.opponent} dataSet={m.dataSet} align="right">
-                        {m.opponent.player_name}
+                        {formatPlayerName(m.opponent.player_name)}
                       </ClickablePlayerName>
                     </div>
                     <div className={`mt-1 text-xs font-['JetBrains_Mono','SF_Mono',monospace] ${m.opponent.purity === 'CONFLICTED' ? 'text-yellow-400' : 'text-red-400'}`}>

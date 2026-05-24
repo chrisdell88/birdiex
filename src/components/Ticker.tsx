@@ -1,4 +1,5 @@
 import { tickerData, tickerRound } from '../data/ticker';
+import { formatPlayerName } from '../lib/formatName';
 
 /** Score-to-par display + color (under par green, over par red). */
 function score(s: number | null): { text: string; cls: string } {
@@ -37,7 +38,7 @@ export default function Ticker() {
                     {e.pos}
                   </span>
                   <span className="text-xs font-medium text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
-                    {e.player}
+                    {formatPlayerName(e.player)}
                   </span>
                   <span className={`text-xs font-['JetBrains_Mono','SF_Mono',monospace] ${s.cls}`}>
                     {s.text}

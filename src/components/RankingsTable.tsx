@@ -8,6 +8,7 @@ import PlayerSearch from './PlayerSearch';
 import Avatar from './Avatar';
 import DataSetToggle from './DataSetToggle';
 import RankingsGlossary from './RankingsGlossary';
+import { formatPlayerName } from '../lib/formatName';
 import { normalizeSignal, isFade } from '../lib/signalDisplay';
 import CourseFitScatter from './CourseFitScatter';
 import PastChampions from './PastChampions';
@@ -398,7 +399,7 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
                     <div className="flex items-center gap-2">
                       <Avatar playerName={player.player_name} size="sm" />
                       <span className="text-[#f5f5f5] font-medium font-['Inter',system-ui,sans-serif] text-sm truncate max-w-[120px] md:max-w-none">
-                        {player.player_name}
+                        {formatPlayerName(player.player_name)}
                       </span>
                     </div>
                   </td>

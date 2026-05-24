@@ -1,5 +1,14 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import type { TabId, DataSet } from './types';
+
+const VALID_TABS: readonly TabId[] = ['rankings', 'matchups', 'odds', 'simulator', 'methodology', 'results', 'alerts'] as const;
+
+/** Parse the active tab from the URL hash (#matchups → 'matchups'). Falls
+ *  back to 'rankings' when the hash is missing or unknown. */
+function readTabFromHash(): TabId {
+  const raw = typeof window !== 'undefined' ? window.location.hash.replace(/^#/, '') : '';
+  return (VALID_TABS as readonly string[]).includes(raw) ? (raw as TabId) : 'rankings';
+}
 import { currentEvent } from './config/event';
 import Header from './components/Header';
 import Ticker from './components/Ticker';
@@ -17,9 +26,27 @@ const SignupPage = lazy(() => import('./components/SignupPage'));
 const UnsubscribePage = lazy(() => import('./components/UnsubscribePage'));
 
 function App() {
-  const [activeTab, setActiveTab] = useState<TabId>('rankings');
+  // Tab persists across reloads via URL hash (#matchups, #results, etc).
+  // Reading from hash on first render means a hard refresh keeps the user
+  // on the same tab; sharing a URL with #tab works as deep-link.
+  const [activeTab, setActiveTab] = useState<TabId>(() => readTabFromHash());
   // Default to cumulative — historically the stronger signal (see Masters data).
   const [dataSet, setDataSet] = useState<DataSet>('cumulative');
+
+  // Two-way sync: tab change → update hash. Browser back/forward (which
+  // fires hashchange) → update tab state.
+  useEffect(() => {
+    if (window.location.hash.replace(/^#/, '') !== activeTab) {
+      // replaceState avoids polluting history on every internal tab click.
+      window.history.replaceState(null, '', `#${activeTab}`);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    const onHashChange = () => setActiveTab(readTabFromHash());
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
 
   // Email alert footers link to `/?unsubscribe=<token>` — handle that before
   // rendering the normal app so the link works as a standalone confirmation.

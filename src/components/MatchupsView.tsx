@@ -194,7 +194,7 @@ function SportsbookLink({ bookName }: { bookName: string }) {
 
 // --- Player Stat Popup ---
 
-function PlayerStatPopup({ player, onClose }: { player: PlayerData; onClose: () => void }) {
+function PlayerStatPopup({ player, onClose, dataSet }: { player: PlayerData; onClose: () => void; dataSet?: 'round-only' | 'cumulative' }) {
   // Suppress signal pre-R1 — it isn't meaningful before live SG data exists.
   const hideSignal = currentEvent.picksRound <= 1;
   const popupRef = useRef<HTMLDivElement>(null);
@@ -212,6 +212,18 @@ function PlayerStatPopup({ player, onClose }: { player: PlayerData; onClose: () 
   const fmtScore = (v: number) => (v > 0 ? `+${v.toFixed(2)}` : v.toFixed(2));
   const scoreColor = (v: number) => (v > 0 ? 'text-[#22c55e]' : v < 0 ? 'text-red-400' : 'text-[#f5f5f5]');
 
+  const completedRound = Math.max(0, currentEvent.picksRound - 1);
+  const dsLabel = dataSet === 'round-only'
+    ? `Round ${completedRound} data`
+    : dataSet === 'cumulative'
+      ? 'Cumulative data'
+      : null;
+  const dsExplanation = dataSet === 'round-only'
+    ? `Just R${completedRound} — the most recently played round only.`
+    : dataSet === 'cumulative'
+      ? `Through R${completedRound} — totals across all completed rounds.`
+      : '';
+
   return (
     <div
       ref={popupRef}
@@ -220,12 +232,22 @@ function PlayerStatPopup({ player, onClose }: { player: PlayerData; onClose: () 
       // it anchored to the player name on desktop; max-w cap handles mobile.
       className="absolute z-50 bg-[#111111] border border-[#262626] rounded-lg p-4 shadow-xl w-72 max-w-[calc(100vw-2rem)] left-0 top-full mt-1"
     >
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif] truncate pr-2">
           {player.player_name}
         </span>
         <button onClick={onClose} className="text-[#a1a1aa] hover:text-white text-xs cursor-pointer shrink-0">X</button>
       </div>
+      {dsLabel && (
+        <div className="mb-3">
+          <span className="text-[9px] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif] bg-[#1a1a1a] text-[#a1a1aa] rounded-full px-2 py-0.5">
+            {dsLabel}
+          </span>
+          <p className="text-[10px] text-[#737373] font-['Inter',system-ui,sans-serif] mt-1.5 leading-snug">
+            {dsExplanation}
+          </p>
+        </div>
+      )}
       {!hideSignal && (
         <div className="flex items-center gap-2 mb-3 flex-wrap">
           <SignalBadge signal={player.signal} conflicted={player.purity === 'CONFLICTED'} />
@@ -245,19 +267,19 @@ function PlayerStatPopup({ player, onClose }: { player: PlayerData; onClose: () 
           X Score Breakdown
         </span>
         <div className="grid grid-cols-2 gap-1 mt-1 text-xs font-['JetBrains_Mono','SF_Mono',monospace]">
-          <span className="text-[#a1a1aa]">SG Score (L1)</span>
+          <span className="text-[#a1a1aa]">SG Score (L1) <span className="text-[9px] text-[#525252]">live</span></span>
           <span className={scoreColor(player.sg_score_l1)}>{fmtScore(player.sg_score_l1)}</span>
-          <span className="text-[#a1a1aa]">History (L2)</span>
+          <span className="text-[#a1a1aa]">History (L2) <span className="text-[9px] text-[#525252]">historical</span></span>
           <span className={scoreColor(player.course_history_l2)}>{fmtScore(player.course_history_l2)}</span>
-          <span className="text-[#a1a1aa]">Fit (L3)</span>
+          <span className="text-[#a1a1aa]">Fit (L3) <span className="text-[9px] text-[#525252]">profile</span></span>
           <span className={scoreColor(player.fit_plus_category_l3)}>{fmtScore(player.fit_plus_category_l3)}</span>
-          <span className="text-[#a1a1aa]">Major (L4)</span>
+          <span className="text-[#a1a1aa]">Major (L4) <span className="text-[9px] text-[#525252]">historical</span></span>
           <span className={scoreColor(player.major_adj_l4)}>{fmtScore(player.major_adj_l4)}</span>
         </div>
       </div>
       <div className="border-t border-[#1a1a1a] pt-2">
         <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
-          Strokes Gained
+          Strokes Gained <span className="text-[9px] text-[#525252] normal-case tracking-normal">({dsLabel ?? 'live'})</span>
         </span>
         <div className="grid grid-cols-2 gap-1 mt-1 text-xs font-['JetBrains_Mono','SF_Mono',monospace]">
           <span className="text-[#a1a1aa]">PUTT</span>
@@ -276,10 +298,12 @@ function ClickablePlayerName({
   player,
   className,
   children,
+  dataSet,
 }: {
   player: PlayerData;
   className?: string;
   children?: React.ReactNode;
+  dataSet?: 'round-only' | 'cumulative';
 }) {
   const [showPopup, setShowPopup] = useState(false);
 
@@ -291,7 +315,7 @@ function ClickablePlayerName({
       >
         {children || player.player_name}
       </span>
-      {showPopup && <PlayerStatPopup player={player} onClose={() => setShowPopup(false)} />}
+      {showPopup && <PlayerStatPopup player={player} onClose={() => setShowPopup(false)} dataSet={dataSet} />}
     </span>
   );
 }
@@ -651,7 +675,7 @@ export default function MatchupsView(_: MatchupsViewProps) {
                   <Avatar playerName={m.pick.player_name} size="sm" />
                   <div className="min-w-0">
                     <div className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif] leading-snug">
-                      <ClickablePlayerName player={m.pick}>
+                      <ClickablePlayerName player={m.pick} dataSet={m.dataSet}>
                         {m.pick.player_name}
                       </ClickablePlayerName>
                     </div>
@@ -677,7 +701,7 @@ export default function MatchupsView(_: MatchupsViewProps) {
                 <div className="flex-1 flex items-start gap-2 justify-end min-w-0">
                   <div className="min-w-0 text-right">
                     <div className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif] leading-snug">
-                      <ClickablePlayerName player={m.opponent}>
+                      <ClickablePlayerName player={m.opponent} dataSet={m.dataSet}>
                         {m.opponent.player_name}
                       </ClickablePlayerName>
                     </div>

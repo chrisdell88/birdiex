@@ -5,6 +5,8 @@
  *   - Matchup Score
  *   - Best Bet
  *   - Best Bet Matchup Score Threshold
+ *   - Cumulative Data (added 2026-05-24)
+ *   - Round-Only Data (added 2026-05-24)
  *
  * Do NOT add new entries to this file without asking Chris first.
  * Removed (do not re-add without explicit approval): All Matchups,
@@ -30,6 +32,14 @@ const TERMS: Term[] = [
   {
     label: 'Best Bet Matchup Score Threshold',
     def: 'Venue-specific cutoff above which a model pick counts as a tracked Best Bet. Lower at predictable courses, higher at unpredictable ones.',
+  },
+  {
+    label: 'Cumulative Data',
+    def: 'X Scores computed from a player\'s strokes-gained TOTAL across every round played so far. The whole-tournament view of a player\'s form.',
+  },
+  {
+    label: 'Round-Only Data',
+    def: 'X Scores computed from a player\'s strokes-gained in JUST the most-recently completed round. The "what just happened" view — useful when a player heats up or cools off mid-event.',
   },
 ];
 

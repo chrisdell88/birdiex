@@ -199,38 +199,6 @@ async function patchEventConfig(args: {
   await writeFile(path, content);
 }
 
-/**
- * Patch the workflow YAML env block so the next cron firing pulls the new
- * phase / writes to the new file names.
- */
-async function patchWorkflowEnv(args: {
-  phase: string;
-  roundDataOut: string;
-  matchupsOut: string;
-  matchupsExport: string;
-  outrightsOut: string;
-  outrightsExport: string;
-}): Promise<void> {
-  const path = join(ROOT, '.github/workflows/datagolf-pull.yml');
-  let content = await readFile(path, 'utf8');
-
-  const subs: { re: RegExp; to: string; label: string }[] = [
-    { re: /PHASE:\s*\S+/,             to: `PHASE: ${args.phase}`,                   label: 'PHASE' },
-    { re: /ROUND_DATA_OUT:\s*\S+/,    to: `ROUND_DATA_OUT: ${args.roundDataOut}`,   label: 'ROUND_DATA_OUT' },
-    { re: /MATCHUPS_OUT:\s*\S+/,      to: `MATCHUPS_OUT: ${args.matchupsOut}`,      label: 'MATCHUPS_OUT' },
-    { re: /MATCHUPS_EXPORT:\s*\S+/,   to: `MATCHUPS_EXPORT: ${args.matchupsExport}`,label: 'MATCHUPS_EXPORT' },
-    { re: /OUTRIGHTS_OUT:\s*\S+/,     to: `OUTRIGHTS_OUT: ${args.outrightsOut}`,    label: 'OUTRIGHTS_OUT' },
-    { re: /OUTRIGHTS_EXPORT:\s*\S+/,  to: `OUTRIGHTS_EXPORT: ${args.outrightsExport}`,label: 'OUTRIGHTS_EXPORT' },
-  ];
-
-  for (const { re, to, label } of subs) {
-    if (!re.test(content)) throw new Error(`patchWorkflowEnv: could not find ${label}`);
-    content = content.replace(re, to);
-  }
-
-  await writeFile(path, content);
-}
-
 async function refreshCurrentRound(picksRound: number): Promise<void> {
   const completedRound = picksRound - 1;
   const phase = completedRound === 0 ? 'pre' : `r${completedRound}`;
@@ -371,19 +339,13 @@ async function doAutoAdvance(currentPicks: number, detected: number): Promise<vo
     outrightsExport,
   });
 
-  await patchWorkflowEnv({
-    phase: newPhase,
-    roundDataOut,
-    matchupsOut,
-    matchupsExport,
-    outrightsOut,
-    outrightsExport,
-  });
+  // Workflow no longer carries per-round env vars — phase is derived from
+  // src/config/event.ts every cron firing. Nothing to patch in the YAML.
 
   // Discord + email blast for the new round's picks.
   sendNotifyOnTransition(newPicks);
 
-  console.log(`Advance complete. Next cron will pull phase=${newPhase}.`);
+  console.log(`Advance complete. Next cron derives phase=${newPhase} from event.ts.`);
 }
 
 main().catch((e) => {

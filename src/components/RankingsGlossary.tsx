@@ -4,7 +4,8 @@
  * like POS / Player / SCORE are common sense and intentionally omitted.
  *
  * Two sections: Column metrics (the BirdieX-specific ones) and Signal
- * tiers (the 7 BUY/FADE levels + Pure/Conflicted purity).
+ * tiers (the 7 BUY/FADE levels, with the Conflicted warning entry
+ * appended after STRONG FADE).
  */
 
 interface Term {
@@ -36,8 +37,8 @@ const COLUMN_TERMS: Term[] = [
     def: 'Strokes Gained: Putting. The X Score SUBTRACTS this — putting is the least repeatable skill.',
   },
   {
-    label: 'SG Score / DG Skill',
-    def: 'Layer 1 of the model. Post-R1: course-weighted strokes-gained from the latest round. Pre-R1: DataGolf\'s baseline skill estimate.',
+    label: 'SG Score',
+    def: 'Layer 1 of the model — course-weighted strokes-gained from the latest completed round.',
   },
 ];
 
@@ -49,23 +50,9 @@ const SIGNAL_TERMS: Term[] = [
   { label: 'SOFT FADE', def: 'X Score -1.00 to -0.50. Lean toward regression.' },
   { label: 'FADE', def: 'X Score -1.50 to -1.00.' },
   { label: 'STRONG FADE', def: 'X Score ≤ -1.50. Highest-conviction "expect to regress" pick.' },
-];
-
-// What the visual icons next to each signal mean. Users see the ICONS,
-// not the words "PURE" or "CONFLICTED" anywhere on the page, so describe
-// the icons themselves.
-const ICON_TERMS: Term[] = [
   {
-    label: '⚠️ Yellow warning',
-    def: 'Ball-striking (OTT + APP) contradicts the signal direction. Proceed with caution. Hover the icon for specifics.',
-  },
-  {
-    label: '✓ Green check',
-    def: 'Ball-striking confirms a buy signal.',
-  },
-  {
-    label: '✓ Red check',
-    def: 'Ball-striking confirms a fade signal.',
+    label: '⚠️ Conflicted Signal',
+    def: 'Yellow warning next to a signal. Ball-striking (OTT or APP) contradicts the signal direction. Click the icon for specifics.',
   },
 ];
 
@@ -99,10 +86,9 @@ export default function RankingsGlossary() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
         <Section title="Column Metrics" terms={COLUMN_TERMS} />
         <Section title="Signal Levels" terms={SIGNAL_TERMS} />
-        <Section title="Signal Icons" terms={ICON_TERMS} />
       </div>
     </div>
   );

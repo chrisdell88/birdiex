@@ -59,7 +59,7 @@ export default function DataSetToggle({ dataSet, onChange }: DataSetToggleProps)
             className={pillBtn(dataSet === 'round', false)}
             aria-pressed={dataSet === 'round'}
           >
-            Round {completedRound} Only Data
+            Round {completedRound} Data
           </button>
         </div>
         {!cumulativeEnabled && (

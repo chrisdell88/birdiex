@@ -21,7 +21,7 @@ export default function Ticker() {
       <div className="max-w-7xl mx-auto flex items-stretch">
         <div className="flex-shrink-0 bg-[#22c55e]/10 border-r border-[#262626] px-3 md:px-4 flex items-center">
           <span className="text-[10px] uppercase tracking-wider font-bold text-[#22c55e] whitespace-nowrap font-['Inter',system-ui,sans-serif]">
-            R{tickerRound} Tee Times
+            R{tickerRound} Tee Times / Leaderboard
           </span>
         </div>
         <div className="overflow-hidden flex-1">

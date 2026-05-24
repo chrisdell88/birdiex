@@ -139,6 +139,11 @@ async function postDiscord(mode: NotifyMode, eventName: string, round: number, n
  * Compute the current Best Bet count INSIDE notify so the gate cannot be
  * bypassed by a buggy caller. Best Bet = matchup whose X-Score edge
  * (cumulative — same data the matchups page shows) ≥ venue floor.
+ *
+ * DataGolf's matchups feed can return the SAME player pair multiple times
+ * (different books / markets). The site dedupes to one card per pair, so
+ * the count must do the same — otherwise Discord/email reports inflated
+ * numbers vs. what the user sees on /matchups.
  */
 function computeBestBetCount(currentEvent: {
   rankingsCumulative: { player_name: string; x_score: number }[];
@@ -147,14 +152,17 @@ function computeBestBetCount(currentEvent: {
 }): number {
   const map = new Map<string, number>();
   for (const p of currentEvent.rankingsCumulative) map.set(p.player_name, p.x_score);
-  let n = 0;
+  const seenPairs = new Set<string>();
   for (const m of currentEvent.matchups) {
     const x1 = map.get(m.p1_player_name);
     const x2 = map.get(m.p2_player_name);
     if (x1 == null || x2 == null) continue;
-    if (Math.abs(x1 - x2) >= currentEvent.recommendedFloor) n++;
+    if (Math.abs(x1 - x2) < currentEvent.recommendedFloor) continue;
+    // Order-independent pair key so (A,B) and (B,A) count once.
+    const [a, b] = [m.p1_player_name, m.p2_player_name].sort();
+    seenPairs.add(`${a}::${b}`);
   }
-  return n;
+  return seenPairs.size;
 }
 
 async function main() {

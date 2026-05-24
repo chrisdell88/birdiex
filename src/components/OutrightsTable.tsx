@@ -130,7 +130,7 @@ export default function OutrightsTable({ outrights, players = [] }: Props) {
           Outright Winner Odds
         </span>
         <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
-          Top {display.length} favorites &mdash; reference only, not a recommendation
+          Top {display.length} favorites
         </span>
       </div>
       <div className="overflow-x-auto">

@@ -157,9 +157,11 @@ type OddsTab = 'matchups' | 'outrights';
 
 export default function OddsTablePage({ data, dataSet, onDataSetChange }: OddsTablePageProps) {
   const [activeTab, setActiveTab] = useState<OddsTab>('outrights');
-  // Default Min Edge = the venue's recommended floor. Users can lower it
-  // to see internally-graded picks below the recommended floor.
-  const [minEdge, setMinEdge] = useState<number>(currentEvent.recommendedFloor);
+  // Default: show ALL matchups (≥ 0.95 hard floor). Odds page is a price-
+  // comparison tool — users may want to shop a non-Best-Bet matchup that
+  // happens to have great odds at a specific book. They can narrow to a
+  // higher tier via the dropdown.
+  const [minEdge, setMinEdge] = useState<number>(0.95);
   const [sortField, setSortField] = useState<OddsSortField>('edge');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
 
@@ -302,12 +304,12 @@ export default function OddsTablePage({ data, dataSet, onDataSetChange }: OddsTa
             onChange={(e) => setMinEdge(parseFloat(e.target.value))}
             className="bg-[#0a0a0a] border border-[#262626] rounded-lg px-3 py-2 text-xs text-[#d4d4d4] font-['Inter',system-ui,sans-serif] focus:border-[#22c55e]/50 focus:outline-none cursor-pointer"
           >
-            <option value={0.95}>Min Edge: 0.95</option>
-            <option value={1.45}>Min Edge: 1.45</option>
-            <option value={1.95}>Min Edge: 1.95</option>
-            <option value={2.45}>Min Edge: 2.45</option>
-            <option value={2.95}>Min Edge: 2.95</option>
-            <option value={3.45}>Min Edge: 3.45</option>
+            <option value={0.95}>All Matchups (≥ 0.95)</option>
+            <option value={1.45}>Min Matchup Score: 1.45</option>
+            <option value={1.95}>Min Matchup Score: 1.95</option>
+            <option value={2.45}>Min Matchup Score: 2.45</option>
+            <option value={2.95}>Min Matchup Score: 2.95</option>
+            <option value={3.45}>Min Matchup Score: 3.45</option>
           </select>
 
           <span className={`${label} ml-auto`}>
@@ -355,7 +357,7 @@ export default function OddsTablePage({ data, dataSet, onDataSetChange }: OddsTa
                     onClick={() => handleSort('edge')}
                     className={`px-3 py-3 text-[10px] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif] cursor-pointer hover:text-[#22c55e] transition-colors whitespace-nowrap select-none ${sortField === 'edge' ? 'text-[#22c55e]' : 'text-[#a1a1aa]'}`}
                   >
-                    Edge{sortArrow('edge')}
+                    Matchup Score{sortArrow('edge')}
                   </th>
                   <th
                     onClick={() => handleSort('tier')}

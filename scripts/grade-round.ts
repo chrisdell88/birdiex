@@ -81,12 +81,15 @@ async function main() {
   const args = parseArgs();
   const round = Number(args.round);
 
-  // X Scores that drove the picks for this round.
+  // X Scores that drove the picks for this round. MUST be cumulative —
+  // that's the dataset the public Matchups page uses to compute and
+  // display Best Bets. Grading with round-only would give different
+  // edges than what users actually saw and bet on.
   const xsMod = await import(
     pathToFileURL(join(PROJECT_ROOT, 'src', 'data', `${args.xscores}.ts`)).href
   );
   const xsList: Array<{ player_name: string; x_score: number; signal: string }> =
-    xsMod.roundOnlyData;
+    xsMod.cumulativeData ?? xsMod.roundOnlyData;
   const xs = new Map(xsList.map((p) => [p.player_name, p]));
 
   // Tier-based bet sizing (Scheme D) — single source of truth in src/lib/sizing.ts.
@@ -180,7 +183,7 @@ async function main() {
       pickScore, oppScore,
       result,
       units: Math.round(betUnits(result, bestOdds, edge) * 100) / 100,
-      dataSet: 'round-only',
+      dataSet: 'cumulative',
     });
   }
 
@@ -224,8 +227,36 @@ async function main() {
   ].join('\n');
 
   await writeFile(join(PROJECT_ROOT, 'src', 'data', `${args.out}.ts`), file);
+
+  // Also compute the Best-Bets-only summary at the venue floor. This is
+  // the ONLY number safe to quote to users / reports / notifications —
+  // the raw line above includes scored-only picks below the venue floor.
+  const { recommendedFloorForPredictability } = await import(
+    pathToFileURL(join(PROJECT_ROOT, 'src', 'lib', 'sizing.ts')).href
+  );
+  const { COURSES, DEFAULT_LOW_PREDICTABILITY_COURSE } = await import(
+    pathToFileURL(join(PROJECT_ROOT, 'scripts', 'lib', 'courses.ts')).href
+  );
+  // Venue lookup by slug fragment — best-effort. Falls back to a generic
+  // low-predictability floor if we don't have a venue profile.
+  type CourseProfile = { predictability: number };
+  type CourseMap = Record<string, CourseProfile>;
+  const coursesMap = COURSES as CourseMap;
+  const slugLower = args.slug.toLowerCase();
+  const venueKey = Object.keys(coursesMap).find((k) => slugLower.includes(k)) ?? '';
+  const profile = (venueKey ? coursesMap[venueKey] : (DEFAULT_LOW_PREDICTABILITY_COURSE as CourseProfile));
+  const floor: number = recommendedFloorForPredictability(profile.predictability);
+
+  const bb = bets.filter((b) => b.edge >= floor);
+  const bbW = bb.filter((b) => b.result === 'W').length;
+  const bbL = bb.filter((b) => b.result === 'L').length;
+  const bbP = bb.filter((b) => b.result === 'P').length;
+  const bbUnits = bb.reduce((s, b) => s + (b.units as number), 0);
+
   console.log(`✅ Wrote src/data/${args.out}.ts`);
-  console.log(`   Round ${round}: ${summary.record}, ${summary.units > 0 ? '+' : ''}${summary.units}u, ${summary.roi > 0 ? '+' : ''}${summary.roi}% ROI — ${summary.bets} bets (${skipped} matchups skipped: no X Score / odds / score).`);
+  console.log(`   ALL graded picks (edge ≥ 0.95) — ${summary.bets} bets · ${summary.record} · ${summary.units > 0 ? '+' : ''}${summary.units}u`);
+  console.log(`   BEST BETS only (edge ≥ ${floor.toFixed(2)}) — ${bb.length} bets · ${bbW}-${bbL}-${bbP} · ${bbUnits > 0 ? '+' : ''}${Math.round(bbUnits * 100) / 100}u  ← public-facing record`);
+  console.log(`   (${skipped} matchups skipped: no X Score / odds / score)`);
 }
 
 main().catch((e) => { console.error('grade-round failed:', e); process.exit(1); });

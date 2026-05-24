@@ -4,16 +4,39 @@ Read `MEMORY.md` first for project context, model methodology, results history, 
 
 ---
 
-## 📣 Notifications — Hard Rules
+## 📣 Best Bets — Hard Rules (applies to ALL public reporting)
 
-1. **Discord + email notifications fire ONLY for Best Bets.** Never for raw matchups posted by sportsbooks, raw odds movements, or anything else.
-2. **Best Bet = matchup whose X-Score edge (cumulative) ≥ venue `recommendedFloor`.** Use `currentEvent.rankingsCumulative`, NOT `rankingsRound`. The matchups page displays cumulative — notifications must match.
-3. **Discord + email always fire TOGETHER.** Never one without the other. If one channel breaks, log + continue, don't skip the other.
-4. **The Best Bet gate lives INSIDE `scripts/notify.ts`** (`computeBestBetCount`). Never trust callers to gate correctly. The script silently exits if:
-   - `--mode round-picks` and current Best Bet count is 0
-   - `--mode new-bets` and current count did not exceed `--previous-bb-count`
-5. **`--force` bypasses the gate.** Only use it when explicitly told by Chris (e.g., backfilling a missed announcement). Default off.
-6. **If you change notification logic**, verify the gate still holds. A misfire pings real users — there's no undo.
+**Best Bet = matchup whose X-Score edge ≥ venue `recommendedFloor`, computed
+using the CUMULATIVE X Scores users see on the matchups page.** Round-only
+X Scores produce different edges and are NOT the basis for Best Bet
+detection or grading.
+
+These rules apply to **everything users see**: Discord, email, the Results
+page record, the all-time totals on the Methodology page banner, any
+wins/losses/units numbers quoted to Chris in chat. No exceptions.
+
+1. **Notifications fire ONLY for Best Bets.** Never for raw matchups posted
+   by sportsbooks, raw odds movements, or anything else. The gate lives
+   INSIDE `scripts/notify.ts` (`computeBestBetCount`); callers cannot bypass.
+2. **Grading uses cumulative X Scores.** `scripts/grade-round.ts` reads
+   `cumulativeData` (not `roundOnlyData`) so edges match what the matchups
+   page displayed. After grading, the script prints BOTH the raw "all
+   graded picks" line AND the "Best Bets only" line — quote ONLY the
+   Best Bets line to Chris or users.
+3. **The Results page and all-time totals filter by venue floor.** Bets
+   below the floor are scored internally for backtesting (`isTrackedBet`
+   gate in `src/lib/sizing.ts`); they DO NOT appear in any public-facing
+   record.
+4. **Discord + email always fire TOGETHER on a Best Bet trigger.** Never
+   one without the other. If one channel breaks, log + continue, don't skip
+   the other.
+5. **`notify.ts --force` bypasses the gate.** Only use it when explicitly
+   told by Chris (e.g., backfilling a missed announcement). Default off.
+6. **Before quoting any wins/losses/units to Chris, confirm the source
+   is the Best Bets filter.** If the source is the raw bet log, filter
+   first.
+7. **A misfire is permanent — there's no undo.** When changing notification
+   or grading logic, verify the gate still holds end-to-end.
 
 ---
 

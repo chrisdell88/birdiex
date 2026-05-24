@@ -78,11 +78,11 @@ export default function DataSetToggle({ dataSet, onChange }: DataSetToggleProps)
       </div>
       {showTip && (
         <p className="text-xs text-[#d4d4d4] font-['Inter',system-ui,sans-serif] mt-3 pt-3 border-t border-[#262626] leading-relaxed">
-          <span className="text-[#22c55e] font-medium">Round {completedRound}</span> uses only the
+          <span className="text-[#22c55e] font-medium">Round {completedRound} Data</span> uses only the
           latest completed round&rsquo;s strokes-gained data to drive picks.{' '}
-          <span className="text-[#22c55e] font-medium">Cumulative</span> blends every round played
-          so far &mdash; historically the stronger long-run signal. Same model; only the input
-          window changes.
+          <span className="text-[#22c55e] font-medium">Cumulative Data</span> blends every round
+          played so far &mdash; historically the stronger long-run signal. Same model; only the
+          input window changes.
         </p>
       )}
     </div>

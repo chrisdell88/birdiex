@@ -194,7 +194,7 @@ function SportsbookLink({ bookName }: { bookName: string }) {
 
 // --- Player Stat Popup ---
 
-function PlayerStatPopup({ player, onClose, dataSet }: { player: PlayerData; onClose: () => void; dataSet?: 'round-only' | 'cumulative' }) {
+function PlayerStatPopup({ player, onClose, dataSet, align = 'left' }: { player: PlayerData; onClose: () => void; dataSet?: 'round-only' | 'cumulative'; align?: 'left' | 'right' }) {
   // Suppress signal pre-R1 — it isn't meaningful before live SG data exists.
   const hideSignal = currentEvent.picksRound <= 1;
   const popupRef = useRef<HTMLDivElement>(null);
@@ -224,7 +224,10 @@ function PlayerStatPopup({ player, onClose, dataSet }: { player: PlayerData; onC
       ref={popupRef}
       // Pure black background + green border for active-selection feel.
       // w-72 preferred, capped to viewport so it never overflows mobile.
-      className="absolute z-50 bg-[#0a0a0a] border border-[#22c55e]/40 rounded-lg p-4 shadow-xl w-72 max-w-[calc(100vw-2rem)] left-0 top-full mt-1"
+      // Anchor left for the pick (left side of card), right for the
+      // opponent — otherwise the popup opens off-screen for the right
+      // player on narrow viewports.
+      className={`absolute z-50 bg-[#0a0a0a] border border-[#22c55e]/40 rounded-lg p-4 shadow-xl w-72 max-w-[calc(100vw-2rem)] top-full mt-1 ${align === 'right' ? 'right-0' : 'left-0'}`}
     >
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif] truncate pr-2">
@@ -293,11 +296,13 @@ function ClickablePlayerName({
   className,
   children,
   dataSet,
+  align,
 }: {
   player: PlayerData;
   className?: string;
   children?: React.ReactNode;
   dataSet?: 'round-only' | 'cumulative';
+  align?: 'left' | 'right';
 }) {
   const [showPopup, setShowPopup] = useState(false);
 
@@ -309,7 +314,7 @@ function ClickablePlayerName({
       >
         {children || player.player_name}
       </span>
-      {showPopup && <PlayerStatPopup player={player} onClose={() => setShowPopup(false)} dataSet={dataSet} />}
+      {showPopup && <PlayerStatPopup player={player} onClose={() => setShowPopup(false)} dataSet={dataSet} align={align} />}
     </span>
   );
 }
@@ -695,7 +700,7 @@ export default function MatchupsView(_: MatchupsViewProps) {
                 <div className="flex-1 flex items-start gap-2 justify-end min-w-0">
                   <div className="min-w-0 text-right">
                     <div className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif] leading-snug">
-                      <ClickablePlayerName player={m.opponent} dataSet={m.dataSet}>
+                      <ClickablePlayerName player={m.opponent} dataSet={m.dataSet} align="right">
                         {m.opponent.player_name}
                       </ClickablePlayerName>
                     </div>

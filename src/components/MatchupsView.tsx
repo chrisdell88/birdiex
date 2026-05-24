@@ -370,6 +370,8 @@ export default function MatchupsView(_: MatchupsViewProps) {
     [],
   );
 
+  const floor = currentEvent.recommendedFloor;
+
   const rawMatchups = useMemo(() => {
     if (datasetsIdentical) {
       return cumulativeMatchups.map((m) => ({
@@ -379,19 +381,23 @@ export default function MatchupsView(_: MatchupsViewProps) {
       }));
     }
     const keyOf = (m: Matchup) => `${m.pick.player_name}::${m.opponent.player_name}`;
-    const roundKeys = new Set(roundMatchups.map(keyOf));
-    const cumKeys = new Set(cumulativeMatchups.map(keyOf));
+    // Double Signal = SAME matchup is a Best Bet (edge ≥ venue floor) in
+    // BOTH datasets. Not "appears in both above 0.95" — that gave false
+    // positives where a Best Bet in cumulative was flagged just because
+    // a low-edge version of the pair also existed in round-only.
+    const roundBBKeys = new Set(roundMatchups.filter((m) => m.matchupScore >= floor).map(keyOf));
+    const cumBBKeys = new Set(cumulativeMatchups.filter((m) => m.matchupScore >= floor).map(keyOf));
+    const bothBB = (m: Matchup) => roundBBKeys.has(keyOf(m)) && cumBBKeys.has(keyOf(m));
+
     const tagged: Array<Matchup & { dataSet: 'round-only' | 'cumulative'; doubleSignal: boolean }> = [];
     for (const m of roundMatchups) {
-      tagged.push({ ...m, dataSet: 'round-only', doubleSignal: cumKeys.has(keyOf(m)) });
+      tagged.push({ ...m, dataSet: 'round-only', doubleSignal: bothBB(m) });
     }
     for (const m of cumulativeMatchups) {
-      tagged.push({ ...m, dataSet: 'cumulative', doubleSignal: roundKeys.has(keyOf(m)) });
+      tagged.push({ ...m, dataSet: 'cumulative', doubleSignal: bothBB(m) });
     }
     return tagged;
-  }, [roundMatchups, cumulativeMatchups, datasetsIdentical]);
-
-  const floor = currentEvent.recommendedFloor;
+  }, [roundMatchups, cumulativeMatchups, datasetsIdentical, floor]);
 
   // Three bands:
   //   bestBets — matchupScore ≥ venue floor (the tracked recommendations)

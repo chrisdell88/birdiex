@@ -22,34 +22,36 @@ interface VenueInfo {
   predictability: number;
 }
 
+// All predictability values come from DataGolf's Course History Tool chart
+// (pulled 2026-05-25). Exact bar heights stored in src/data/dataGolfPredictability.ts.
+// Scaling: predictability = dgBarPct × 0.001580 (anchored so Augusta = 0.1439).
 export const VENUES: Record<EventId, VenueInfo> = {
   'masters-2026': {
     eventName: 'Masters 2026',
     course: 'Augusta National',
+    // DataGolf bar pct: 91.11 → 0.1439 (anchor).
     predictability: 0.1439,
   },
   'pga-2026': {
     eventName: 'PGA Championship 2026',
     course: 'Aronimink',
-    predictability: 0.0413,
+    // DataGolf bar pct: 9.08 → 0.0143. Floor shifts to 2.95 (★★★+) — Aronimink
+    // is one of the lowest-predictability PGA Tour venues. Public PGA Championship
+    // record now filters at the tighter 2.95 threshold.
+    predictability: 0.0143,
   },
-  // Predictability computed 2026-05-20 from DataGolf player-decompositions
-  // (mean |total_course_history_adjustment| over the 147-player field). Lower
-  // than Aronimink's 0.0413, so the formula bumps the recommended floor up
-  // a tier — see docs/THRESHOLD_SWEEP.md.
   'cj-cup-byron-nelson-2026': {
     eventName: 'CJ Cup Byron Nelson 2026',
     course: 'TPC Craig Ranch',
-    predictability: 0.0373,
+    // DataGolf bar pct: 22.14 → 0.0350. Floor stays at 2.45 (★★+) —
+    // small shift from old 0.0373, no tier change.
+    predictability: 0.0350,
   },
-  // Predictability computed 2026-05-25 from DataGolf player-decompositions
-  // (mean |course_history_adjustment| over the 132-player field). At 0.0180
-  // this is the lowest predictability of any venue we've modeled — the
-  // formula snaps the recommended floor to 2.95 (★★★+), the tightest tier.
   'charles-schwab-challenge-2026': {
     eventName: 'Charles Schwab Challenge 2026',
     course: 'Colonial Country Club',
-    predictability: 0.0180,
+    // DataGolf bar pct: 31.84 → 0.0503. Floor: 2.45 (★★+).
+    predictability: 0.0503,
   },
 };
 

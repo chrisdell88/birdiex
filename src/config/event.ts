@@ -65,7 +65,9 @@ export interface CurrentEvent {
   skillEstimates: PlayerSkillEstimate[];
 }
 
-const COLONIAL_PREDICTABILITY = 0.0180;
+// DataGolf bar pct: 31.84 → 0.0503 (anchored against Augusta = 0.1439 = 91.11%).
+// Source of truth: src/data/dataGolfPredictability.ts.
+const COLONIAL_PREDICTABILITY = 0.0503;
 
 export const currentEvent: CurrentEvent = {
   name: 'Charles Schwab Challenge',

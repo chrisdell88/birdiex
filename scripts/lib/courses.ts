@@ -54,57 +54,58 @@ export const DEFAULT_LOW_PREDICTABILITY_COURSE: CourseProfile = {
 /** Maximum predictability used to normalize (0–1 scale). Per formula doc. */
 export const MAX_PREDICTABILITY = 0.15;
 
+// All predictability values below come from DataGolf's Course History Tool
+// ("Where is course history most predictive?" chart), pulled 2026-05-25.
+// Exact bar heights are stored in src/data/dataGolfPredictability.ts.
+// Scaling: predictability = dgBarPct × 0.001580 (anchored so Augusta = 0.1439).
 export const COURSES: Record<string, CourseProfile> = {
   'augusta-national': {
     name: 'Augusta National',
+    // DataGolf bar pct: 91.11 → 0.1439 (anchor — matches existing).
     predictability: 0.1439,
     coefficients: { ott: 0.749, app: 0.652, arg: 0.39, putt: 0.408 },
-    source_date: '2026-04-09',
+    source_date: '2026-05-25',
     is_major: true,
   },
   // PGA Championship 2026 venue.
   // Aronimink Golf Club — Newtown Square, PA. Par 70, ~7,267 yards.
-  // TODO: Pull actual coefficients + predictability from DataGolf web tool.
-  // Aronimink rarely hosts PGA Tour events, so DataGolf data is likely sparse —
-  // we expect low predictability and near-equal weights.
   'aronimink': {
     name: 'Aronimink Golf Club',
-    // predictability: mean |total_course_history_adjustment| over the
-    // 156-player PGA Championship field (data/raw/pga-championship-2026/pre).
-    predictability: 0.0413,
+    // DataGolf bar pct: 9.08 → 0.0143. Aronimink is one of the LOW-predictability
+    // PGA Tour venues (rare host, sparse history). This shifts the venue floor
+    // from 2.45 (old proxy value) to 2.95 — tighter Best Bet threshold.
+    predictability: 0.0143,
     // coefficients: DataGolf Course Fit radar, Relative Importance OFF, pulled
     // 2026-05-15. Radar axes: DrivingDistance 0.780, DrivingAccuracy 0.428,
     // Approach 0.723, AroundGreen 0.413, Putting 0.524.
     // ott = higher of DrivingDistance (0.780) and DrivingAccuracy (0.428) = 0.780.
     coefficients: { ott: 0.780, app: 0.723, arg: 0.413, putt: 0.524 },
-    source_date: '2026-05-15',
+    source_date: '2026-05-25',
     is_major: true,
   },
   // CJ Cup Byron Nelson — TPC Craig Ranch, McKinney TX. Par 71, ~7,569 yards.
-  // Predictability computed 2026-05-20 from DataGolf player-decompositions
-  // (mean |total_course_history_adjustment| over 147-player field).
-  // Coefficients pulled from DataGolf's Course Fit Tool web app 2026-05-21
-  // (Relative Importance OFF). Radar axes:
-  //   DrivingDistance 0.80, DrivingAccuracy 0.50,
-  //   Approach 0.70, AroundGreen 0.40, Putting 0.50.
-  // ott = higher of DrivingDistance (0.80) and DrivingAccuracy (0.50) = 0.80.
   'tpc-craig-ranch': {
     name: 'TPC Craig Ranch',
-    predictability: 0.0373,
+    // DataGolf bar pct: 22.14 → 0.0350. Floor stays at 2.45 — slight adjustment
+    // from the old proxy 0.0373 but same recommended tier.
+    predictability: 0.0350,
+    // coefficients: DataGolf Course Fit Tool, Relative Importance OFF, 2026-05-21.
+    // Radar: DD 0.80, DA 0.50, APP 0.70, ARG 0.40, PUTT 0.50.
+    // ott = max(DD, DA) = 0.80.
     coefficients: { ott: 0.80, app: 0.70, arg: 0.40, putt: 0.50 },
-    source_date: '2026-05-21',
+    source_date: '2026-05-25',
     is_major: false,
   },
   // Charles Schwab Challenge — Colonial Country Club, Fort Worth TX. Par 70,
-  // ~7,209 yards. "Hogan's Alley" — historic shotmaker's course, narrow
-  // tree-lined fairways, small Bermuda greens, premium on accuracy + iron play.
-  // Predictability computed 2026-05-25 from DataGolf player-decompositions
-  // (mean |course_history_adjustment| over 132-player field).
-  // Coefficients provided by Chris from DataGolf 2026-05-25:
-  //   DD 0.60, APP 0.70, ARG 0.40, PUTT 0.50.
+  // ~7,209 yards. "Hogan's Alley" — historic shotmaker's course.
   'colonial-country-club': {
     name: 'Colonial Country Club',
-    predictability: 0.0180,
+    // DataGolf bar pct: 31.84 → 0.0503. Floor: 2.45 (★★+). Colonial is a
+    // moderate-predictability venue — long-tenured PGA stop where some players
+    // genuinely "own" the course.
+    predictability: 0.0503,
+    // coefficients: DataGolf Course Fit Tool, 2026-05-25. ott=0.60 (= max(DD, DA),
+    // DD higher), APP=0.70, ARG=0.40, PUTT=0.50.
     coefficients: { ott: 0.60, app: 0.70, arg: 0.40, putt: 0.50 },
     source_date: '2026-05-25',
     is_major: false,

@@ -16,6 +16,7 @@ import { verifyLabPassword, supabaseConfigured } from '../lib/supabase';
 
 import { r2Results as cjR2 } from '../data/cjCupR2Results';
 import { r3Results as cjR3 } from '../data/cjCupR3Results';
+import { r4Results as cjR4 } from '../data/cjCupR4Results';
 import { r2Results as pgaR2 } from '../data/pgaChampR2Results';
 import { r3Results as pgaR3 } from '../data/pgaChampR3Results';
 import { r4Results as pgaR4 } from '../data/pgaChampR4Results';
@@ -32,6 +33,7 @@ const EVENTS: EventBucket[] = [
     rounds: [
       { label: 'R2', bets: cjR2 },
       { label: 'R3', bets: cjR3 },
+      { label: 'R4', bets: cjR4 },
     ],
   },
   {

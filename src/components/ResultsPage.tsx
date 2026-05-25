@@ -10,9 +10,9 @@ import { r3Results, r3Summary as pgaR3SummaryRaw } from '../data/pgaChampR3Resul
 import { r4Results, r4Summary as pgaR4SummaryRaw } from '../data/pgaChampR4Results';
 import { r2Results as cjR2RawBets } from '../data/cjCupR2Results';
 import { r3Results as cjR3RawBets } from '../data/cjCupR3Results';
+import { r4Results as cjR4RawBets } from '../data/cjCupR4Results';
 import { starsForEdge, unitsForEdge, stakeToWin1, isTrackedBet } from '../lib/sizing';
 import { floorForEvent } from '../config/venues';
-import { currentEvent } from '../config/event';
 import {
   overallRecord,
   overallUnits,
@@ -85,12 +85,14 @@ const pgaR3Summary = summarise(pgaR3Tracked);
 const pgaR4Summary = summarise(pgaR4Tracked);
 const pgaSummary = summarise(pgaTracked);
 
-// CJ Cup — in-progress. Filter to Best Bets only at the venue floor.
+// CJ Cup — COMPLETE after R4. Filter to Best Bets only at the venue floor.
 const cjR2Tracked = trackedAt(cjR2RawBets, cjCupFloor.floor);
 const cjR3Tracked = trackedAt(cjR3RawBets, cjCupFloor.floor);
+const cjR4Tracked = trackedAt(cjR4RawBets, cjCupFloor.floor);
 const cjR2Summary = summarise(cjR2Tracked);
 const cjR3Summary = summarise(cjR3Tracked);
-const cjTracked = [...cjR2Tracked, ...cjR3Tracked];
+const cjR4Summary = summarise(cjR4Tracked);
+const cjTracked = [...cjR2Tracked, ...cjR3Tracked, ...cjR4Tracked];
 const cjSummary = summarise(cjTracked);
 
 // All-time = Masters (tracked) + PGA (tracked) + CJ Cup (tracked, in-progress).
@@ -157,25 +159,25 @@ const EVENT_REGISTRY: EventEntry[] = [
   {
     id: 'cj-cup-byron-nelson-2026',
     name: 'CJ Cup Byron Nelson 2026',
-    status: 'IN PROGRESS',
-    wins: 0,
-    losses: 0,
-    pushes: 0,
-    units: 0,
-    roi: 0,
+    status: 'COMPLETE',
+    wins: cjSummary.wins,
+    losses: cjSummary.losses,
+    pushes: cjSummary.pushes,
+    units: cjSummary.units,
+    roi: cjSummary.roi,
     threshold: cjCupFloor.floor,
     course: cjCupFloor.course,
     predictability: cjCupFloor.predictability,
   },
 ];
 
-// --- All-time totals (sum of venue-tracked records) ---
-const allTimeWins = mastersSummary.wins + pgaSummary.wins;
-const allTimeLosses = mastersSummary.losses + pgaSummary.losses;
-const allTimePushes = mastersSummary.pushes + pgaSummary.pushes;
-const allTimeUnits = +(mastersSummary.units + pgaSummary.units).toFixed(2);
-const allTimeStaked = mastersSummary.staked + pgaSummary.staked;
-const allTimeROI = +((allTimeUnits / allTimeStaked) * 100).toFixed(1);
+// --- All-time totals (sum of venue-tracked records across every event) ---
+const allTimeWins = mastersSummary.wins + pgaSummary.wins + cjSummary.wins;
+const allTimeLosses = mastersSummary.losses + pgaSummary.losses + cjSummary.losses;
+const allTimePushes = mastersSummary.pushes + pgaSummary.pushes + cjSummary.pushes;
+const allTimeUnits = +(mastersSummary.units + pgaSummary.units + cjSummary.units).toFixed(2);
+const allTimeStaked = mastersSummary.staked + pgaSummary.staked + cjSummary.staked;
+const allTimeROI = allTimeStaked > 0 ? +((allTimeUnits / allTimeStaked) * 100).toFixed(1) : 0;
 const allTimeBets = allTimeWins + allTimeLosses + allTimePushes;
 
 // --- Helpers ---
@@ -968,21 +970,19 @@ function PGAView() {
   );
 }
 
-// --- CJ Cup Byron Nelson View — in-progress, graded round-by-round ---
+// --- CJ Cup Byron Nelson View — COMPLETE after R4, graded round-by-round ---
 function CJCupView() {
-  const picksRound = currentEvent.picksRound;
-  const completedRounds = Math.max(0, picksRound - 1);
-
-  // Best Bets only, per round.
+  // Best Bets only, per round. Event is complete — show R2, R3, R4.
   const gradedRounds = [
     { round: 2, summary: cjR2Summary, bets: cjR2Tracked },
     { round: 3, summary: cjR3Summary, bets: cjR3Tracked },
-  ].filter((r) => r.round <= completedRounds);
+    { round: 4, summary: cjR4Summary, bets: cjR4Tracked },
+  ];
 
   return (
     <div>
       <TournamentSummaryBanner
-        status="IN PROGRESS"
+        status="COMPLETE"
         eventName="CJ Cup Byron Nelson 2026"
         course={cjCupFloor.course}
         threshold={cjCupFloor.floor}
@@ -990,7 +990,7 @@ function CJCupView() {
         units={cjSummary.units}
         roi={cjSummary.roi}
         bets={cjSummary.bets}
-        recordLabel="Best Bets so far"
+        recordLabel="Best Bets — Final"
       />
 
       {gradedRounds.length === 0 && (
@@ -1083,12 +1083,6 @@ function CJCupView() {
         </div>
       ))}
 
-      {completedRounds < 4 && (
-        <p className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mt-6">
-          Round {picksRound} picks are live on the <span className="text-[#22c55e]">Matchups</span> page.
-          Graded results post once Round {picksRound} completes.
-        </p>
-      )}
     </div>
   );
 }

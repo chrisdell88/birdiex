@@ -67,6 +67,40 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
         </div>
       </section>
 
+      {/* Section 1.5: BirdieX RTG (pre-tournament) */}
+      <section className="mb-12">
+        <h2 className="text-2xl font-bold text-[#f5f5f5] mb-2 font-['Inter',system-ui,sans-serif]">
+          BirdieX RTG (Pre-Tournament)
+        </h2>
+        <p className="text-sm text-[#d4d4d4] mb-6 font-['Inter',system-ui,sans-serif] leading-relaxed">
+          Before Round 1 tees off there is no live strokes-gained data for the
+          model to ingest. The putting-regression X Score literally cannot be
+          computed yet. In that window the Rankings page surfaces a different
+          number called <span className="text-[#22c55e] font-semibold">BirdieX RTG</span> &mdash; a
+          pre-event rating built from baseline player skill plus venue-specific
+          tilts.
+        </p>
+
+        <div className="bg-[#0a0a0a] border border-[#262626] rounded-xl p-5 mb-4">
+          <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed mb-3">
+            BirdieX RTG combines:
+          </p>
+          <ul className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed list-disc ml-6 space-y-1">
+            <li>DataGolf's adjusted skill estimate (Layer 1)</li>
+            <li>Course history adjustment per player (Layer 2)</li>
+            <li>Course fit adjustment, weighted by venue coefficients (Layer 3)</li>
+            <li>Major-championship adjustment, when applicable (Layer 4)</li>
+          </ul>
+        </div>
+
+        <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
+          Once Round 1 finishes the column header on the Rankings page flips from
+          BirdieX RTG to X Score, and the in-event putting-regression model takes over.
+          The two ratings are intentionally given different names so it's always
+          clear which model is driving the page.
+        </p>
+      </section>
+
       {/* Section 2: Why Putting Regression? */}
       <section className="mb-12">
         <h2 className="text-xl font-bold text-[#f5f5f5] mb-4 font-['Inter',system-ui,sans-serif]">

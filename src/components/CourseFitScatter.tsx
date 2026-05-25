@@ -419,11 +419,12 @@ export default function CourseFitScatter({ topN = 20, onPlayerClick }: Props) {
       </svg>
 
       <p className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif] leading-relaxed mt-3">
-        X Score combines DataGolf skill + course history + course fit
+        BirdieX RTG combines DataGolf skill + course history + course fit
         {currentEvent.isMajor ? ' + major-championship adjustment' : ''} into a
-        single number that ranks the field. Heads near the upper-right hit both
+        single pre-tournament rating. Heads near the upper-right hit both
         venue-fit and historical-performance buckets &mdash; the model&rsquo;s
-        strongest picks at {currentEvent.course}.
+        strongest picks at {currentEvent.course}. Once R1 finishes, the live
+        X Score takes over.
       </p>
     </div>
   );

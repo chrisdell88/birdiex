@@ -278,7 +278,12 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
     { field: 'player_name', label: 'Player' },
     // X Score + Signal + To Win all hide post-final — model picks/odds are
     // historical noise once the tournament is over.
-    ...(isComplete ? [] : [{ field: 'x_score' as SortField, label: 'X Score' }]),
+    // Pre-tournament: the metric is BirdieX RTG (different model — no live
+    // putting-regression data yet). Once R1 finishes, the live-data X Score
+    // takes over with the same column slot.
+    ...(isComplete
+      ? []
+      : [{ field: 'x_score' as SortField, label: isPreTournament ? 'BirdieX RTG' : 'X Score' }]),
     ...(isPreTournament || isComplete ? [] : [{ field: 'signal' as SortField, label: 'Signal' }]),
     ...(isComplete ? [] : [{ field: 'outright_odds' as SortField, label: 'To Win' }]),
     ...sgSplitColumns,

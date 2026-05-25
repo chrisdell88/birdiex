@@ -17,8 +17,12 @@ interface Term {
 // are common sense or context-obvious; they're omitted on purpose.
 const COLUMN_TERMS: Term[] = [
   {
+    label: 'BirdieX RTG',
+    def: 'Pre-tournament rating. Combines DataGolf skill estimate + course history + course fit + major adjustment. Higher = stronger pre-event pick. Switches to X Score once R1 finishes.',
+  },
+  {
     label: 'X Score',
-    def: 'BirdieX\'s proprietary rating. Positive = expected to improve; negative = expected to regress.',
+    def: 'BirdieX\'s in-event putting-regression rating, computed once live SG data exists. Positive = expected to improve; negative = expected to regress. Only shown after R1.',
   },
   {
     label: 'SG_OTT',

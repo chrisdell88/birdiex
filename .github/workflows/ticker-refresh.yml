@@ -18,7 +18,7 @@ on:
   workflow_dispatch: {}
 
 env:
-  SLUG: cj-cup-byron-nelson-2026
+  SLUG: charles-schwab-challenge-2026
 
 permissions:
   contents: write

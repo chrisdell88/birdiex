@@ -8,17 +8,18 @@
  * edits needed.
  */
 import type { PlayerData, MatchupOddsEntry, OutrightEntry, PlayerSkillEstimate } from '../types';
-// Post-final: cumulative now = R1+R2+R3+R4 (the full tournament), round-only = R4.
-// The Rankings dataset toggle uses these directly.
-import { roundOnlyData, cumulativeData, generatedAt } from '../data/cjCupR4Data';
+// Pre-tournament: cumulativeData and roundOnlyData are both the pre-tournament
+// snapshot (DataGolf skill estimates only, no live SG yet). Once R1 finishes
+// the auto-roll script rebuilds cscR1Data and swaps this import.
+import { roundOnlyData, cumulativeData, generatedAt } from '../data/cscPreData';
 // Pre-tournament rankings — used as a FROZEN snapshot for the Course Fit
 // Scatter chart. The chart is meant to be a pre-tournament reference, not
 // updated round-by-round. Stays pointed at the pre-tournament file even
 // once the main rankings advance.
-import { roundOnlyData as preTournamentRoundOnly } from '../data/cjCupPreData';
-import { r4MatchupOddsData } from '../data/cjCupR4Matchups';
-import { r4OutrightsData } from '../data/cjCupR4Outrights';
-import { skillEstimatesData } from '../data/cjCupSkillEstimates';
+import { roundOnlyData as preTournamentRoundOnly } from '../data/cscPreData';
+import { r1MatchupOddsData } from '../data/cscR1Matchups';
+import { r1OutrightsData } from '../data/cscR1Outrights';
+import { skillEstimatesData } from '../data/cscSkillEstimates';
 import { recommendedFloorForPredictability, floorTierLabel } from '../lib/sizing';
 
 export interface CurrentEvent {
@@ -64,23 +65,23 @@ export interface CurrentEvent {
   skillEstimates: PlayerSkillEstimate[];
 }
 
-const CRAIG_RANCH_PREDICTABILITY = 0.0373;
+const COLONIAL_PREDICTABILITY = 0.0180;
 
 export const currentEvent: CurrentEvent = {
-  name: 'CJ Cup Byron Nelson',
-  course: 'TPC Craig Ranch',
+  name: 'Charles Schwab Challenge',
+  course: 'Colonial Country Club',
   isMajor: false,
-  predictability: CRAIG_RANCH_PREDICTABILITY,
-  recommendedFloor: recommendedFloorForPredictability(CRAIG_RANCH_PREDICTABILITY),
-  recommendedFloorLabel: floorTierLabel(recommendedFloorForPredictability(CRAIG_RANCH_PREDICTABILITY)),
-  picksRound: 4,
-  isComplete: true,
-  headerBanner: 'TOURNAMENT COMPLETE',
+  predictability: COLONIAL_PREDICTABILITY,
+  recommendedFloor: recommendedFloorForPredictability(COLONIAL_PREDICTABILITY),
+  recommendedFloorLabel: floorTierLabel(recommendedFloorForPredictability(COLONIAL_PREDICTABILITY)),
+  picksRound: 1,
+  isComplete: false,
+  headerBanner: 'PRE-TOURNAMENT · ROUND 1 PICKS',
   dataUpdatedAt: generatedAt,
   rankingsRound: roundOnlyData,
   rankingsCumulative: cumulativeData,
   preTournamentRankings: preTournamentRoundOnly,
-  matchups: r4MatchupOddsData,
-  outrights: r4OutrightsData,
+  matchups: r1MatchupOddsData,
+  outrights: r1OutrightsData,
   skillEstimates: skillEstimatesData,
 };

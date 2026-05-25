@@ -95,6 +95,20 @@ export const COURSES: Record<string, CourseProfile> = {
     source_date: '2026-05-21',
     is_major: false,
   },
+  // Charles Schwab Challenge — Colonial Country Club, Fort Worth TX. Par 70,
+  // ~7,209 yards. "Hogan's Alley" — historic shotmaker's course, narrow
+  // tree-lined fairways, small Bermuda greens, premium on accuracy + iron play.
+  // Predictability computed 2026-05-25 from DataGolf player-decompositions
+  // (mean |course_history_adjustment| over 132-player field).
+  // Coefficients provided by Chris from DataGolf 2026-05-25:
+  //   DD 0.60, APP 0.70, ARG 0.40, PUTT 0.50.
+  'colonial-country-club': {
+    name: 'Colonial Country Club',
+    predictability: 0.0180,
+    coefficients: { ott: 0.60, app: 0.70, arg: 0.40, putt: 0.50 },
+    source_date: '2026-05-25',
+    is_major: false,
+  },
 };
 
 /**

@@ -11,7 +11,7 @@
  */
 import { recommendedFloorForPredictability, floorTierLabel } from '../lib/sizing';
 
-export type EventId = 'masters-2026' | 'pga-2026' | 'cj-cup-byron-nelson-2026';
+export type EventId = 'masters-2026' | 'pga-2026' | 'cj-cup-byron-nelson-2026' | 'charles-schwab-challenge-2026';
 
 interface VenueInfo {
   /** Tournament label as shown to users. */
@@ -41,6 +41,15 @@ export const VENUES: Record<EventId, VenueInfo> = {
     eventName: 'CJ Cup Byron Nelson 2026',
     course: 'TPC Craig Ranch',
     predictability: 0.0373,
+  },
+  // Predictability computed 2026-05-25 from DataGolf player-decompositions
+  // (mean |course_history_adjustment| over the 132-player field). At 0.0180
+  // this is the lowest predictability of any venue we've modeled — the
+  // formula snaps the recommended floor to 2.95 (★★★+), the tightest tier.
+  'charles-schwab-challenge-2026': {
+    eventName: 'Charles Schwab Challenge 2026',
+    course: 'Colonial Country Club',
+    predictability: 0.0180,
   },
 };
 

@@ -94,8 +94,10 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
       : null;
   const [sortField, setSortField] = useState<SortField>(isPreTournament ? 'x_score' : 'position');
   const [sortDir, setSortDir] = useState<SortDirection>(
-    // ascending for position (lower is better); descending for X Score
-    isPreTournament ? 'desc' : 'asc',
+    // sortDir is RELATIVE to the column's "good" direction (set by the cmp
+    // formula in the sort callback). For both POS and X Score, sortDir 'asc'
+    // means "good first" — pos #1 first, OR highest X Score first.
+    'asc',
   );
   const [search, setSearch] = useState('');
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);

@@ -212,6 +212,11 @@ async function refreshCurrentRound(picksRound: number): Promise<void> {
   exec(`npx tsx scripts/build-matchups.ts --slug ${SLUG} --phase ${phase} --market round_matchups --export ${matchupsExport} --out ${matchupsOut}`);
   exec(`npx tsx scripts/build-outrights.ts --slug ${SLUG} --phase ${phase} --export ${outrightsExport} --out ${outrightsOut}`);
   exec(`npx tsx scripts/build-skill-estimates.ts --slug ${SLUG} --phase ${phase} --export skillEstimatesData --out ${SLUG_PREFIX}SkillEstimates`);
+  // Headshots: pull from ESPN's current leaderboard, name-match to our field,
+  // merge into the cumulative map. Best-effort — ESPN may not have switched
+  // to this tournament yet (typically updates ~24 hrs before tee-off). Players
+  // not yet covered fall back to initials avatars.
+  exec(`npx tsx scripts/build-headshots.ts --players ${roundDataOut} --out headshots`);
 }
 
 async function main(): Promise<void> {
@@ -354,6 +359,8 @@ async function doAutoAdvance(currentPicks: number, detected: number): Promise<vo
   exec(`npx tsx scripts/build-matchups.ts --slug ${SLUG} --phase ${newPhase} --market round_matchups --export ${matchupsExport} --out ${matchupsOut}`);
   exec(`npx tsx scripts/build-outrights.ts --slug ${SLUG} --phase ${newPhase} --export ${outrightsExport} --out ${outrightsOut}`);
   exec(`npx tsx scripts/build-skill-estimates.ts --slug ${SLUG} --phase ${newPhase} --export skillEstimatesData --out ${SLUG_PREFIX}SkillEstimates`);
+  // Refresh headshots — see refreshCurrentRound() for rationale.
+  exec(`npx tsx scripts/build-headshots.ts --players ${roundDataOut} --out headshots`);
 
   // Step 5: grade the round that just finished (Best Bets land in Results page).
   // picksPhase is the phase whose X scores drove the picks (= previous phase),

@@ -82,6 +82,10 @@ export type SortField =
   | 'player_name'
   | 'position'
   | 'score_to_par'
+  // Virtual sort key for the "most recent completed round" column. The
+  // RankingsTable maps this to whichever of r1/r2/r3/r4_score_to_par is
+  // active at the moment (depends on picksRound + isComplete).
+  | 'last_round_score'
   | 'sg_putt'
   | 'sg_app'
   | 'sg_ott'

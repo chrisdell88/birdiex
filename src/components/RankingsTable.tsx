@@ -81,6 +81,17 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
   // counter cards, the signal filter dropdown, and switch the caption to
   // "Final Standings". X Score column stays as historical reference.
   const isComplete = currentEvent.isComplete;
+  // "Most recent completed round" drives the dynamic R{N} column between
+  // SCORE and PLAYER. Live: picksRound - 1 (e.g., picksRound=4 means R3
+  // just finished). Post-final: picksRound (R4 itself). 0 → pre-tournament,
+  // column hidden.
+  const lastCompletedRound = isComplete
+    ? currentEvent.picksRound
+    : Math.max(0, currentEvent.picksRound - 1);
+  const lastRoundField: 'r1_score_to_par' | 'r2_score_to_par' | 'r3_score_to_par' | 'r4_score_to_par' | null =
+    lastCompletedRound >= 1 && lastCompletedRound <= 4
+      ? (`r${lastCompletedRound}_score_to_par` as 'r1_score_to_par' | 'r2_score_to_par' | 'r3_score_to_par' | 'r4_score_to_par')
+      : null;
   const [sortField, setSortField] = useState<SortField>(isPreTournament ? 'x_score' : 'position');
   const [sortDir, setSortDir] = useState<SortDirection>(
     // ascending for position (lower is better); descending for X Score
@@ -186,6 +197,14 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
         case 'score_to_par':
           cmp = a.score_to_par - b.score_to_par;
           break;
+        case 'last_round_score': {
+          // Lower (more under par) is better → ascending = best first.
+          // Null/undefined sort to the bottom regardless of direction.
+          const av = lastRoundField ? (a[lastRoundField] ?? 999) : 999;
+          const bv = lastRoundField ? (b[lastRoundField] ?? 999) : 999;
+          cmp = av - bv;
+          break;
+        }
         case 'sg_putt':
           cmp = b.sg_putt - a.sg_putt;
           break;
@@ -242,13 +261,18 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
       ];
 
   const columns: { field: SortField; label: string }[] = [
-    // POS + SCORE first post-R1; nothing meaningful pre-R1.
+    // POS + SCORE first post-R1; nothing meaningful pre-R1. Then a dynamic
+    // R{N} column showing the most recent completed round's score-to-par
+    // (only when a round has actually completed).
     ...(isPreTournament
       ? []
       : [
           { field: 'position' as SortField, label: 'POS' },
           { field: 'score_to_par' as SortField, label: 'SCORE' },
         ]),
+    ...(lastRoundField
+      ? [{ field: 'last_round_score' as SortField, label: `R${lastCompletedRound}` }]
+      : []),
     { field: 'player_name', label: 'Player' },
     // X Score + Signal + To Win all hide post-final — model picks/odds are
     // historical noise once the tournament is over.
@@ -430,6 +454,22 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
                       </td>
                     </>
                   )}
+                  {lastRoundField && (() => {
+                    const v = player[lastRoundField];
+                    return (
+                      <td className="px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs">
+                        {v == null ? (
+                          <span className="text-[#525252]">—</span>
+                        ) : (
+                          <span className={
+                            v < 0 ? 'text-[#22c55e]' : v > 0 ? 'text-red-400' : 'text-[#d4d4d4]'
+                          }>
+                            {formatScore(v)}
+                          </span>
+                        )}
+                      </td>
+                    );
+                  })()}
                   <td className="px-3 py-2.5 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       <Avatar playerName={player.player_name} size="sm" />

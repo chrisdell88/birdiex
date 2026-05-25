@@ -85,7 +85,10 @@ create or replace function public.verify_lab_password(pw text)
 returns boolean
 language plpgsql
 security definer
-set search_path = public
+-- pgcrypto installs `crypt()` into the `extensions` schema on Supabase,
+-- so we MUST include it in the function's search_path. Locking it to
+-- `public` alone breaks the function with 42883 (crypt does not exist).
+set search_path = public, extensions
 as $$
 declare
   stored_hash text;

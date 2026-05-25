@@ -441,7 +441,7 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
                       {player.x_score > 0 ? '+' : ''}{player.x_score.toFixed(2)}
                     </span>
                   </td>
-                  {!isPreTournament && (
+                  {!isPreTournament && !isComplete && (
                     <td className="px-3 py-2.5">
                       <div className="flex items-center gap-1.5">
                         <SignalBadge signal={player.signal} compact conflicted={player.purity === 'CONFLICTED'} />

@@ -20,6 +20,18 @@ import { r4Results as cjR4 } from '../data/cjCupR4Results';
 import { r2Results as pgaR2 } from '../data/pgaChampR2Results';
 import { r3Results as pgaR3 } from '../data/pgaChampR3Results';
 import { r4Results as pgaR4 } from '../data/pgaChampR4Results';
+import { betLog as mastersBets } from '../data/resultsData';
+
+// Masters 2026 — bets live in resultsData.betLog with a `dataSet` field
+// distinguishing "round-only" vs "cumulative". Each round can have both
+// variants. To avoid double-counting in the all-time roll-up, we include
+// only the canonical dataset per round: R2 = round-only (R2 cumulative IS
+// round-only by definition since R1 doesn't generate picks), R3/R4 = cumulative
+// (matches how every other event in this lab is graded — cumulative is what
+// the Matchups page displays to users).
+const mastersR2 = mastersBets.filter((b) => b.round === 2 && b.dataSet === 'round-only');
+const mastersR3 = mastersBets.filter((b) => b.round === 3 && b.dataSet === 'cumulative');
+const mastersR4 = mastersBets.filter((b) => b.round === 4 && b.dataSet === 'cumulative');
 
 interface EventBucket {
   label: string;
@@ -29,19 +41,27 @@ interface EventBucket {
 // Every graded round across every event. Easy to append new events here.
 const EVENTS: EventBucket[] = [
   {
+    label: 'Masters 2026',
+    rounds: [
+      { label: 'R2', bets: mastersR2 },
+      { label: 'R3', bets: mastersR3 },
+      { label: 'R4', bets: mastersR4 },
+    ],
+  },
+  {
+    label: 'PGA Championship 2026',
+    rounds: [
+      { label: 'R2', bets: pgaR2 },
+      { label: 'R3', bets: pgaR3 },
+      { label: 'R4', bets: pgaR4 },
+    ],
+  },
+  {
     label: 'CJ Cup Byron Nelson 2026',
     rounds: [
       { label: 'R2', bets: cjR2 },
       { label: 'R3', bets: cjR3 },
       { label: 'R4', bets: cjR4 },
-    ],
-  },
-  {
-    label: 'PGA Championship 2025',
-    rounds: [
-      { label: 'R2', bets: pgaR2 },
-      { label: 'R3', bets: pgaR3 },
-      { label: 'R4', bets: pgaR4 },
     ],
   },
 ];

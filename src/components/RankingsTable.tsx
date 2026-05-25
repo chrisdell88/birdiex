@@ -291,7 +291,9 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
         <span className="text-[11px] text-[#d4d4d4] uppercase tracking-wider font-['Inter',system-ui,sans-serif]">
           Last Updated: {formatUpdated(currentEvent.dataUpdatedAt)} —{' '}
           {isComplete
-            ? 'Final Standings'
+            ? dataSet === 'cumulative'
+              ? `Final Standings (Cumulative R1–${currentEvent.picksRound})`
+              : `Final Standings (Round ${currentEvent.picksRound} Only)`
             : currentEvent.picksRound > 1
               ? dataSet === 'cumulative'
                 ? 'Cumulative Data Below'

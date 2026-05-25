@@ -21,9 +21,14 @@ interface DataSetToggleProps {
 export default function DataSetToggle({ dataSet, onChange }: DataSetToggleProps) {
   const [showTip, setShowTip] = useState(false);
 
-  // The "latest completed round" = picksRound - 1.
-  // picksRound = 2 means R1 is complete and we're picking R2 → "Round 1" pill.
-  const completedRound = Math.max(1, currentEvent.picksRound - 1);
+  // The "latest completed round":
+  //   - Mid-tournament: picksRound - 1 (e.g., picksRound=4 → R3 just finished,
+  //     picks are for R4 → toggle says "Round 3 Data" for the round-only side).
+  //   - Post-final (isComplete): picksRound itself (e.g., picksRound=4 +
+  //     isComplete → R4 finished, toggle says "Round 4 Data").
+  const completedRound = currentEvent.isComplete
+    ? currentEvent.picksRound
+    : Math.max(1, currentEvent.picksRound - 1);
   // Cumulative only makes sense once 2+ rounds have been played.
   const cumulativeEnabled = completedRound >= 2;
 

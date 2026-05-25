@@ -34,25 +34,32 @@ function App() {
   const [activeTab, setActiveTab] = useState<TabId>(() => readTabFromHash());
   // Default to cumulative — historically the stronger signal (see Masters data).
   const [dataSet, setDataSet] = useState<DataSet>('cumulative');
+  // Raw hash state — needed so #lab navigation re-renders the lab view even
+  // when the hash isn't one of the normal TabIds (lab is unlinked from nav).
+  const [hash, setHash] = useState<string>(
+    typeof window !== 'undefined' ? window.location.hash.replace(/^#/, '') : '',
+  );
 
   // Two-way sync: tab change → update hash. Browser back/forward (which
   // fires hashchange) → update tab state.
   useEffect(() => {
-    if (window.location.hash.replace(/^#/, '') !== activeTab) {
+    if (window.location.hash.replace(/^#/, '') !== activeTab && hash !== 'lab') {
       // replaceState avoids polluting history on every internal tab click.
       window.history.replaceState(null, '', `#${activeTab}`);
     }
-  }, [activeTab]);
+  }, [activeTab, hash]);
 
   useEffect(() => {
-    const onHashChange = () => setActiveTab(readTabFromHash());
+    const onHashChange = () => {
+      const h = window.location.hash.replace(/^#/, '');
+      setHash(h);
+      setActiveTab(readTabFromHash());
+    };
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
 
   // Private backtest page — direct URL only (#lab). Never linked from nav.
-  // Check hash directly so the page doesn't appear as a normal tab.
-  const hash = typeof window !== 'undefined' ? window.location.hash.replace(/^#/, '') : '';
   if (hash === 'lab') {
     return (
       <div className="min-h-screen bg-[#0a0a0a] text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">

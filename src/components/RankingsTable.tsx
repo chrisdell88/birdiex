@@ -250,9 +250,11 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
           { field: 'score_to_par' as SortField, label: 'SCORE' },
         ]),
     { field: 'player_name', label: 'Player' },
-    { field: 'x_score', label: 'X Score' },
+    // X Score + Signal + To Win all hide post-final — model picks/odds are
+    // historical noise once the tournament is over.
+    ...(isComplete ? [] : [{ field: 'x_score' as SortField, label: 'X Score' }]),
     ...(isPreTournament || isComplete ? [] : [{ field: 'signal' as SortField, label: 'Signal' }]),
-    { field: 'outright_odds', label: 'To Win' },
+    ...(isComplete ? [] : [{ field: 'outright_odds' as SortField, label: 'To Win' }]),
     ...sgSplitColumns,
     { field: 'sg_score_l1', label: isPreTournament ? 'DG Skill' : 'SG Score' },
     { field: 'course_history_l2', label: 'History' },
@@ -343,9 +345,9 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
 
       {/* Pre-R1: no data toggle yet (no rounds played). Post-R1 the toggle
           appears with the latest-round pill enabled + Cumulative disabled
-          until 2+ rounds exist. Post-final: also hidden — historical data
-          only, no toggle meaningful. */}
-      {!isPreTournament && !isComplete && (
+          until 2+ rounds exist. Post-final: toggle stays — Cumulative now
+          means R1+R2+R3+R4 (the full tournament), Round = R4 only. */}
+      {!isPreTournament && (
         <DataSetToggle dataSet={dataSet} onChange={onDataSetChange} />
       )}
 
@@ -434,13 +436,15 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
                       </span>
                     </div>
                   </td>
-                  <td className="px-3 py-2.5">
-                    <span className={`text-base font-bold font-['JetBrains_Mono','SF_Mono',monospace] ${
-                      player.x_score > 0 ? 'text-[#22c55e]' : player.x_score < 0 ? 'text-red-400' : 'text-[#f5f5f5]'
-                    }`}>
-                      {player.x_score > 0 ? '+' : ''}{player.x_score.toFixed(2)}
-                    </span>
-                  </td>
+                  {!isComplete && (
+                    <td className="px-3 py-2.5">
+                      <span className={`text-base font-bold font-['JetBrains_Mono','SF_Mono',monospace] ${
+                        player.x_score > 0 ? 'text-[#22c55e]' : player.x_score < 0 ? 'text-red-400' : 'text-[#f5f5f5]'
+                      }`}>
+                        {player.x_score > 0 ? '+' : ''}{player.x_score.toFixed(2)}
+                      </span>
+                    </td>
+                  )}
                   {!isPreTournament && !isComplete && (
                     <td className="px-3 py-2.5">
                       <div className="flex items-center gap-1.5">
@@ -449,21 +453,23 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
                       </div>
                     </td>
                   )}
-                  <td className="px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs whitespace-nowrap">
-                    {(() => {
-                      const o = outrightsByName.get(player.player_name);
-                      if (!o) return <span className="text-[#525252]">—</span>;
-                      return (
-                        <span
-                          className="text-[#22c55e]"
-                          title={`DataGolf modeled winner odds (baseline + history + fit)`}
-                        >
-                          {o.odds}
-                          <span className="text-[#737373] ml-1 text-[10px]">dg</span>
-                        </span>
-                      );
-                    })()}
-                  </td>
+                  {!isComplete && (
+                    <td className="px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs whitespace-nowrap">
+                      {(() => {
+                        const o = outrightsByName.get(player.player_name);
+                        if (!o) return <span className="text-[#525252]">—</span>;
+                        return (
+                          <span
+                            className="text-[#22c55e]"
+                            title={`DataGolf modeled winner odds (baseline + history + fit)`}
+                          >
+                            {o.odds}
+                            <span className="text-[#737373] ml-1 text-[10px]">dg</span>
+                          </span>
+                        );
+                      })()}
+                    </td>
+                  )}
                   {!isPreTournament && (
                     <>
                       <td className={`px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs ${

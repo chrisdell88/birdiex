@@ -8,7 +8,9 @@
  * edits needed.
  */
 import type { PlayerData, MatchupOddsEntry, OutrightEntry, PlayerSkillEstimate } from '../types';
-import { roundOnlyData, cumulativeData, generatedAt } from '../data/cjCupR3Data';
+// Post-final: cumulative now = R1+R2+R3+R4 (the full tournament), round-only = R4.
+// The Rankings dataset toggle uses these directly.
+import { roundOnlyData, cumulativeData, generatedAt } from '../data/cjCupR4Data';
 // Pre-tournament rankings — used as a FROZEN snapshot for the Course Fit
 // Scatter chart. The chart is meant to be a pre-tournament reference, not
 // updated round-by-round. Stays pointed at the pre-tournament file even

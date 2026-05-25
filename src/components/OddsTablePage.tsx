@@ -156,6 +156,24 @@ const label = "text-[10px] uppercase tracking-wider text-[#a1a1aa] font-medium f
 type OddsTab = 'matchups' | 'outrights';
 
 export default function OddsTablePage({ data, dataSet, onDataSetChange }: OddsTablePageProps) {
+  // After the final round, the odds page is stale — books pull their lines,
+  // matchups disappear, and outrights settle. Show a clean placeholder.
+  if (currentEvent.isComplete) {
+    return (
+      <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-8 text-center">
+        <h2 className="text-lg font-bold text-[#f5f5f5] font-['JetBrains_Mono','SF_Mono',monospace] uppercase tracking-wider mb-2">
+          {currentEvent.name} — Complete
+        </h2>
+        <p className="text-sm text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mb-4">
+          Odds comparison resumes when the next event opens.
+        </p>
+        <p className="text-xs text-[#737373] font-['Inter',system-ui,sans-serif]">
+          See the <span className="text-[#22c55e]">Results</span> tab for the final graded record.
+        </p>
+      </div>
+    );
+  }
+
   const [activeTab, setActiveTab] = useState<OddsTab>('outrights');
   // Default: show every matchup DataGolf provides — no floor. Users can
   // narrow to a tier via the dropdown.

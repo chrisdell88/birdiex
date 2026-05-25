@@ -54,17 +54,26 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
                 {currentEvent.course}{' '}
                 <span className="text-[#f5f5f5]/50">·</span>{' '}
                 {currentEvent.name}{' '}
-                <span className="text-[#f5f5f5]/50">·</span>{' '}
-                <span className="text-[#a1a1aa]">
-                  Updated{' '}
-                  {new Date(currentEvent.dataUpdatedAt).toLocaleString('en-US', {
-                    timeZone: 'America/New_York',
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true,
-                    timeZoneName: 'short',
-                  })}
-                </span>
+                {currentEvent.isComplete ? (
+                  <>
+                    <span className="text-[#f5f5f5]/50">·</span>{' '}
+                    <span className="text-[#22c55e] font-bold">COMPLETE</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-[#f5f5f5]/50">·</span>{' '}
+                    <span className="text-[#a1a1aa]">
+                      Updated{' '}
+                      {new Date(currentEvent.dataUpdatedAt).toLocaleString('en-US', {
+                        timeZone: 'America/New_York',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true,
+                        timeZoneName: 'short',
+                      })}
+                    </span>
+                  </>
+                )}
               </span>
             </div>
           </div>

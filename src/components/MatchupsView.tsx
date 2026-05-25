@@ -375,6 +375,25 @@ export default function MatchupsView(_: MatchupsViewProps) {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const isPreTournament = currentEvent.picksRound <= 1;
 
+  // After the final round, there are no upcoming matchups to bet on. Show a
+  // clean "complete" placeholder instead of stale picks. Final results live
+  // on the Results page.
+  if (currentEvent.isComplete) {
+    return (
+      <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-8 text-center">
+        <h2 className="text-lg font-bold text-[#f5f5f5] font-['JetBrains_Mono','SF_Mono',monospace] uppercase tracking-wider mb-2">
+          {currentEvent.name} — Complete
+        </h2>
+        <p className="text-sm text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mb-4">
+          The tournament is over. New matchups will appear once the next event opens.
+        </p>
+        <p className="text-xs text-[#737373] font-['Inter',system-ui,sans-serif]">
+          See the <span className="text-[#22c55e]">Results</span> tab for the final graded record.
+        </p>
+      </div>
+    );
+  }
+
   // Build matchups for BOTH datasets and combine. Cards display a chip
   // for the dataset they came from; duplicates (same pick+opp in both)
   // get a 'DOUBLE SIGNAL' marker so the user can see when round-only and

@@ -35,6 +35,14 @@ export interface CurrentEvent {
   recommendedFloorLabel: string;
   /** The round these picks are FOR (e.g. 3 = round-3 picks). */
   picksRound: number;
+  /** True once the final round (R4) has finished. When true:
+   *    - Header shows "COMPLETE" status, not "R3 FINAL · ROUND 4 PICKS"
+   *    - Rankings hides Signal column + BUYS/SELLS counters (no more picks)
+   *    - Matchups + Odds pages show a "Tournament complete" placeholder
+   *    - Ticker hides itself
+   *    - Auto-roll + ticker workflows skip (nothing to refresh)
+   *  Stays true until the NEXT event config replaces this one. */
+  isComplete: boolean;
   /** Header badge status text, e.g. "R2 FINAL · ROUND 3 PICKS". */
   headerBanner: string;
   /** ISO timestamp of the latest data pull — drives the "Last Updated" line. */
@@ -64,7 +72,8 @@ export const currentEvent: CurrentEvent = {
   recommendedFloor: recommendedFloorForPredictability(CRAIG_RANCH_PREDICTABILITY),
   recommendedFloorLabel: floorTierLabel(recommendedFloorForPredictability(CRAIG_RANCH_PREDICTABILITY)),
   picksRound: 4,
-  headerBanner: 'R3 FINAL · ROUND 4 PICKS',
+  isComplete: true,
+  headerBanner: 'TOURNAMENT COMPLETE',
   dataUpdatedAt: generatedAt,
   rankingsRound: roundOnlyData,
   rankingsCumulative: cumulativeData,

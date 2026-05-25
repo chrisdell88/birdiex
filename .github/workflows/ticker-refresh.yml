@@ -41,19 +41,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Determine current picks round from event.ts
+      - name: Read picksRound + isComplete from event.ts
         id: cfg
+        # Node can't `import` a .ts file without a TS loader, so the previous
+        # `node -e import(...)` silently fell back to PICKS=1 every run.
+        # Grep the source file directly — simple and reliable.
         run: |
-          PICKS=$(node -e "import('./src/config/event.ts').then(m=>console.log(m.currentEvent.picksRound))" 2>/dev/null || echo "1")
+          PICKS=$(grep -oE "picksRound:[[:space:]]*[0-9]+" src/config/event.ts | head -1 | grep -oE "[0-9]+" || echo "1")
+          COMPLETE=$(grep -oE "isComplete:[[:space:]]*(true|false)" src/config/event.ts | head -1 | grep -oE "(true|false)" || echo "false")
           COMPLETED=$((PICKS - 1))
           if [ "$COMPLETED" -lt 1 ]; then COMPLETED=1; fi
           PHASE="r$COMPLETED"
           if [ "$COMPLETED" -eq 0 ]; then PHASE="pre"; fi
-          echo "picks=$PICKS"        >> "$GITHUB_OUTPUT"
-          echo "phase=$PHASE"        >> "$GITHUB_OUTPUT"
-          echo "completed=$COMPLETED">> "$GITHUB_OUTPUT"
+          echo "picks=$PICKS"         >> "$GITHUB_OUTPUT"
+          echo "phase=$PHASE"         >> "$GITHUB_OUTPUT"
+          echo "completed=$COMPLETED" >> "$GITHUB_OUTPUT"
+          echo "complete=$COMPLETE"   >> "$GITHUB_OUTPUT"
+          echo "Parsed: picksRound=$PICKS, isComplete=$COMPLETE, phase=$PHASE"
 
       - name: Pull just field-updates + in-play
+        if: steps.cfg.outputs.complete != 'true'
         env:
           DATAGOLF_API_KEY: ${{ secrets.DATAGOLF_API_KEY }}
         run: |
@@ -63,16 +70,24 @@ jobs:
           npm run pull:event -- --slug "${{ env.SLUG }}" --phase "${{ steps.cfg.outputs.phase }}"
 
       - name: Rebuild ticker
+        if: steps.cfg.outputs.complete != 'true'
         run: |
           npx tsx scripts/build-ticker.ts \
             --slug "${{ env.SLUG }}" \
             --phase "${{ steps.cfg.outputs.phase }}" \
             --round "${{ steps.cfg.outputs.picks }}"
 
+      - name: Skip ticker refresh — tournament complete
+        if: steps.cfg.outputs.complete == 'true'
+        run: |
+          echo "isComplete=true in event.ts — skipping ticker pull + rebuild."
+          echo "The ticker is hidden in the UI when isComplete=true; nothing to refresh."
+
       - name: Verify build still passes
         run: npm run build
 
       - name: Commit + push if ticker changed
+        if: steps.cfg.outputs.complete != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

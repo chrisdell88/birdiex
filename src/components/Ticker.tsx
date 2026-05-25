@@ -1,5 +1,6 @@
 import { tickerData, tickerRound } from '../data/ticker';
 import { formatPlayerName } from '../lib/formatName';
+import { currentEvent } from '../config/event';
 
 /** Score-to-par display + color (under par green, over par red). */
 function score(s: number | null): { text: string; cls: string } {
@@ -13,6 +14,9 @@ function score(s: number | null): { text: string; cls: string } {
  * field. Auto-scrolls; pauses on hover (see .ticker-track in index.css).
  */
 export default function Ticker() {
+  // Once the tournament is complete, the ticker is meaningless (no upcoming
+  // tee times, no live scoring). Hide it entirely until the next event.
+  if (currentEvent.isComplete) return null;
   if (!tickerData.length) return null;
   // Duplicate the list so the marquee loop is seamless.
   const items = [...tickerData, ...tickerData];

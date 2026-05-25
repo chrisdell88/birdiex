@@ -76,6 +76,11 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
   // ordering). Pre-tournament there's no leaderboard yet, so we fall back to
   // X Score as the default sort. Users can re-sort by any column.
   const isPreTournament = currentEvent.picksRound <= 1;
+  // After the final round finishes, signals/picks are historical clutter —
+  // there's no next round to bet on. Hide the Signal column, the BUYS/SELLS
+  // counter cards, the signal filter dropdown, and switch the caption to
+  // "Final Standings". X Score column stays as historical reference.
+  const isComplete = currentEvent.isComplete;
   const [sortField, setSortField] = useState<SortField>(isPreTournament ? 'x_score' : 'position');
   const [sortDir, setSortDir] = useState<SortDirection>(
     // ascending for position (lower is better); descending for X Score
@@ -246,7 +251,7 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
         ]),
     { field: 'player_name', label: 'Player' },
     { field: 'x_score', label: 'X Score' },
-    ...(isPreTournament ? [] : [{ field: 'signal' as SortField, label: 'Signal' }]),
+    ...(isPreTournament || isComplete ? [] : [{ field: 'signal' as SortField, label: 'Signal' }]),
     { field: 'outright_odds', label: 'To Win' },
     ...sgSplitColumns,
     { field: 'sg_score_l1', label: isPreTournament ? 'DG Skill' : 'SG Score' },
@@ -283,11 +288,13 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-[11px] text-[#d4d4d4] uppercase tracking-wider font-['Inter',system-ui,sans-serif]">
           Last Updated: {formatUpdated(currentEvent.dataUpdatedAt)} —{' '}
-          {currentEvent.picksRound > 1
-            ? dataSet === 'cumulative'
-              ? 'Cumulative Data Below'
-              : `Round ${currentEvent.picksRound - 1} Data Below`
-            : 'Pre-Tournament Rankings Below'}
+          {isComplete
+            ? 'Final Standings'
+            : currentEvent.picksRound > 1
+              ? dataSet === 'cumulative'
+                ? 'Cumulative Data Below'
+                : `Round ${currentEvent.picksRound - 1} Data Below`
+              : 'Pre-Tournament Rankings Below'}
         </span>
       </div>
       <div className="flex gap-2 w-full sm:w-auto">
@@ -303,25 +310,42 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
             setSearch('');
           }}
         />
-        <select
-          value={signalFilter}
-          onChange={(e) => setSignalFilter(e.target.value)}
-          className="bg-[#0a0a0a] border border-[#22c55e]/50 rounded-lg px-3 py-2 text-sm text-[#f5f5f5] focus:outline-none focus:border-[#22c55e] font-['Inter',system-ui,sans-serif] cursor-pointer"
-        >
-          <option value="ALL">All Signals</option>
-          <option value="BUYS">Buys</option>
-          <option value="SELLS">Sells</option>
-        </select>
+        {!isComplete && (
+          <select
+            value={signalFilter}
+            onChange={(e) => setSignalFilter(e.target.value)}
+            className="bg-[#0a0a0a] border border-[#22c55e]/50 rounded-lg px-3 py-2 text-sm text-[#f5f5f5] focus:outline-none focus:border-[#22c55e] font-['Inter',system-ui,sans-serif] cursor-pointer"
+          >
+            <option value="ALL">All Signals</option>
+            <option value="BUYS">Buys</option>
+            <option value="SELLS">Sells</option>
+          </select>
+        )}
       </div>
     </div>
   );
 
   return (
     <div>
+      {/* Tournament-complete banner — sits above everything else so users
+          immediately know they're looking at historical / final data, not
+          live picks for an upcoming round. */}
+      {isComplete && (
+        <div className="mb-4 bg-[#22c55e]/10 border border-[#22c55e]/30 rounded-lg px-4 py-3 flex items-baseline justify-between">
+          <span className="text-xs uppercase tracking-wider text-[#22c55e] font-bold font-['Inter',system-ui,sans-serif]">
+            Tournament Complete — Final Standings
+          </span>
+          <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
+            Picks resume at the next event
+          </span>
+        </div>
+      )}
+
       {/* Pre-R1: no data toggle yet (no rounds played). Post-R1 the toggle
           appears with the latest-round pill enabled + Cumulative disabled
-          until 2+ rounds exist. */}
-      {!isPreTournament && (
+          until 2+ rounds exist. Post-final: also hidden — historical data
+          only, no toggle meaningful. */}
+      {!isPreTournament && !isComplete && (
         <DataSetToggle dataSet={dataSet} onChange={onDataSetChange} />
       )}
 
@@ -329,15 +353,20 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
           cards, then filters, then table. The table is mostly empty pre-R1
           so we lead with the visual + historical references.
 
-          POST-R1: filters + cards + table FIRST (the rankings table is the
-          headline content once we have real data). Reference blocks move
-          to the bottom. */}
+          POST-R1 (live): filters + cards + table FIRST (the rankings table is
+          the headline content once we have real data). Reference blocks move
+          to the bottom.
+
+          POST-FINAL: hide the BUYS/SELLS counter cards — those signals point
+          at picks for a round that no longer exists. */}
       {isPreTournament ? (
         <>
           {referenceBlocks}
           <SummaryCards data={data} activeFilter={signalFilter} onFilterChange={handleCardFilter} />
           {filtersBar}
         </>
+      ) : isComplete ? (
+        <>{filtersBar}</>
       ) : (
         <>
           {filtersBar}

@@ -19,6 +19,8 @@ dist-ssr
 
 # Pipeline output (raw API dumps)
 data/raw/
+# Transient auto-roll notify marker (runtime only — read by the workflow after push)
+data/.pending-notify.json
 
 # Claude Code local config (worktrees, launch.json, etc.)
 .claude/

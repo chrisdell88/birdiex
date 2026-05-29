@@ -155,7 +155,12 @@ async function patchEventConfig(args: {
 
   const subs: { re: RegExp; to: string; label: string }[] = [
     {
-      re: /from '\.\.\/data\/(cjCup|pgaChamp|masters)R\dData'/,
+      // Matches the MAIN rankings import — `from '../data/<prefix><Pre|R{n}>Data'`.
+      // Must cover the `Pre` suffix (pre-tournament → R1 advance) and the `csc`
+      // prefix, not just `R\dData` / cjCup|pgaChamp|masters. `.replace` (no /g)
+      // hits the FIRST occurrence, which is always the main rankings import on
+      // line 14; the frozen pre-tournament import below it stays untouched.
+      re: /from '\.\.\/data\/(csc|cjCup|pgaChamp|masters)(Pre|R\d)Data'/,
       to: `from '../data/${args.roundDataFile}'`,
       label: 'roundData import',
     },
@@ -363,17 +368,24 @@ async function doAutoAdvance(currentPicks: number, detected: number): Promise<vo
   exec(`npx tsx scripts/build-headshots.ts --players ${roundDataOut} --out headshots`);
 
   // Step 5: grade the round that just finished (Best Bets land in Results page).
-  // picksPhase is the phase whose X scores drove the picks (= previous phase),
-  // xscores file is the round data file from that previous phase.
-  const prevCompleted = newCompleted - 1; // round that produced the picks for what just ran
-  const picksPhase = prevCompleted === 0 ? 'pre' : `r${prevCompleted}`;
-  const xscoresFile = prevCompleted === 0 ? `${SLUG_PREFIX}PreData` : `${SLUG_PREFIX}R${prevCompleted}Data`;
-  try {
-    exec(`npx tsx scripts/grade-round.ts --slug ${SLUG} --round ${newCompleted} --picks-phase ${picksPhase} --results-phase ${newPhase} --xscores ${xscoresFile} --out ${SLUG_PREFIX}R${newCompleted}Results`);
-  } catch (e) {
-    // Grading is best-effort — bad odds data or skipped matchups shouldn't
-    // block the advance. Log + continue.
-    console.error(`✖ grade-round failed for R${newCompleted}: ${(e as Error).message}`);
+  // We do NOT publish H2H matchups for Round 1 (the pre-tournament phase only
+  // produces rankings/outrights), so there are no R1 bets to grade. The first
+  // gradeable round is R2 — skip grading for anything below that.
+  if (newCompleted >= 2) {
+    // picksPhase is the phase whose X scores drove the picks (= previous phase),
+    // xscores file is the round data file from that previous phase.
+    const prevCompleted = newCompleted - 1; // round that produced the picks for what just ran
+    const picksPhase = `r${prevCompleted}`;
+    const xscoresFile = `${SLUG_PREFIX}R${prevCompleted}Data`;
+    try {
+      exec(`npx tsx scripts/grade-round.ts --slug ${SLUG} --round ${newCompleted} --picks-phase ${picksPhase} --results-phase ${newPhase} --xscores ${xscoresFile} --out ${SLUG_PREFIX}R${newCompleted}Results`);
+    } catch (e) {
+      // Grading is best-effort — bad odds data or skipped matchups shouldn't
+      // block the advance. Log + continue.
+      console.error(`✖ grade-round failed for R${newCompleted}: ${(e as Error).message}`);
+    }
+  } else {
+    console.log(`Skipping grade-round for R${newCompleted} — no H2H matchups are published for Round 1.`);
   }
 
   // Step 6: rebuild the ticker for the new picks round.
@@ -396,8 +408,9 @@ async function doAutoAdvance(currentPicks: number, detected: number): Promise<vo
   // Workflow no longer carries per-round env vars — phase is derived from
   // src/config/event.ts every cron firing. Nothing to patch in the YAML.
 
-  // Discord + email blast for the new round's picks.
-  sendNotifyOnTransition(newPicks);
+  // NOTE: notification is queued by the caller (main) via callNotify() AFTER
+  // this returns, so the Discord/email blast only fires once the workflow has
+  // committed + pushed the new data. Do not notify from here.
 
   console.log(`Advance complete. Next cron derives phase=${newPhase} from event.ts.`);
 }

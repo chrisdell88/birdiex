@@ -11,14 +11,14 @@ import type { PlayerData, MatchupOddsEntry, OutrightEntry, PlayerSkillEstimate }
 // Pre-tournament: cumulativeData and roundOnlyData are both the pre-tournament
 // snapshot (DataGolf skill estimates only, no live SG yet). Once R1 finishes
 // the auto-roll script rebuilds cscR1Data and swaps this import.
-import { roundOnlyData, cumulativeData, generatedAt } from '../data/cscPreData';
+import { roundOnlyData, cumulativeData, generatedAt } from '../data/cscR1Data';
 // Pre-tournament rankings — used as a FROZEN snapshot for the Course Fit
 // Scatter chart. The chart is meant to be a pre-tournament reference, not
 // updated round-by-round. Stays pointed at the pre-tournament file even
 // once the main rankings advance.
 import { roundOnlyData as preTournamentRoundOnly } from '../data/cscPreData';
-import { r1MatchupOddsData } from '../data/cscR1Matchups';
-import { r1OutrightsData } from '../data/cscR1Outrights';
+import { r2MatchupOddsData } from '../data/cscR2Matchups';
+import { r2OutrightsData } from '../data/cscR2Outrights';
 import { skillEstimatesData } from '../data/cscSkillEstimates';
 import { recommendedFloorForPredictability, floorTierLabel } from '../lib/sizing';
 
@@ -76,14 +76,14 @@ export const currentEvent: CurrentEvent = {
   predictability: COLONIAL_PREDICTABILITY,
   recommendedFloor: recommendedFloorForPredictability(COLONIAL_PREDICTABILITY),
   recommendedFloorLabel: floorTierLabel(recommendedFloorForPredictability(COLONIAL_PREDICTABILITY)),
-  picksRound: 1,
+  picksRound: 2,
   isComplete: false,
-  headerBanner: 'PRE-TOURNAMENT · ROUND 1 PICKS',
+  headerBanner: 'R1 FINAL · ROUND 2 PICKS',
   dataUpdatedAt: generatedAt,
   rankingsRound: roundOnlyData,
   rankingsCumulative: cumulativeData,
   preTournamentRankings: preTournamentRoundOnly,
-  matchups: r1MatchupOddsData,
-  outrights: r1OutrightsData,
+  matchups: r2MatchupOddsData,
+  outrights: r2OutrightsData,
   skillEstimates: skillEstimatesData,
 };

@@ -89,6 +89,15 @@ async function main() {
   const decomp = await safe('player-decompositions', () => getPlayerDecompositions('pga'));
   if (decomp) await dump(slug, phase, 'player-decompositions', decomp);
 
+  // In-play — pulled in EVERY phase (incl. pre). auto-roll reads this file to
+  // detect when a round has finished and advance picks. During pre-tournament
+  // it's how we detect R1 completing; if we only pulled it from r1 onward the
+  // pre->R1 advance could never trigger (the file would never exist for phase
+  // 'pre'), permanently freezing the site on Round 1 picks. Before tee-off the
+  // feed is empty/no-action, which correctly reads as "no round done".
+  const inPlayAll = await safe('in-play', () => getInPlay('pga'));
+  if (inPlayAll) await dump(slug, phase, 'in-play', inPlayAll);
+
   // Outrights — pull all markets
   console.log('Outright odds:');
   for (const market of ['win', 'top_5', 'top_10', 'top_20', 'make_cut'] as const) {
@@ -119,9 +128,6 @@ async function main() {
       const data = await safe(`live-stats-r${r}`, () => getLiveTournamentStats(r));
       if (data) await dump(slug, phase, `live-stats-r${r}`, data);
     }
-
-    const inPlay = await safe('in-play', () => getInPlay('pga'));
-    if (inPlay) await dump(slug, phase, 'in-play', inPlay);
 
     // Matchup odds — CRITICAL to pull every round, DataGolf doesn't retain historical
     console.log('Matchup odds (CRITICAL — not retained historically):');

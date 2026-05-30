@@ -11,6 +11,7 @@ import { r4Results, r4Summary as pgaR4SummaryRaw } from '../data/pgaChampR4Resul
 import { r2Results as cjR2RawBets } from '../data/cjCupR2Results';
 import { r3Results as cjR3RawBets } from '../data/cjCupR3Results';
 import { r4Results as cjR4RawBets } from '../data/cjCupR4Results';
+import { r2Results as cscR2RawBets } from '../data/cscR2Results';
 import { starsForEdge, unitsForEdge, stakeToWin1, isTrackedBet } from '../lib/sizing';
 import { floorForEvent } from '../config/venues';
 import {
@@ -43,6 +44,7 @@ import {
 const mastersFloor = floorForEvent('masters-2026');
 const pgaFloor = floorForEvent('pga-2026');
 const cjCupFloor = floorForEvent('cj-cup-byron-nelson-2026');
+const cscFloor = floorForEvent('charles-schwab-challenge-2026');
 
 /** Filter a bet array down to the tracked bets at this venue's floor. */
 function trackedAt(bets: BetRecord[], floor: number): BetRecord[] {
@@ -95,8 +97,15 @@ const cjR4Summary = summarise(cjR4Tracked);
 const cjTracked = [...cjR2Tracked, ...cjR3Tracked, ...cjR4Tracked];
 const cjSummary = summarise(cjTracked);
 
-// All-time = Masters (tracked) + PGA (tracked) + CJ Cup (tracked, in-progress).
-const ALL_TIME_BETS = [...mastersTracked, ...pgaTracked, ...cjTracked];
+// Charles Schwab — IN PROGRESS. Only graded round so far is R2; R3/R4 will be
+// appended here as the auto-roll grades them.
+const cscR2Tracked = trackedAt(cscR2RawBets, cscFloor.floor);
+const cscR2Summary = summarise(cscR2Tracked);
+const cscTracked = [...cscR2Tracked];
+const cscSummary = summarise(cscTracked);
+
+// All-time = Masters + PGA + CJ Cup + Charles Schwab (all tracked Best Bets).
+const ALL_TIME_BETS = [...mastersTracked, ...pgaTracked, ...cjTracked, ...cscTracked];
 
 // Silence unused-import warnings — these raw summaries are kept for
 // reference / backtesting comparisons; the venue-aware values above
@@ -173,23 +182,23 @@ const EVENT_REGISTRY: EventEntry[] = [
     id: 'charles-schwab-challenge-2026',
     name: 'Charles Schwab Challenge 2026',
     status: 'IN PROGRESS',
-    wins: 0,
-    losses: 0,
-    pushes: 0,
-    units: 0,
-    roi: 0,
-    threshold: floorForEvent('charles-schwab-challenge-2026').floor,
-    course: floorForEvent('charles-schwab-challenge-2026').course,
-    predictability: floorForEvent('charles-schwab-challenge-2026').predictability,
+    wins: cscSummary.wins,
+    losses: cscSummary.losses,
+    pushes: cscSummary.pushes,
+    units: cscSummary.units,
+    roi: cscSummary.roi,
+    threshold: cscFloor.floor,
+    course: cscFloor.course,
+    predictability: cscFloor.predictability,
   },
 ];
 
 // --- All-time totals (sum of venue-tracked records across every event) ---
-const allTimeWins = mastersSummary.wins + pgaSummary.wins + cjSummary.wins;
-const allTimeLosses = mastersSummary.losses + pgaSummary.losses + cjSummary.losses;
-const allTimePushes = mastersSummary.pushes + pgaSummary.pushes + cjSummary.pushes;
-const allTimeUnits = +(mastersSummary.units + pgaSummary.units + cjSummary.units).toFixed(2);
-const allTimeStaked = mastersSummary.staked + pgaSummary.staked + cjSummary.staked;
+const allTimeWins = mastersSummary.wins + pgaSummary.wins + cjSummary.wins + cscSummary.wins;
+const allTimeLosses = mastersSummary.losses + pgaSummary.losses + cjSummary.losses + cscSummary.losses;
+const allTimePushes = mastersSummary.pushes + pgaSummary.pushes + cjSummary.pushes + cscSummary.pushes;
+const allTimeUnits = +(mastersSummary.units + pgaSummary.units + cjSummary.units + cscSummary.units).toFixed(2);
+const allTimeStaked = mastersSummary.staked + pgaSummary.staked + cjSummary.staked + cscSummary.staked;
 const allTimeROI = allTimeStaked > 0 ? +((allTimeUnits / allTimeStaked) * 100).toFixed(1) : 0;
 const allTimeBets = allTimeWins + allTimeLosses + allTimePushes;
 
@@ -1102,7 +1111,14 @@ function CJCupView() {
 
 // --- Charles Schwab Challenge View — pre-tournament placeholder until R1 grades ---
 function CharlesSchwabView() {
-  const cscFloor = floorForEvent('charles-schwab-challenge-2026');
+  // IN PROGRESS — auto-roll grades each round when it completes and appends
+  // a cscR<N>Results.ts file. Add new rounds to gradedRounds below as they
+  // arrive (eventually this should be derived dynamically, but it's a one-
+  // line edit per round for now).
+  const gradedRounds = [
+    { round: 2, summary: cscR2Summary, bets: cscR2Tracked },
+  ];
+
   return (
     <div>
       <TournamentSummaryBanner
@@ -1110,15 +1126,106 @@ function CharlesSchwabView() {
         eventName="Charles Schwab Challenge 2026"
         course={cscFloor.course}
         threshold={cscFloor.floor}
-        record={{ wins: 0, losses: 0, pushes: 0 }}
-        units={0}
-        roi={0}
-        bets={0}
+        record={{ wins: cscSummary.wins, losses: cscSummary.losses, pushes: cscSummary.pushes }}
+        units={cscSummary.units}
+        roi={cscSummary.roi}
+        bets={cscSummary.bets}
         recordLabel="Best Bets so far"
       />
-      <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-6 text-center">
-        <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">
-          Pre-tournament. R1 picks drop as soon as DataGolf posts matchups (typically 24–48 hrs before tee-off).
+
+      {gradedRounds.length === 0 && (
+        <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-6 text-center">
+          <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">
+            No Best Bets graded yet for this event.
+          </p>
+        </div>
+      )}
+
+      {gradedRounds.map(({ round, summary, bets }) => (
+        <div key={round} className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className={`w-0.5 h-5 rounded-full ${summary.units >= 0 ? 'bg-[#22c55e]' : 'bg-[#ef4444]'}`} />
+            <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
+              Round {round} — Best Bets
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+            <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-4">
+              <div className={label}>Record</div>
+              <div className={`text-lg font-bold ${mono} text-[#f5f5f5] mt-1`}>{summary.record}</div>
+            </div>
+            <div className={`bg-[#0a0a0a] border ${borderColor(summary.units)} rounded-lg p-4`}>
+              <div className={label}>Units</div>
+              <div className={`text-lg font-bold ${mono} ${unitColor(summary.units)} mt-1`}>{formatUnits(summary.units)}u</div>
+            </div>
+            <div className={`bg-[#0a0a0a] border ${borderColor(summary.roi)} rounded-lg p-4`}>
+              <div className={label}>ROI</div>
+              <div className={`text-lg font-bold ${mono} ${unitColor(summary.roi)} mt-1`}>{formatROI(summary.roi)}</div>
+            </div>
+            <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-4">
+              <div className={label}>Best Bets</div>
+              <div className={`text-lg font-bold ${mono} text-[#f5f5f5] mt-1`}>{summary.bets}</div>
+            </div>
+          </div>
+
+          {bets.length > 0 ? (
+            <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-[#262626]">
+                      {(['#', 'Pick', 'Opp', 'Edge', 'Stars', 'Best Odds', 'Book', 'Result', 'Units +/-'] as const).map((h) => (
+                        <th key={h} className="px-3 py-3 text-[10px] uppercase tracking-wider text-[#a1a1aa] font-medium font-['Inter',system-ui,sans-serif] whitespace-nowrap">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {bets.map((bet, i) => (
+                      <tr key={bet.id} className={`border-b border-[#1a1a1a] ${i % 2 === 0 ? 'bg-[#0a0a0a]' : 'bg-[#0f0f0f]'} hover:bg-[#141414] transition-colors`}>
+                        <td className={`px-3 py-2 text-xs ${mono} text-[#a1a1aa]`}>{bet.id}</td>
+                        <td className="px-3 py-2 text-xs text-[#f5f5f5] font-['Inter',system-ui,sans-serif] whitespace-nowrap">{bet.pick}</td>
+                        <td className="px-3 py-2 text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif] whitespace-nowrap">{bet.opponent}</td>
+                        <td className={`px-3 py-2 text-xs ${mono} text-[#d4d4d4]`}>{bet.edge.toFixed(2)}</td>
+                        <td className="px-3 py-2">
+                          <span className="text-[#22c55e] text-xs tracking-tight" aria-label={`${starsForEdge(bet.edge)} star play`}>
+                            {'★'.repeat(starsForEdge(bet.edge))}
+                          </span>
+                        </td>
+                        <td className={`px-3 py-2 text-xs ${mono} text-[#d4d4d4]`}>{bet.bestOdds}</td>
+                        <td className="px-3 py-2 text-xs font-['Inter',system-ui,sans-serif] whitespace-nowrap">
+                          {sportsbookUrls[bet.book] ? (
+                            <a href={sportsbookUrls[bet.book]} target="_blank" rel="noopener noreferrer" className="text-[#22c55e] hover:underline transition-colors">
+                              {bet.book}<span className="ml-0.5 text-[10px]">{'↗'}</span>
+                            </a>
+                          ) : (
+                            <span className="text-[#a1a1aa]">{bet.book}</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2">{resultBadge(bet.result)}</td>
+                        <td className={`px-3 py-2 text-xs ${mono} ${unitColor(bet.units)} font-bold`}>{formatUnits(bet.units)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="px-4 py-3 border-t border-[#262626] text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
+                {bets.length} Best Bet{bets.length === 1 ? '' : 's'} — Round {round} complete
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif] italic">
+              No matchups cleared the {cscFloor.floor.toFixed(2)} venue threshold this round.
+            </p>
+          )}
+        </div>
+      ))}
+
+      <div className="bg-[#0a0a0a] border border-dashed border-[#262626] rounded-lg p-5 text-center">
+        <p className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
+          Tournament still in progress — later rounds will populate here as they grade.
         </p>
       </div>
     </div>

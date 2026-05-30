@@ -100,6 +100,28 @@ async function main() {
     };
   });
 
+  // Defensive guard: if every entry came back with NO sportsbook odds,
+  // DataGolf was likely between book updates (e.g. books briefly closed
+  // overnight between rounds). Skip writing — keep the existing good file
+  // in place and let the next cron run rebuild against fresh data. Exit
+  // cleanly so the rest of the refresh pipeline (matchups, ticker, etc.)
+  // continues normally.
+  const populatedCheck = built.filter((e) => Object.keys(e.allBooks).length > 0);
+  if (built.length > 0 && populatedCheck.length === 0) {
+    console.warn(
+      `⚠️  build-outrights: all ${built.length} entries have empty allBooks ` +
+      `— DataGolf returned no book lines this pull. Leaving src/data/${args.out}.ts ` +
+      `untouched. Will retry on the next cron tick.`
+    );
+    return;
+  }
+
+  // Drop entries with no book odds at all (long shots / WD / not lined).
+  // Keeping them only puts blank rows on the public Odds page.
+  const withOdds = built.filter((e) => Object.keys(e.allBooks).length > 0);
+  built.length = 0;
+  built.push(...withOdds);
+
   // Sort by best implied payout (longshots last → favorites first).
   built.sort((a, b) => payoutMultiplier(a.bestOdds) - payoutMultiplier(b.bestOdds));
 

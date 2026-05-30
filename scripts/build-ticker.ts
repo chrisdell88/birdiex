@@ -8,6 +8,7 @@
  *   npx tsx scripts/build-ticker.ts --slug pga-championship-2026 --phase r2 --round 3
  */
 import { readFile, writeFile } from 'node:fs/promises';
+import { execSync, spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 
 const PROJECT_ROOT = new URL('..', import.meta.url).pathname;
@@ -123,6 +124,79 @@ async function main() {
 
   await writeFile(join(PROJECT_ROOT, 'src', 'data', 'ticker.ts'), file);
   console.log(`✅ Wrote src/data/ticker.ts — round ${roundNum}, ${clean.length} players.`);
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Piggy-back live H2H + outright refresh on the ticker tick.
+  // ──────────────────────────────────────────────────────────────────────────
+  // Why this lives here (not in the workflow YAML):
+  //
+  // The ticker-refresh workflow fires every 30 min during the play window
+  // and already has fresh DataGolf data on disk from its pull-event step.
+  // The matchups + outrights files normally only get rebuilt during the
+  // auto-roll's 6-hour active window after a round transition — by daytime
+  // play they're frozen at the prior night's snapshot.
+  //
+  // build-matchups + build-outrights both implement the line-shopping merge
+  // (build-matchups.ts / build-outrights.ts), so re-running them never
+  // degrades a price; they only ever add new pairings/books or improve
+  // odds we've seen. Calling them from here keeps both surfaces live
+  // through round play.
+  //
+  // When in CI (GITHUB_ACTIONS=true), we also commit + push so the deploy
+  // picks up the refresh. The existing workflow's commit step only stages
+  // ticker.ts, which is why we handle the matchups/outrights commit here.
+  //
+  // SLUG_PREFIX: derived from env, defaults to 'csc' (current event). When
+  // the event rotates, set SLUG_PREFIX in the ticker-refresh workflow env.
+  const slugPrefix = process.env.SLUG_PREFIX ?? 'csc';
+  const matchupsOut = `${slugPrefix}R${roundNum}Matchups`;
+  const matchupsExport = `r${roundNum}MatchupOddsData`;
+  const outrightsOut = `${slugPrefix}R${roundNum}Outrights`;
+  const outrightsExport = `r${roundNum}OutrightsData`;
+
+  function safeRun(label: string, cmd: string): boolean {
+    try {
+      console.log(`▶ ${label}`);
+      execSync(cmd, { cwd: PROJECT_ROOT, stdio: 'inherit' });
+      return true;
+    } catch (e) {
+      console.error(`✖ ${label} failed (non-fatal — ticker tick continues): ${(e as Error).message}`);
+      return false;
+    }
+  }
+
+  const matchupsOk = safeRun(
+    `rebuilding ${matchupsOut} (line-shopping merge)`,
+    `npx tsx scripts/build-matchups.ts --slug ${slug} --phase ${phase} --market round_matchups --export ${matchupsExport} --out ${matchupsOut}`
+  );
+  const outrightsOk = safeRun(
+    `rebuilding ${outrightsOut} (line-shopping merge)`,
+    `npx tsx scripts/build-outrights.ts --slug ${slug} --phase ${phase} --export ${outrightsExport} --out ${outrightsOut}`
+  );
+
+  // CI-only: commit + push the matchups/outrights changes ourselves. Ticker
+  // itself is handled by the workflow's existing commit step. Skipping the
+  // commit/push locally so dev runs don't poke the remote.
+  if (process.env.GITHUB_ACTIONS === 'true' && (matchupsOk || outrightsOk)) {
+    try {
+      execSync('git config user.name "github-actions[bot]"', { cwd: PROJECT_ROOT, stdio: 'inherit' });
+      execSync('git config user.email "41898282+github-actions[bot]@users.noreply.github.com"', { cwd: PROJECT_ROOT, stdio: 'inherit' });
+      const matchupsPath = `src/data/${matchupsOut}.ts`;
+      const outrightsPath = `src/data/${outrightsOut}.ts`;
+      // Stage and detect actual content changes before bothering to commit.
+      execSync(`git add ${matchupsPath} ${outrightsPath}`, { cwd: PROJECT_ROOT, stdio: 'inherit' });
+      const diffCheck = spawnSync('git', ['diff', '--cached', '--quiet'], { cwd: PROJECT_ROOT });
+      if (diffCheck.status === 0) {
+        console.log('No matchups/outrights changes — skipping live-refresh commit.');
+      } else {
+        execSync('git commit -m "live-refresh: matchups + outrights"', { cwd: PROJECT_ROOT, stdio: 'inherit' });
+        execSync('git push', { cwd: PROJECT_ROOT, stdio: 'inherit' });
+        console.log('✓ pushed live-refresh commit.');
+      }
+    } catch (e) {
+      console.error(`✖ commit/push step failed (non-fatal): ${(e as Error).message}`);
+    }
+  }
 }
 
 main().catch((e) => { console.error('build-ticker failed:', e); process.exit(1); });

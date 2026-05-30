@@ -9,6 +9,16 @@ function score(s: number | null): { text: string; cls: string } {
   return { text: `+${s}`, cls: 'text-[#ef4444]' };
 }
 
+/** Live status pill — what to show next to the score:
+ *   - thru >= 18: "F" (finished)
+ *   - 0 < thru < 18: "Thru N" (on course right now)
+ *   - thru null/0: the player's tee time (hasn't started yet) */
+function statusFor(thru: number | null, teeTime: string): { text: string; cls: string } {
+  if (thru != null && thru >= 18) return { text: 'F', cls: 'text-[#a1a1aa]' };
+  if (thru != null && thru > 0) return { text: `Thru ${thru}`, cls: 'text-[#22c55e]' };
+  return { text: teeTime, cls: 'text-[#a1a1aa]' };
+}
+
 /**
  * Tee-times / scores ticker — a horizontal marquee of the upcoming round's
  * field. Auto-scrolls; pauses on hover (see .ticker-track in index.css).
@@ -50,11 +60,15 @@ export default function Ticker() {
                   <span className={`text-xs font-['JetBrains_Mono','SF_Mono',monospace] ${s.cls}`}>
                     {s.text}
                   </span>
-                  {!isFinal && e.teeTime && (
-                    <span className="text-[10px] text-[#a1a1aa] font-['JetBrains_Mono','SF_Mono',monospace]">
-                      {e.teeTime}
-                    </span>
-                  )}
+                  {!isFinal && (() => {
+                    const st = statusFor(e.thru, e.teeTime);
+                    if (!st.text) return null;
+                    return (
+                      <span className={`text-[10px] font-['JetBrains_Mono','SF_Mono',monospace] ${st.cls}`}>
+                        {st.text}
+                      </span>
+                    );
+                  })()}
                 </div>
               );
             })}

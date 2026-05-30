@@ -21,6 +21,22 @@ import { r2Results as pgaR2 } from '../data/pgaChampR2Results';
 import { r3Results as pgaR3 } from '../data/pgaChampR3Results';
 import { r4Results as pgaR4 } from '../data/pgaChampR4Results';
 import { betLog as mastersBets } from '../data/resultsData';
+// Charles Schwab — picked up dynamically via Vite glob, so every cscR<N>
+// the auto-roll grades shows up here automatically with no manual edits.
+const cscResultModules = import.meta.glob<Record<string, unknown>>(
+  '../data/cscR*Results.ts',
+  { eager: true }
+);
+const cscRoundsList = Object.entries(cscResultModules)
+  .map(([path, mod]) => {
+    const m = path.match(/cscR(\d+)Results\.ts$/);
+    if (!m) return null;
+    const round = Number(m[1]);
+    const bets = (mod as Record<string, unknown>)[`r${round}Results`] as BetRecord[] | undefined;
+    return Array.isArray(bets) ? { round, bets } : null;
+  })
+  .filter((x): x is { round: number; bets: BetRecord[] } => x !== null)
+  .sort((a, b) => a.round - b.round);
 
 // Masters 2026 — bets live in resultsData.betLog with a `dataSet` field
 // distinguishing "round-only" vs "cumulative". Each round can have both
@@ -38,14 +54,21 @@ interface EventBucket {
   rounds: { label: string; bets: BetRecord[] }[];
 }
 
-// Every graded round across every event. Easy to append new events here.
+// Every graded round across every event, ORDERED NEWEST EVENT FIRST.
+// Charles Schwab's per-round entries are derived dynamically from the
+// Vite glob above, so the auto-roll just needs to drop a new
+// cscR<N>Results.ts file and it shows up here on the next deploy.
 const EVENTS: EventBucket[] = [
   {
-    label: 'Masters 2026',
+    label: 'Charles Schwab Challenge 2026',
+    rounds: cscRoundsList.map((r) => ({ label: `R${r.round}`, bets: r.bets })),
+  },
+  {
+    label: 'CJ Cup Byron Nelson 2026',
     rounds: [
-      { label: 'R2', bets: mastersR2 },
-      { label: 'R3', bets: mastersR3 },
-      { label: 'R4', bets: mastersR4 },
+      { label: 'R2', bets: cjR2 },
+      { label: 'R3', bets: cjR3 },
+      { label: 'R4', bets: cjR4 },
     ],
   },
   {
@@ -57,11 +80,11 @@ const EVENTS: EventBucket[] = [
     ],
   },
   {
-    label: 'CJ Cup Byron Nelson 2026',
+    label: 'Masters 2026',
     rounds: [
-      { label: 'R2', bets: cjR2 },
-      { label: 'R3', bets: cjR3 },
-      { label: 'R4', bets: cjR4 },
+      { label: 'R2', bets: mastersR2 },
+      { label: 'R3', bets: mastersR3 },
+      { label: 'R4', bets: mastersR4 },
     ],
   },
 ];

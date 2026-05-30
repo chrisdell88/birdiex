@@ -11,7 +11,13 @@ import { r4Results, r4Summary as pgaR4SummaryRaw } from '../data/pgaChampR4Resul
 import { r2Results as cjR2RawBets } from '../data/cjCupR2Results';
 import { r3Results as cjR3RawBets } from '../data/cjCupR3Results';
 import { r4Results as cjR4RawBets } from '../data/cjCupR4Results';
-import { r2Results as cscR2RawBets } from '../data/cscR2Results';
+// Charles Schwab — IN PROGRESS event. Picked up dynamically via Vite glob,
+// so any cscR<N>Results.ts file the auto-roll drops gets wired in on the
+// next deploy — no manual import per round.
+const cscResultModules = import.meta.glob<Record<string, unknown>>(
+  '../data/cscR*Results.ts',
+  { eager: true }
+);
 import { starsForEdge, unitsForEdge, stakeToWin1, isTrackedBet } from '../lib/sizing';
 import { floorForEvent } from '../config/venues';
 import {
@@ -97,11 +103,22 @@ const cjR4Summary = summarise(cjR4Tracked);
 const cjTracked = [...cjR2Tracked, ...cjR3Tracked, ...cjR4Tracked];
 const cjSummary = summarise(cjTracked);
 
-// Charles Schwab — IN PROGRESS. Only graded round so far is R2; R3/R4 will be
-// appended here as the auto-roll grades them.
-const cscR2Tracked = trackedAt(cscR2RawBets, cscFloor.floor);
-const cscR2Summary = summarise(cscR2Tracked);
-const cscTracked = [...cscR2Tracked];
+// Charles Schwab — IN PROGRESS. Auto-roll drops cscR<N>Results.ts files as
+// each round grades; the Vite glob above picks them up at build time, so
+// THIS BLOCK NEEDS NO PER-ROUND EDITS. Sort by round, then summarise.
+const cscRounds = Object.entries(cscResultModules)
+  .map(([path, mod]) => {
+    const m = path.match(/cscR(\d+)Results\.ts$/);
+    if (!m) return null;
+    const round = Number(m[1]);
+    const bets = (mod as Record<string, unknown>)[`r${round}Results`] as BetRecord[] | undefined;
+    if (!Array.isArray(bets)) return null;
+    const tracked = trackedAt(bets, cscFloor.floor);
+    return { round, bets: tracked, summary: summarise(tracked) };
+  })
+  .filter((x): x is { round: number; bets: BetRecord[]; summary: ReturnType<typeof summarise> } => x !== null)
+  .sort((a, b) => a.round - b.round);
+const cscTracked = cscRounds.flatMap((r) => r.bets);
 const cscSummary = summarise(cscTracked);
 
 // All-time = Masters + PGA + CJ Cup + Charles Schwab (all tracked Best Bets).
@@ -1111,13 +1128,10 @@ function CJCupView() {
 
 // --- Charles Schwab Challenge View — pre-tournament placeholder until R1 grades ---
 function CharlesSchwabView() {
-  // IN PROGRESS — auto-roll grades each round when it completes and appends
-  // a cscR<N>Results.ts file. Add new rounds to gradedRounds below as they
-  // arrive (eventually this should be derived dynamically, but it's a one-
-  // line edit per round for now).
-  const gradedRounds = [
-    { round: 2, summary: cscR2Summary, bets: cscR2Tracked },
-  ];
+  // gradedRounds is derived from the cscR*Results.ts files Vite found at
+  // build time — every new round graded by auto-roll appears here on the
+  // next deploy with zero manual edits.
+  const gradedRounds = cscRounds;
 
   return (
     <div>

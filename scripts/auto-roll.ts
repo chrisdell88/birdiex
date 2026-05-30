@@ -377,8 +377,13 @@ async function doAutoAdvance(currentPicks: number, detected: number): Promise<vo
     const prevCompleted = newCompleted - 1; // round that produced the picks for what just ran
     const picksPhase = `r${prevCompleted}`;
     const xscoresFile = `${SLUG_PREFIX}R${prevCompleted}Data`;
+    // CRITICAL: source picks from the COMMITTED <prefix>R<N>Matchups.ts file
+    // (the canonical pairings users saw and bet on), NOT from the raw JSON
+    // pull that gets overwritten with the NEXT round's pairings at each
+    // refresh. Without this, R<N> gets graded against R<N+1>'s pairings.
+    const picksMatchupsFile = `${SLUG_PREFIX}R${newCompleted}Matchups`;
     try {
-      exec(`npx tsx scripts/grade-round.ts --slug ${SLUG} --round ${newCompleted} --picks-phase ${picksPhase} --results-phase ${newPhase} --xscores ${xscoresFile} --out ${SLUG_PREFIX}R${newCompleted}Results`);
+      exec(`npx tsx scripts/grade-round.ts --slug ${SLUG} --round ${newCompleted} --picks-phase ${picksPhase} --picks-matchups ${picksMatchupsFile} --results-phase ${newPhase} --xscores ${xscoresFile} --out ${SLUG_PREFIX}R${newCompleted}Results`);
     } catch (e) {
       // Grading is best-effort — bad odds data or skipped matchups shouldn't
       // block the advance. Log + continue.

@@ -21,6 +21,13 @@ interface Args {
   'results-phase': string;
   xscores: string;
   out: string;
+  /** Optional: name of the committed src/data/<name>.ts matchups file (no .ts
+   *  suffix) to source the picks/odds from. STRONGLY PREFERRED over the raw
+   *  picks-phase JSON, which gets overwritten by each auto-roll re-pull —
+   *  by the time grading runs at the next transition, the raw file holds the
+   *  NEXT round's pairings, not the round being graded. Pass e.g.
+   *  `--picks-matchups cscR2Matchups` to grade R2 against the actual R2 file. */
+  'picks-matchups'?: string;
 }
 
 function parseArgs(): Args {
@@ -97,13 +104,40 @@ async function main() {
     pathToFileURL(join(PROJECT_ROOT, 'src', 'lib', 'sizing.ts')).href
   );
 
-  // Matchup odds for this round (pulled the phase before the round).
-  const matchRaw = JSON.parse(
-    await readFile(
-      join(PROJECT_ROOT, 'data', 'raw', args.slug, args['picks-phase'], 'matchups-round_matchups.json'),
-      'utf8'
-    )
-  );
+  // Matchup pairings + odds for this round. The CANONICAL source is the
+  // committed src/data/<prefix>R<N>Matchups.ts file — that's what users
+  // actually saw and bet on, and unlike the raw JSON dir (gitignored,
+  // overwritten by every auto-roll re-pull) it is stable.
+  //
+  // The raw fallback path remains so old per-event re-grading scripts that
+  // still pass --picks-phase keep working, but the CORRECT call path is
+  // --picks-matchups <prefix>R<N>Matchups.
+  interface RawMatchEntry {
+    p1_player_name: string;
+    p2_player_name: string;
+    odds?: Record<string, { p1?: string; p2?: string }>;
+  }
+  let matchList: RawMatchEntry[];
+  if (args['picks-matchups']) {
+    const mm = await import(
+      pathToFileURL(join(PROJECT_ROOT, 'src', 'data', `${args['picks-matchups']}.ts`)).href
+    );
+    const exp = (mm as Record<string, unknown>)[`r${round}MatchupOddsData`];
+    if (!Array.isArray(exp)) {
+      throw new Error(
+        `grade-round: expected r${round}MatchupOddsData array export in ${args['picks-matchups']}.ts`
+      );
+    }
+    matchList = exp as RawMatchEntry[];
+  } else {
+    const matchRaw = JSON.parse(
+      await readFile(
+        join(PROJECT_ROOT, 'data', 'raw', args.slug, args['picks-phase'], 'matchups-round_matchups.json'),
+        'utf8'
+      )
+    ) as { match_list?: RawMatchEntry[] };
+    matchList = matchRaw.match_list ?? [];
+  }
 
   // Round outcomes — each player's score for the graded round.
   const resRaw = JSON.parse(
@@ -123,7 +157,7 @@ async function main() {
   const byPair = new Map<string, Record<string, unknown>>();
   let skipped = 0;
 
-  for (const m of matchRaw.match_list ?? []) {
+  for (const m of matchList) {
     const a = xs.get(m.p1_player_name);
     const b = xs.get(m.p2_player_name);
     if (!a || !b) { skipped++; continue; }

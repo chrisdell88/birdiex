@@ -212,25 +212,54 @@ function LoginScreen({ onUnlock }: { onUnlock: () => void }) {
 
 // ─── Stats table ─────────────────────────────────────────────────────────
 
-function TierRow({ label, stats, isFloor }: { label: string; stats: Stats; isFloor?: boolean }) {
+/** One row per tier — shows BAND stats (floor only) and CUMULATIVE stats
+ *  (all above) side by side. Lets you read both questions from the same row:
+ *    - Floor only:  how did THIS tier perform on its own?
+ *    - All above:   what would we have done if THIS were the floor?           */
+function DualTierRow({
+  label,
+  band,
+  above,
+  isFloor,
+}: {
+  label: string;
+  band: Stats;
+  above: Stats;
+  isFloor?: boolean;
+}) {
+  const cell = (n: number, fmt: (x: number) => string, color = false, bold = false) => (
+    <td
+      className={`px-3 py-2 text-xs ${mono} text-right whitespace-nowrap ${
+        color ? colorForUnits(n) : 'text-[#d4d4d4]'
+      } ${bold ? 'font-bold' : ''}`}
+    >
+      {fmt(n)}
+    </td>
+  );
   return (
     <tr className={`border-t border-[#1a1a1a] ${isFloor ? 'bg-[#22c55e]/5' : ''}`}>
       <td className={`px-3 py-2 text-xs ${mono} text-[#f5f5f5] whitespace-nowrap`}>
-        ≥ {label}
+        {label}
         {isFloor && (
           <span className="ml-2 text-[9px] uppercase tracking-wider text-[#22c55e]">venue floor</span>
         )}
       </td>
-      <td className={`px-3 py-2 text-xs ${mono} text-[#d4d4d4] text-right`}>{stats.bets}</td>
+      {/* Floor only (band) — this tier only, no rows above */}
+      <td className={`px-3 py-2 text-xs ${mono} text-[#d4d4d4] text-right`}>{band.bets}</td>
       <td className={`px-3 py-2 text-xs ${mono} text-[#d4d4d4] text-right whitespace-nowrap`}>
-        {stats.wins}-{stats.losses}-{stats.pushes}
+        {band.wins}-{band.losses}-{band.pushes}
       </td>
-      <td className={`px-3 py-2 text-xs ${mono} ${colorForUnits(stats.units)} text-right font-bold whitespace-nowrap`}>
-        {fmtUnits(stats.units)}
+      {cell(band.units, fmtUnits, true, true)}
+      {cell(band.roi, fmtRoi, true)}
+      {/* Visual divider between the two groups */}
+      <td className="border-l border-[#262626] w-0 p-0" />
+      {/* All above (cumulative) — this tier + everything higher */}
+      <td className={`px-3 py-2 text-xs ${mono} text-[#d4d4d4] text-right`}>{above.bets}</td>
+      <td className={`px-3 py-2 text-xs ${mono} text-[#d4d4d4] text-right whitespace-nowrap`}>
+        {above.wins}-{above.losses}-{above.pushes}
       </td>
-      <td className={`px-3 py-2 text-xs ${mono} ${colorForUnits(stats.roi)} text-right whitespace-nowrap`}>
-        {fmtRoi(stats.roi)}
-      </td>
+      {cell(above.units, fmtUnits, true, true)}
+      {cell(above.roi, fmtRoi, true)}
     </tr>
   );
 }
@@ -239,17 +268,11 @@ function StatsTable({
   title,
   bets,
   venueFloor,
-  mode,
 }: {
   title: string;
   bets: BetRecord[];
   venueFloor?: number;
-  mode: TierMode;
 }) {
-  // For cumulative mode each row is edge >= tier (open-ended).
-  // For band mode each row is edge in [tier, nextTier) — last tier still
-  // open-ended since there's no higher tier above 5.45.
-  const colHeader = mode === 'cumulative' ? 'Edge ≥ tier' : 'Edge band';
   return (
     <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg overflow-hidden mb-6">
       <div className="px-4 py-3 border-b border-[#262626] flex items-center justify-between">
@@ -259,8 +282,26 @@ function StatsTable({
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
+            {/* Two-row header — first row groups the metric columns into the
+                "Floor only" (band) section and the "All above" (cumulative)
+                section so it's unambiguous which is which. */}
             <tr className="border-b border-[#262626]">
-              <th className={`px-3 py-2 text-[10px] uppercase tracking-wider text-[#a1a1aa] text-left ${mono}`}>{colHeader}</th>
+              <th rowSpan={2} className={`px-3 py-2 text-[10px] uppercase tracking-wider text-[#a1a1aa] text-left align-bottom ${mono}`}>Edge tier</th>
+              <th colSpan={4} className={`px-3 py-2 text-[10px] uppercase tracking-wider text-center ${mono} text-[#22c55e]`}>
+                Floor only
+                <div className="text-[9px] normal-case tracking-normal text-[#737373] mt-0.5">this tier band only</div>
+              </th>
+              <th rowSpan={2} className="border-l border-[#262626] w-0 p-0" />
+              <th colSpan={4} className={`px-3 py-2 text-[10px] uppercase tracking-wider text-center ${mono} text-[#a1a1aa]`}>
+                All above
+                <div className="text-[9px] normal-case tracking-normal text-[#737373] mt-0.5">if this tier were the floor</div>
+              </th>
+            </tr>
+            <tr className="border-b border-[#262626]">
+              <th className={`px-3 py-2 text-[10px] uppercase tracking-wider text-[#a1a1aa] text-right ${mono}`}>Bets</th>
+              <th className={`px-3 py-2 text-[10px] uppercase tracking-wider text-[#a1a1aa] text-right ${mono}`}>W-L-P</th>
+              <th className={`px-3 py-2 text-[10px] uppercase tracking-wider text-[#a1a1aa] text-right ${mono}`}>Units</th>
+              <th className={`px-3 py-2 text-[10px] uppercase tracking-wider text-[#a1a1aa] text-right ${mono}`}>ROI</th>
               <th className={`px-3 py-2 text-[10px] uppercase tracking-wider text-[#a1a1aa] text-right ${mono}`}>Bets</th>
               <th className={`px-3 py-2 text-[10px] uppercase tracking-wider text-[#a1a1aa] text-right ${mono}`}>W-L-P</th>
               <th className={`px-3 py-2 text-[10px] uppercase tracking-wider text-[#a1a1aa] text-right ${mono}`}>Units</th>
@@ -270,22 +311,14 @@ function StatsTable({
           <tbody>
             {TIERS.map((t, i) => {
               const next = TIERS[i + 1];
-              const upper = mode === 'cumulative' ? undefined : next;
-              // Label format:
-              //   cumulative → "≥2.45"
-              //   band       → "2.45–2.95" (or "≥5.45" for the open-ended top)
-              const label =
-                mode === 'cumulative'
-                  ? `≥${t.toFixed(2)}`
-                  : next !== undefined
-                    ? `${t.toFixed(2)}–${next.toFixed(2)}`
-                    : `≥${t.toFixed(2)}`;
+              const bandLabel = next !== undefined ? `${t.toFixed(2)}–${next.toFixed(2)}` : `≥${t.toFixed(2)}`;
               return (
-                <TierRow
+                <DualTierRow
                   key={t}
-                  label={label}
-                  stats={computeStats(bets, t, upper)}
-                  isFloor={mode === 'cumulative' && venueFloor !== undefined && Math.abs(t - venueFloor) < 0.01}
+                  label={bandLabel}
+                  band={computeStats(bets, t, next)}
+                  above={computeStats(bets, t, undefined)}
+                  isFloor={venueFloor !== undefined && Math.abs(t - venueFloor) < 0.01}
                 />
               );
             })}
@@ -310,17 +343,8 @@ export default function BacktestLab() {
     }
     return EVENTS[0]?.label ?? 'all';
   });
-  // Tier mode — 'cumulative' = each row is edge ≥ X (good for "where to set
-  // the floor"), 'band' = each row is edge in [X, nextX) (good for "which
-  // edge ranges actually print"). Default to 'band' — that's the view that
-  // surfaces tier-by-tier signal without the cumulative row dilution.
-  const [tierMode, setTierMode] = useState<TierMode>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem('lab-tier-mode');
-      if (saved === 'cumulative' || saved === 'band') return saved;
-    }
-    return 'band';
-  });
+  // Tier mode is no longer toggled — every row now shows BOTH band and
+  // cumulative columns side by side (Floor only / All above).
 
   useEffect(() => {
     if (sessionStorage.getItem('lab-auth') === '1') setUnlocked(true);
@@ -330,9 +354,6 @@ export default function BacktestLab() {
     if (typeof window !== 'undefined') sessionStorage.setItem('lab-event-filter', eventFilter);
   }, [eventFilter]);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') sessionStorage.setItem('lab-tier-mode', tierMode);
-  }, [tierMode]);
 
   const allBets = useMemo(() => EVENTS.flatMap((e) => e.rounds.flatMap((r) => r.bets)), []);
   const visibleEvents = useMemo(
@@ -363,38 +384,10 @@ export default function BacktestLab() {
         </button>
       </div>
 
-      {/* Tier-mode toggle — band vs cumulative. Band answers "which edge
-          ranges actually print"; cumulative answers "where should the floor
-          be". Default is band so each row tells you about that specific
-          tier in isolation — without the row above lumping its results in. */}
-      <div className="flex flex-wrap items-center gap-2 mb-3">
-        <span className={`text-[10px] uppercase tracking-wider text-[#a1a1aa] ${mono} mr-1`}>Tier view:</span>
-        {(['band', 'cumulative'] as const).map((opt) => {
-          const active = tierMode === opt;
-          const label = opt === 'band' ? 'Band only (tier-to-next)' : 'Cumulative (≥ tier)';
-          return (
-            <button
-              key={opt}
-              onClick={() => setTierMode(opt)}
-              className={`px-3 py-1.5 text-[11px] font-medium rounded-md border transition-colors font-['Inter',system-ui,sans-serif] cursor-pointer ${
-                active
-                  ? 'bg-[#22c55e] text-[#0a0a0a] border-[#22c55e] font-semibold'
-                  : 'bg-transparent text-[#a1a1aa] border-[#262626] hover:text-[#f5f5f5] hover:border-[#404040]'
-              }`}
-            >
-              {label}
-            </button>
-          );
-        })}
-        <span className="ml-2 text-[10px] text-[#737373] font-['Inter',system-ui,sans-serif]">
-          {tierMode === 'band'
-            ? 'Each row = bets whose edge falls in that band only. Rows do not include the bands above.'
-            : 'Each row = bets at that floor or higher. Rows include every tier above them.'}
-        </span>
-      </div>
-
-      {/* All-time across every event — always shown regardless of filter */}
-      <StatsTable title="All-time (every event, every round)" bets={allBets} mode={tierMode} />
+      {/* All-time across every event — always shown regardless of filter.
+          Each tier row now shows BOTH "Floor only" (this band) and "All
+          above" (cumulative) side by side — no toggle needed. */}
+      <StatsTable title="All-time (every event, every round)" bets={allBets} />
 
       {/* Event filter pills — default to most recent so page opens compact.
           Click "All Events" to expand everything. Selection persists across
@@ -437,11 +430,11 @@ export default function BacktestLab() {
                 </span>
               )}
             </h2>
-            <StatsTable title={`${ev.label} — all rounds`} bets={evBets} venueFloor={venueFloor} mode={tierMode} />
+            <StatsTable title={`${ev.label} — all rounds`} bets={evBets} venueFloor={venueFloor} />
             {/* Rounds shown newest first (R4 → R3 → R2) so the most recent
                 round is at the top, matching the event ordering above. */}
             {[...ev.rounds].reverse().map((r) => (
-              <StatsTable key={r.label} title={`${ev.label} — ${r.label}`} bets={r.bets} venueFloor={venueFloor} mode={tierMode} />
+              <StatsTable key={r.label} title={`${ev.label} — ${r.label}`} bets={r.bets} venueFloor={venueFloor} />
             ))}
           </div>
         );

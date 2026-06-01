@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s https://feeds.datagolf.com/*)",
+      "Bash(git add *)",
+      "Bash(git add -A)",
+      "Bash(git commit -m *)",
+      "Bash(git commit)",
+      "Bash(git pull)",
+      "Bash(git pull --rebase)",
+      "Bash(git push)",
+      "Bash(git push --tags)",
+      "Bash(git rebase --continue)",
+      "Bash(git rebase --abort)",
+      "Bash(git stash)",
+      "Bash(git stash pop)",
+      "Bash(git checkout --ours *)",
+      "Bash(git checkout --theirs *)",
+      "Bash(git fetch)",
+      "Bash(git fetch --all)",
+      "Bash(git reset --soft HEAD~1)",
+      "Bash(git restore --staged *)",
+      "Bash(npm run build)",
+      "Bash(npm run lint)",
+      "Bash(npm run dev)",
+      "Bash(npm run preview)",
+      "Bash(npm ci)",
+      "Bash(npx tsx scripts/*)",
+      "Bash(npx tsx /tmp/*)",
+      "Bash(mkdir -p *)",
+      "Bash(cp /tmp/* *)",
+      "Bash(gh workflow run *)",
+      "Bash(gh workflow list)",
+      "Bash(gh auth status)",
+      "Bash(gh repo list *)"
+    ]
+  }
+}

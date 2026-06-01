@@ -22,8 +22,9 @@ data/raw/
 # Transient auto-roll notify marker (runtime only — read by the workflow after push)
 data/.pending-notify.json
 
-# Claude Code local config (worktrees, launch.json, etc.)
-.claude/
+# Claude Code local config (worktrees, launch.json, etc.) — directory
+# contents ignored except for settings.json (negated below in line 42).
+.claude/*
 
 # Editor directories and files
 .vscode/*

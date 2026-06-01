@@ -92,37 +92,28 @@ const EVENTS: EventBucket[] = [
 // Floor tiers we care about — same set used by recommendedFloorForPredictability.
 const TIERS = [0.95, 1.45, 1.95, 2.45, 2.95] as const;
 
-interface Stats {
-  bets: number;
-  wins: number;
-  losses: number;
-  pushes: number;
-  units: number;
-  staked: number;
-  roi: number;
-}
+// Use the SHARED summariser so Lab numbers cannot disagree with Results at
+// the same edge floor. Below we keep the local computeStats name so the
+// existing render code stays intact, but internally it delegates to the
+// shared lib. ROI now uses the real stake (unitsForEdge * stakeToWin1),
+// same as the Results page.
+import { summariseAtFloor, type BetSummary } from '../lib/statSummarise';
+import { floorForEvent, type EventId } from '../config/venues';
+
+type Stats = BetSummary;
 
 function computeStats(bets: BetRecord[], floor: number): Stats {
-  const filtered = bets.filter((b) => b.edge >= floor);
-  const wins = filtered.filter((b) => b.result === 'W').length;
-  const losses = filtered.filter((b) => b.result === 'L').length;
-  const pushes = filtered.filter((b) => b.result === 'P').length;
-  const units = filtered.reduce((s, b) => s + b.units, 0);
-  // Stake assumption matches grading: each bet stakes its assigned units;
-  // pushes stake but return 0. Approximate "staked" as |units assigned|
-  // (the unit-sizing bands all stake positive amounts).
-  const staked = filtered.reduce((s, b) => {
-    // For W: units = stake * decimal_odds * (1 if win); for L: units = -stake;
-    // We just need a sensible denominator → use the stake band by edge bucket.
-    // The simplest defensible answer: |units|+|loss|, but a simple proxy is
-    // count * avg_band. Use the recorded stake convention: 1u baseline times
-    // the band multiplier from sizing.
-    const band = b.edge >= 2.95 ? 2.5 : b.edge >= 2.45 ? 2.0 : b.edge >= 1.95 ? 1.5 : b.edge >= 1.45 ? 1.0 : 0.5;
-    return s + band;
-  }, 0);
-  const roi = staked > 0 ? (units / staked) * 100 : 0;
-  return { bets: filtered.length, wins, losses, pushes, units, staked, roi };
+  return summariseAtFloor(bets, floor);
 }
+
+// Map each Lab EVENT label → the venues.ts EventId so we can pass the
+// matching venue floor into the StatsTable for visual highlighting.
+const LABEL_TO_EVENT_ID: Record<string, EventId> = {
+  'Charles Schwab Challenge 2026': 'charles-schwab-challenge-2026',
+  'CJ Cup Byron Nelson 2026': 'cj-cup-byron-nelson-2026',
+  'PGA Championship 2026': 'pga-2026',
+  'Masters 2026': 'masters-2026',
+};
 
 function fmtUnits(u: number): string {
   const rounded = Math.round(u * 100) / 100;
@@ -305,17 +296,26 @@ export default function BacktestLab() {
       {/* All-time across every event */}
       <StatsTable title="All-time (every event, every round)" bets={allBets} />
 
-      {/* Per-event */}
+      {/* Per-event. Pass the event's venue floor so the tier row that maps
+          to the public Results figure is visually highlighted — making the
+          Lab ↔ Results mirror obvious at a glance. */}
       {EVENTS.map((ev) => {
         const evBets = ev.rounds.flatMap((r) => r.bets);
+        const eventId = LABEL_TO_EVENT_ID[ev.label];
+        const venueFloor = eventId ? floorForEvent(eventId).floor : undefined;
         return (
           <div key={ev.label} className="mb-8">
             <h2 className={`text-sm font-bold text-[#22c55e] ${mono} uppercase tracking-wider mb-3`}>
               {ev.label}
+              {venueFloor !== undefined && (
+                <span className="ml-2 text-[10px] text-[#a1a1aa] font-normal tracking-normal">
+                  (Results-page floor: {venueFloor.toFixed(2)})
+                </span>
+              )}
             </h2>
-            <StatsTable title={`${ev.label} — all rounds`} bets={evBets} />
+            <StatsTable title={`${ev.label} — all rounds`} bets={evBets} venueFloor={venueFloor} />
             {ev.rounds.map((r) => (
-              <StatsTable key={r.label} title={`${ev.label} — ${r.label}`} bets={r.bets} />
+              <StatsTable key={r.label} title={`${ev.label} — ${r.label}`} bets={r.bets} venueFloor={venueFloor} />
             ))}
           </div>
         );

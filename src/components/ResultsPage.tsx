@@ -18,7 +18,7 @@ const cscResultModules = import.meta.glob<Record<string, unknown>>(
   '../data/cscR*Results.ts',
   { eager: true }
 );
-import { starsForEdge, unitsForEdge, stakeToWin1, isTrackedBet } from '../lib/sizing';
+import { starsForEdge, unitsForEdge, stakeToWin1 } from '../lib/sizing';
 import { floorForEvent } from '../config/venues';
 import {
   overallRecord,
@@ -52,32 +52,10 @@ const pgaFloor = floorForEvent('pga-2026');
 const cjCupFloor = floorForEvent('cj-cup-byron-nelson-2026');
 const cscFloor = floorForEvent('charles-schwab-challenge-2026');
 
-/** Filter a bet array down to the tracked bets at this venue's floor. */
-function trackedAt(bets: BetRecord[], floor: number): BetRecord[] {
-  return bets.filter((b) => isTrackedBet(b.edge, floor));
-}
-
-/** Re-summarise a filtered bet array (record + units + ROI + staked). */
-function summarise(bets: BetRecord[]) {
-  let wins = 0, losses = 0, pushes = 0, units = 0, staked = 0;
-  for (const b of bets) {
-    if (b.result === 'W') wins++;
-    else if (b.result === 'L') losses++;
-    else pushes++;
-    units += b.units;
-    if (b.result !== 'P') staked += unitsForEdge(b.edge) * stakeToWin1(b.bestOdds);
-  }
-  return {
-    wins,
-    losses,
-    pushes,
-    bets: bets.length,
-    record: `${wins}-${losses}${pushes > 0 ? `-${pushes}` : ''}`,
-    units: +units.toFixed(2),
-    staked: +staked.toFixed(2),
-    roi: staked > 0 ? +((units / staked) * 100).toFixed(1) : 0,
-  };
-}
+// Single source of truth for the trackedAt + summarise pair, shared with
+// BacktestLab. Guarantees both pages cannot disagree about the same
+// (bets, floor) input.
+import { trackedAt, summariseBets as summarise } from '../lib/statSummarise';
 
 // Tracked-bet subsets per event.
 const mastersTracked = trackedAt(betLog, mastersFloor.floor);

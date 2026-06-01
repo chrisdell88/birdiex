@@ -263,12 +263,30 @@ function StatsTable({ title, bets, venueFloor }: { title: string; bets: BetRecor
 
 export default function BacktestLab() {
   const [unlocked, setUnlocked] = useState(false);
+  // Event filter — default to the most recent event (first in EVENTS, which
+  // is sorted newest-first) so the page opens compact. 'all' shows every
+  // event. Persisted in sessionStorage so refreshes keep the selection.
+  const [eventFilter, setEventFilter] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('lab-event-filter');
+      if (saved && (saved === 'all' || EVENTS.some((e) => e.label === saved))) return saved;
+    }
+    return EVENTS[0]?.label ?? 'all';
+  });
 
   useEffect(() => {
     if (sessionStorage.getItem('lab-auth') === '1') setUnlocked(true);
   }, []);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') sessionStorage.setItem('lab-event-filter', eventFilter);
+  }, [eventFilter]);
+
   const allBets = useMemo(() => EVENTS.flatMap((e) => e.rounds.flatMap((r) => r.bets)), []);
+  const visibleEvents = useMemo(
+    () => (eventFilter === 'all' ? EVENTS : EVENTS.filter((e) => e.label === eventFilter)),
+    [eventFilter]
+  );
 
   if (!unlocked) return <LoginScreen onUnlock={() => setUnlocked(true)} />;
 
@@ -293,13 +311,37 @@ export default function BacktestLab() {
         </button>
       </div>
 
-      {/* All-time across every event */}
+      {/* All-time across every event — always shown regardless of filter */}
       <StatsTable title="All-time (every event, every round)" bets={allBets} />
+
+      {/* Event filter pills — default to most recent so page opens compact.
+          Click "All Events" to expand everything. Selection persists across
+          refreshes via sessionStorage. */}
+      <div className="flex flex-wrap items-center gap-2 mb-6 mt-2">
+        <span className={`text-[10px] uppercase tracking-wider text-[#a1a1aa] ${mono} mr-1`}>Event:</span>
+        {(['all', ...EVENTS.map((e) => e.label)] as const).map((opt) => {
+          const active = eventFilter === opt;
+          const label = opt === 'all' ? 'All Events' : opt;
+          return (
+            <button
+              key={opt}
+              onClick={() => setEventFilter(opt)}
+              className={`px-3 py-1.5 text-[11px] font-medium rounded-md border transition-colors font-['Inter',system-ui,sans-serif] cursor-pointer ${
+                active
+                  ? 'bg-[#22c55e] text-[#0a0a0a] border-[#22c55e] font-semibold'
+                  : 'bg-transparent text-[#a1a1aa] border-[#262626] hover:text-[#f5f5f5] hover:border-[#404040]'
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
 
       {/* Per-event. Pass the event's venue floor so the tier row that maps
           to the public Results figure is visually highlighted — making the
           Lab ↔ Results mirror obvious at a glance. */}
-      {EVENTS.map((ev) => {
+      {visibleEvents.map((ev) => {
         const evBets = ev.rounds.flatMap((r) => r.bets);
         const eventId = LABEL_TO_EVENT_ID[ev.label];
         const venueFloor = eventId ? floorForEvent(eventId).floor : undefined;

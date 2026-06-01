@@ -89,8 +89,15 @@ const EVENTS: EventBucket[] = [
   },
 ];
 
-// Floor tiers we care about — same set used by recommendedFloorForPredictability.
-const TIERS = [0.95, 1.45, 1.95, 2.45, 2.95] as const;
+// Edge tiers shown on every StatsTable. Step is 0.5 to match the sizing
+// ladder in src/lib/sizing.ts (each band = one star size). Extended all
+// the way through 5.45+ (the top sizing band caps at 5u) so the right
+// tail is visible — without that, the high-edge bets that drive most of
+// the +EV story would be lumped into the 2.95+ row and the story is half-told.
+const TIERS = [
+  0.95, 1.45, 1.95, 2.45, 2.95,
+  3.45, 3.95, 4.45, 4.95, 5.45,
+] as const;
 
 // Use the SHARED summariser so Lab numbers cannot disagree with Results at
 // the same edge floor. Below we keep the local computeStats name so the

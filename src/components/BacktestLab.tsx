@@ -389,28 +389,28 @@ export default function BacktestLab() {
           above" (cumulative) side by side — no toggle needed. */}
       <StatsTable title="All-time (every event, every round)" bets={allBets} />
 
-      {/* Event filter pills — default to most recent so page opens compact.
-          Click "All Events" to expand everything. Selection persists across
-          refreshes via sessionStorage. */}
-      <div className="flex flex-wrap items-center gap-2 mb-6 mt-2">
-        <span className={`text-[10px] uppercase tracking-wider text-[#a1a1aa] ${mono} mr-1`}>Event:</span>
-        {(['all', ...EVENTS.map((e) => e.label)] as const).map((opt) => {
-          const active = eventFilter === opt;
-          const label = opt === 'all' ? 'All Events' : opt;
-          return (
-            <button
-              key={opt}
-              onClick={() => setEventFilter(opt)}
-              className={`px-3 py-1.5 text-[11px] font-medium rounded-md border transition-colors font-['Inter',system-ui,sans-serif] cursor-pointer ${
-                active
-                  ? 'bg-[#22c55e] text-[#0a0a0a] border-[#22c55e] font-semibold'
-                  : 'bg-transparent text-[#a1a1aa] border-[#262626] hover:text-[#f5f5f5] hover:border-[#404040]'
-              }`}
-            >
-              {label}
-            </button>
-          );
-        })}
+      {/* Event filter — dropdown (cleaner than pills when there are many
+          events). Defaults to the newest event so the page opens compact;
+          choose 'All Events' to expand everything. Selection persists
+          across refreshes via sessionStorage. */}
+      <div className="flex items-center gap-3 mb-6 mt-2">
+        <label
+          htmlFor="lab-event-select"
+          className={`text-[10px] uppercase tracking-wider text-[#a1a1aa] ${mono}`}
+        >
+          Event
+        </label>
+        <select
+          id="lab-event-select"
+          value={eventFilter}
+          onChange={(e) => setEventFilter(e.target.value)}
+          className={`bg-[#0a0a0a] border border-[#262626] rounded-md px-3 py-2 text-[12px] text-[#f5f5f5] ${mono} cursor-pointer hover:border-[#404040] focus:border-[#22c55e] focus:outline-none transition-colors`}
+        >
+          <option value="all">All Events</option>
+          {EVENTS.map((e) => (
+            <option key={e.label} value={e.label}>{e.label}</option>
+          ))}
+        </select>
       </div>
 
       {/* Per-event. Pass the event's venue floor so the tier row that maps

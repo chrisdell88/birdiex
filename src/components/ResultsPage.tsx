@@ -949,10 +949,12 @@ function PGAView() {
   }, [sortField, sortDir, selectedPlayer]);
   const filteredCount = sortedR2.length + sortedR3.length + sortedR4.length;
 
+  // Newest round first (R4 → R3 → R2) — matches the descending-event order
+  // at the top of the page.
   const rounds = [
-    { round: 2, summary: pgaR2Summary, bets: sortedR2 },
-    { round: 3, summary: pgaR3Summary, bets: sortedR3 },
     { round: 4, summary: pgaR4Summary, bets: sortedR4 },
+    { round: 3, summary: pgaR3Summary, bets: sortedR3 },
+    { round: 2, summary: pgaR2Summary, bets: sortedR2 },
   ];
 
   return (
@@ -1092,11 +1094,11 @@ function PGAView() {
 
 // --- CJ Cup Byron Nelson View — COMPLETE after R4, graded round-by-round ---
 function CJCupView() {
-  // Best Bets only, per round. Event is complete — show R2, R3, R4.
+  // Best Bets only, per round. Event complete — newest round first (R4 → R3 → R2).
   const gradedRounds = [
-    { round: 2, summary: cjR2Summary, bets: cjR2Tracked },
-    { round: 3, summary: cjR3Summary, bets: cjR3Tracked },
     { round: 4, summary: cjR4Summary, bets: cjR4Tracked },
+    { round: 3, summary: cjR3Summary, bets: cjR3Tracked },
+    { round: 2, summary: cjR2Summary, bets: cjR2Tracked },
   ];
 
   return (
@@ -1161,8 +1163,8 @@ function CJCupView() {
 function CharlesSchwabView() {
   // gradedRounds is derived from the cscR*Results.ts files Vite found at
   // build time — every new round graded by auto-roll appears here on the
-  // next deploy with zero manual edits.
-  const gradedRounds = cscRounds;
+  // next deploy with zero manual edits. Newest round first (R4 → R3 → R2).
+  const gradedRounds = [...cscRounds].reverse();
 
   return (
     <div>
@@ -1294,22 +1296,19 @@ export default function ResultsPage() {
         </div>
       </div>
 
-      {/* ── Tournament Picker ── */}
-      <div className="flex flex-wrap items-center gap-2 mb-6">
-        <span className={label + ' mr-1'}>View:</span>
-        {tournamentOptions.map(opt => (
-          <button
-            key={opt.value}
-            onClick={() => setActiveView(opt.value)}
-            className={`px-4 py-2 text-xs font-medium rounded-lg border transition-colors font-['Inter',system-ui,sans-serif] cursor-pointer ${
-              activeView === opt.value
-                ? 'bg-[#22c55e] text-[#0a0a0a] border-[#22c55e] font-semibold'
-                : 'bg-transparent text-[#a1a1aa] border-[#262626] hover:text-[#f5f5f5] hover:border-[#404040]'
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
+      {/* ── Tournament Picker (dropdown — cleaner than pills) ── */}
+      <div className="flex items-center gap-3 mb-6">
+        <label htmlFor="results-view-select" className={label}>View</label>
+        <select
+          id="results-view-select"
+          value={activeView}
+          onChange={(e) => setActiveView(e.target.value as TournamentView)}
+          className={`bg-[#0a0a0a] border border-[#262626] rounded-lg px-3 py-2 text-xs ${mono} text-[#f5f5f5] cursor-pointer hover:border-[#404040] focus:border-[#22c55e] focus:outline-none transition-colors`}
+        >
+          {tournamentOptions.map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
       </div>
 
       {/* ── View Content ── */}

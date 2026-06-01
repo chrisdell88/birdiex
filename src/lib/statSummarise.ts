@@ -57,3 +57,20 @@ export function summariseBets(bets: BetRecord[]): BetSummary {
 export function summariseAtFloor(bets: BetRecord[], floor: number): BetSummary {
   return summariseBets(trackedAt(bets, floor));
 }
+
+/**
+ * Summarise bets within a half-open edge range [lower, upper).
+ * When upper is undefined, behaves like summariseAtFloor (open-ended top).
+ * Lets the Lab page switch between cumulative (≥ tier) and tier-only
+ * (band-by-band) views without duplicating logic.
+ */
+export function summariseInRange(
+  bets: BetRecord[],
+  lower: number,
+  upper?: number
+): BetSummary {
+  const filtered = bets.filter((b) =>
+    b.edge >= lower && (upper === undefined || b.edge < upper)
+  );
+  return summariseBets(filtered);
+}

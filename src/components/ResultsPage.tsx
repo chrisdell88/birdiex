@@ -381,6 +381,109 @@ function StarBreakdown({ bets, heading }: { bets: BetRecord[]; heading?: string 
 }
 
 // ─────────────────────────────────────────────────────────────────
+// Sortable per-round bet table — clickable column headers (including
+// Edge / matchup score), used by every per-event view. Each instance
+// holds its own sortField/sortDir state so different rounds on the
+// same page can be sorted independently.
+// ─────────────────────────────────────────────────────────────────
+function SortableBetTable({ bets, round, floor }: { bets: BetRecord[]; round: number; floor: number }) {
+  const [sortField, setSortField] = useState<ResultsSortField>('edge');
+  const [sortDir, setSortDir] = useState<SortDirection>('desc');
+
+  const handleSort = (field: ResultsSortField) => {
+    if (field === sortField) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      // For numeric columns where bigger = "better" by default, start desc.
+      setSortDir(field === 'edge' || field === 'units' ? 'desc' : 'asc');
+    }
+  };
+
+  const sortArrow = (field: ResultsSortField) =>
+    sortField === field ? (sortDir === 'asc' ? ' ▲' : ' ▼') : '';
+
+  const sortedBets = useMemo(
+    () => [...bets].sort((a, b) => compareValues(a, b, sortField, sortDir)),
+    [bets, sortField, sortDir]
+  );
+
+  if (bets.length === 0) {
+    return (
+      <p className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif] italic">
+        No matchups cleared the {floor.toFixed(2)} venue threshold this round.
+      </p>
+    );
+  }
+
+  const columns: [ResultsSortField, string][] = [
+    ['id', '#'],
+    ['pick', 'Pick'],
+    ['opponent', 'Opp'],
+    ['edge', 'Edge'],
+    ['bestOdds', 'Best Odds'],
+    ['book', 'Book'],
+    ['result', 'Result'],
+    ['units', 'Units +/-'],
+  ];
+
+  return (
+    <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-left">
+          <thead>
+            <tr className="border-b border-[#262626]">
+              {columns.map(([field, headerLabel]) => (
+                <th
+                  key={field}
+                  onClick={() => handleSort(field)}
+                  className={`px-3 py-3 text-[10px] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif] cursor-pointer hover:text-[#22c55e] transition-colors whitespace-nowrap select-none ${
+                    sortField === field ? 'text-[#22c55e]' : 'text-[#a1a1aa]'
+                  }`}
+                >
+                  {headerLabel}{sortArrow(field)}
+                </th>
+              ))}
+              <th className="px-3 py-3 text-[10px] uppercase tracking-wider text-[#a1a1aa] font-medium font-['Inter',system-ui,sans-serif] whitespace-nowrap">Stars</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sortedBets.map((bet, i) => (
+              <tr key={bet.id} className={`border-b border-[#1a1a1a] ${i % 2 === 0 ? 'bg-[#0a0a0a]' : 'bg-[#0f0f0f]'} hover:bg-[#141414] transition-colors`}>
+                <td className={`px-3 py-2 text-xs ${mono} text-[#a1a1aa]`}>{bet.id}</td>
+                <td className="px-3 py-2 text-xs text-[#f5f5f5] font-['Inter',system-ui,sans-serif] whitespace-nowrap">{bet.pick}</td>
+                <td className="px-3 py-2 text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif] whitespace-nowrap">{bet.opponent}</td>
+                <td className={`px-3 py-2 text-xs ${mono} text-[#d4d4d4]`}>{bet.edge.toFixed(2)}</td>
+                <td className={`px-3 py-2 text-xs ${mono} text-[#d4d4d4]`}>{bet.bestOdds}</td>
+                <td className="px-3 py-2 text-xs font-['Inter',system-ui,sans-serif] whitespace-nowrap">
+                  {sportsbookUrls[bet.book] ? (
+                    <a href={sportsbookUrls[bet.book]} target="_blank" rel="noopener noreferrer" className="text-[#22c55e] hover:underline transition-colors">
+                      {bet.book}<span className="ml-0.5 text-[10px]">{'↗'}</span>
+                    </a>
+                  ) : (
+                    <span className="text-[#a1a1aa]">{bet.book}</span>
+                  )}
+                </td>
+                <td className="px-3 py-2">{resultBadge(bet.result)}</td>
+                <td className={`px-3 py-2 text-xs ${mono} ${unitColor(bet.units)} font-bold`}>{formatUnits(bet.units)}</td>
+                <td className="px-3 py-2">
+                  <span className="text-[#22c55e] text-xs tracking-tight" aria-label={`${starsForEdge(bet.edge)} star play`}>
+                    {'★'.repeat(starsForEdge(bet.edge))}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="px-4 py-3 border-t border-[#262626] text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
+        {sortedBets.length} Best Bet{sortedBets.length === 1 ? '' : 's'} — Round {round}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
 // SUB-VIEWS
 // ─────────────────────────────────────────────────────────────────
 
@@ -1068,57 +1171,7 @@ function CJCupView() {
             </div>
           </div>
 
-          {bets.length > 0 ? (
-            <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="border-b border-[#262626]">
-                      {(['#', 'Pick', 'Opp', 'Edge', 'Stars', 'Best Odds', 'Book', 'Result', 'Units +/-'] as const).map((h) => (
-                        <th key={h} className="px-3 py-3 text-[10px] uppercase tracking-wider text-[#a1a1aa] font-medium font-['Inter',system-ui,sans-serif] whitespace-nowrap">
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {bets.map((bet, i) => (
-                      <tr key={bet.id} className={`border-b border-[#1a1a1a] ${i % 2 === 0 ? 'bg-[#0a0a0a]' : 'bg-[#0f0f0f]'} hover:bg-[#141414] transition-colors`}>
-                        <td className={`px-3 py-2 text-xs ${mono} text-[#a1a1aa]`}>{bet.id}</td>
-                        <td className="px-3 py-2 text-xs text-[#f5f5f5] font-['Inter',system-ui,sans-serif] whitespace-nowrap">{bet.pick}</td>
-                        <td className="px-3 py-2 text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif] whitespace-nowrap">{bet.opponent}</td>
-                        <td className={`px-3 py-2 text-xs ${mono} text-[#d4d4d4]`}>{bet.edge.toFixed(2)}</td>
-                        <td className="px-3 py-2">
-                          <span className="text-[#22c55e] text-xs tracking-tight" aria-label={`${starsForEdge(bet.edge)} star play`}>
-                            {'★'.repeat(starsForEdge(bet.edge))}
-                          </span>
-                        </td>
-                        <td className={`px-3 py-2 text-xs ${mono} text-[#d4d4d4]`}>{bet.bestOdds}</td>
-                        <td className="px-3 py-2 text-xs font-['Inter',system-ui,sans-serif] whitespace-nowrap">
-                          {sportsbookUrls[bet.book] ? (
-                            <a href={sportsbookUrls[bet.book]} target="_blank" rel="noopener noreferrer" className="text-[#22c55e] hover:underline transition-colors">
-                              {bet.book}<span className="ml-0.5 text-[10px]">{'↗'}</span>
-                            </a>
-                          ) : (
-                            <span className="text-[#a1a1aa]">{bet.book}</span>
-                          )}
-                        </td>
-                        <td className="px-3 py-2">{resultBadge(bet.result)}</td>
-                        <td className={`px-3 py-2 text-xs ${mono} ${unitColor(bet.units)} font-bold`}>{formatUnits(bet.units)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="px-4 py-3 border-t border-[#262626] text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
-                {bets.length} Best Bet{bets.length === 1 ? '' : 's'} — Round {round} complete
-              </div>
-            </div>
-          ) : (
-            <p className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif] italic">
-              No matchups cleared the {cjCupFloor.floor.toFixed(2)} venue threshold this round.
-            </p>
-          )}
+          <SortableBetTable bets={bets} round={round} floor={cjCupFloor.floor} />
         </div>
       ))}
 
@@ -1183,57 +1236,7 @@ function CharlesSchwabView() {
             </div>
           </div>
 
-          {bets.length > 0 ? (
-            <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="border-b border-[#262626]">
-                      {(['#', 'Pick', 'Opp', 'Edge', 'Stars', 'Best Odds', 'Book', 'Result', 'Units +/-'] as const).map((h) => (
-                        <th key={h} className="px-3 py-3 text-[10px] uppercase tracking-wider text-[#a1a1aa] font-medium font-['Inter',system-ui,sans-serif] whitespace-nowrap">
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {bets.map((bet, i) => (
-                      <tr key={bet.id} className={`border-b border-[#1a1a1a] ${i % 2 === 0 ? 'bg-[#0a0a0a]' : 'bg-[#0f0f0f]'} hover:bg-[#141414] transition-colors`}>
-                        <td className={`px-3 py-2 text-xs ${mono} text-[#a1a1aa]`}>{bet.id}</td>
-                        <td className="px-3 py-2 text-xs text-[#f5f5f5] font-['Inter',system-ui,sans-serif] whitespace-nowrap">{bet.pick}</td>
-                        <td className="px-3 py-2 text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif] whitespace-nowrap">{bet.opponent}</td>
-                        <td className={`px-3 py-2 text-xs ${mono} text-[#d4d4d4]`}>{bet.edge.toFixed(2)}</td>
-                        <td className="px-3 py-2">
-                          <span className="text-[#22c55e] text-xs tracking-tight" aria-label={`${starsForEdge(bet.edge)} star play`}>
-                            {'★'.repeat(starsForEdge(bet.edge))}
-                          </span>
-                        </td>
-                        <td className={`px-3 py-2 text-xs ${mono} text-[#d4d4d4]`}>{bet.bestOdds}</td>
-                        <td className="px-3 py-2 text-xs font-['Inter',system-ui,sans-serif] whitespace-nowrap">
-                          {sportsbookUrls[bet.book] ? (
-                            <a href={sportsbookUrls[bet.book]} target="_blank" rel="noopener noreferrer" className="text-[#22c55e] hover:underline transition-colors">
-                              {bet.book}<span className="ml-0.5 text-[10px]">{'↗'}</span>
-                            </a>
-                          ) : (
-                            <span className="text-[#a1a1aa]">{bet.book}</span>
-                          )}
-                        </td>
-                        <td className="px-3 py-2">{resultBadge(bet.result)}</td>
-                        <td className={`px-3 py-2 text-xs ${mono} ${unitColor(bet.units)} font-bold`}>{formatUnits(bet.units)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="px-4 py-3 border-t border-[#262626] text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
-                {bets.length} Best Bet{bets.length === 1 ? '' : 's'} — Round {round} complete
-              </div>
-            </div>
-          ) : (
-            <p className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif] italic">
-              No matchups cleared the {cscFloor.floor.toFixed(2)} venue threshold this round.
-            </p>
-          )}
+          <SortableBetTable bets={bets} round={round} floor={cscFloor.floor} />
         </div>
       ))}
 

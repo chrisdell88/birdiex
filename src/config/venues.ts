@@ -20,6 +20,13 @@ interface VenueInfo {
   course: string;
   /** Course predictability (avg |total_course_history_adjustment| over field). */
   predictability: number;
+  /** Optional: explicit floor that overrides the predictability-derived one
+   *  for THIS event's public record. Use when an event was published at a
+   *  specific floor and that floor IS the record — otherwise updating the
+   *  predictability source (e.g. field-method → bar-chart) would retroactively
+   *  rewrite the published W-L-units number, which is wrong. The Lab page
+   *  still sweeps all tiers; this only governs the canonical Results figure. */
+  publishedFloor?: number;
 }
 
 // All predictability values come from DataGolf's Course History Tool chart
@@ -35,10 +42,16 @@ export const VENUES: Record<EventId, VenueInfo> = {
   'pga-2026': {
     eventName: 'PGA Championship 2026',
     course: 'Aronimink',
-    // DataGolf bar pct: 9.08 → 0.0143. Floor shifts to 2.95 (★★★+) — Aronimink
-    // is one of the lowest-predictability PGA Tour venues. Public PGA Championship
-    // record now filters at the tighter 2.95 threshold.
+    // Bar-chart-derived predictability is 0.0143 (dgBarPct 9.08), which the
+    // formula maps to floor 2.95. BUT the PGA Championship was PUBLISHED at
+    // floor 2.45 (the old field-method predictability anchor of 0.0413). The
+    // canonical record at publication was 5-0-0 / +10.50u — moving to 2.95
+    // retroactively rewrites that to 1-0-0 / +2.50u, which is just wrong as
+    // a record-keeping matter. Locking the published floor at 2.45 here.
+    // Lab page still shows every tier for research; this only governs the
+    // public Results figure.
     predictability: 0.0143,
+    publishedFloor: 2.45,
   },
   'cj-cup-byron-nelson-2026': {
     eventName: 'CJ Cup Byron Nelson 2026',
@@ -58,7 +71,7 @@ export const VENUES: Record<EventId, VenueInfo> = {
 /** Derived helpers — recommended floor + tier label per event. */
 export function floorForEvent(eventId: EventId) {
   const v = VENUES[eventId];
-  const floor = recommendedFloorForPredictability(v.predictability);
+  const floor = v.publishedFloor ?? recommendedFloorForPredictability(v.predictability);
   return {
     eventName: v.eventName,
     course: v.course,

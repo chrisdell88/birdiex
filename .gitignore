@@ -37,3 +37,6 @@ data/.pending-notify.json
 *.sw?
 .vercel
 .gstack/
+
+# Project-level Claude permissions — committed so the allowlist syncs across devices.
+!.claude/settings.json

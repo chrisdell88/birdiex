@@ -314,7 +314,9 @@ export default function BacktestLab() {
               )}
             </h2>
             <StatsTable title={`${ev.label} — all rounds`} bets={evBets} venueFloor={venueFloor} />
-            {ev.rounds.map((r) => (
+            {/* Rounds shown newest first (R4 → R3 → R2) so the most recent
+                round is at the top, matching the event ordering above. */}
+            {[...ev.rounds].reverse().map((r) => (
               <StatsTable key={r.label} title={`${ev.label} — ${r.label}`} bets={r.bets} venueFloor={venueFloor} />
             ))}
           </div>

@@ -346,6 +346,21 @@ export default function BacktestLab() {
   // Tier mode is no longer toggled — every row now shows BOTH band and
   // cumulative columns side by side (Floor only / All above).
 
+  // Per-event expand state — start collapsed (only show "all rounds"
+  // table). Click "Expand rounds" to see the per-round breakdown.
+  // Persisted in sessionStorage so refreshes keep the open events.
+  const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = sessionStorage.getItem('lab-expanded');
+        if (saved) return JSON.parse(saved) as Record<string, boolean>;
+      } catch {}
+    }
+    return {};
+  });
+  const toggleExpanded = (label: string) =>
+    setExpanded((prev) => ({ ...prev, [label]: !prev[label] }));
+
   useEffect(() => {
     if (sessionStorage.getItem('lab-auth') === '1') setUnlocked(true);
   }, []);
@@ -353,6 +368,10 @@ export default function BacktestLab() {
   useEffect(() => {
     if (typeof window !== 'undefined') sessionStorage.setItem('lab-event-filter', eventFilter);
   }, [eventFilter]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') sessionStorage.setItem('lab-expanded', JSON.stringify(expanded));
+  }, [expanded]);
 
 
   const allBets = useMemo(() => EVENTS.flatMap((e) => e.rounds.flatMap((r) => r.bets)), []);
@@ -431,9 +450,16 @@ export default function BacktestLab() {
               )}
             </h2>
             <StatsTable title={`${ev.label} — all rounds`} bets={evBets} venueFloor={venueFloor} />
-            {/* Rounds shown newest first (R4 → R3 → R2) so the most recent
-                round is at the top, matching the event ordering above. */}
-            {[...ev.rounds].reverse().map((r) => (
+            <button
+              onClick={() => toggleExpanded(ev.label)}
+              className={`mb-4 mt-1 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] uppercase tracking-wider font-medium rounded-md border border-[#262626] bg-transparent text-[#a1a1aa] hover:text-[#22c55e] hover:border-[#22c55e]/40 transition-colors cursor-pointer ${mono}`}
+            >
+              <span>{expanded[ev.label] ? '▾' : '▸'}</span>
+              <span>{expanded[ev.label] ? 'Collapse rounds' : 'Expand rounds (R4 → R3 → R2)'}</span>
+            </button>
+            {/* Per-round tables — collapsed by default. Rounds shown newest
+                first (R4 → R3 → R2) so most recent round is at the top. */}
+            {expanded[ev.label] && [...ev.rounds].reverse().map((r) => (
               <StatsTable key={r.label} title={`${ev.label} — ${r.label}`} bets={r.bets} venueFloor={venueFloor} />
             ))}
           </div>

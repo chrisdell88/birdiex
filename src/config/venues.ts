@@ -56,9 +56,16 @@ export const VENUES: Record<EventId, VenueInfo> = {
   'cj-cup-byron-nelson-2026': {
     eventName: 'CJ Cup Byron Nelson 2026',
     course: 'TPC Craig Ranch',
-    // DataGolf bar pct: 22.14 → 0.0350. Floor stays at 2.45 (★★+) —
-    // small shift from old 0.0373, no tier change.
+    // DataGolf bar pct: 22.14 → 0.0350 (formula maps to 2.45 by snap).
+    // publishedFloor LOCKED at 1.95 per post-event analysis: the 1.95–2.45
+    // band ran 15 bets 10-2-3 (+12.53u, 83.3% hit, Sharpe-like +0.79). The
+    // 2.45+ band ran 3-7-1 (−12.09u) but ~all of that loss is the single
+    // R4 Seamus Power 4-bet correlated fade cluster (0-4-0, −12.54u);
+    // stripping Power R4 leaves 2.45+ at +0.45u. So the model worked at
+    // Craig Ranch — 1.95 captures the engine, the 2.45-only floor was
+    // a fluke driven by one correlated tail event.
     predictability: 0.0350,
+    publishedFloor: 1.95,
   },
   'charles-schwab-challenge-2026': {
     eventName: 'Charles Schwab Challenge 2026',

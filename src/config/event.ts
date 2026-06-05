@@ -9,7 +9,7 @@
  */
 import type { PlayerData, MatchupOddsEntry, OutrightEntry, PlayerSkillEstimate } from '../types';
 // The Memorial Tournament — R1 complete, R2 picks active.
-import { roundOnlyData, cumulativeData, generatedAt } from '../data/memorialR1Data';
+import { roundOnlyData, cumulativeData, generatedAt } from '../data/memorialR2Data';
 // Ticker file is rebuilt every 30 min by the ticker-refresh workflow. We use
 // its timestamp to drive the header "Last Updated" label so it reflects
 // actual liveness, not the (hours-old) rankings build time.
@@ -19,8 +19,8 @@ import { tickerGeneratedAt } from '../data/ticker';
 // updated round-by-round. Stays pointed at the pre-tournament file even
 // once the main rankings advance.
 import { roundOnlyData as preTournamentRoundOnly } from '../data/memorialPreData';
-import { r2MatchupOddsData } from '../data/memorialR2Matchups';
-import { r2OutrightsData } from '../data/memorialR2Outrights';
+import { r3MatchupOddsData } from '../data/memorialR3Matchups';
+import { r3OutrightsData } from '../data/memorialR3Outrights';
 import { skillEstimatesData } from '../data/memorialSkillEstimates';
 import { recommendedFloorForPredictability, floorTierLabel } from '../lib/sizing';
 
@@ -78,16 +78,16 @@ export const currentEvent: CurrentEvent = {
   predictability: MUIRFIELD_VILLAGE_PREDICTABILITY,
   recommendedFloor: recommendedFloorForPredictability(MUIRFIELD_VILLAGE_PREDICTABILITY),
   recommendedFloorLabel: floorTierLabel(recommendedFloorForPredictability(MUIRFIELD_VILLAGE_PREDICTABILITY)),
-  picksRound: 2,
+  picksRound: 3,
   isComplete: false,
-  headerBanner: 'R1 FINAL · ROUND 2 PICKS',
+  headerBanner: 'R2 FINAL · ROUND 3 PICKS',
   // Take the most-recent timestamp across rankings build + ticker pull so the
   // header "Last Updated" always tracks the freshest data source.
   dataUpdatedAt: new Date(generatedAt).getTime() > new Date(tickerGeneratedAt).getTime() ? generatedAt : tickerGeneratedAt,
   rankingsRound: roundOnlyData,
   rankingsCumulative: cumulativeData,
   preTournamentRankings: preTournamentRoundOnly,
-  matchups: r2MatchupOddsData,
-  outrights: r2OutrightsData,
+  matchups: r3MatchupOddsData,
+  outrights: r3OutrightsData,
   skillEstimates: skillEstimatesData,
 };

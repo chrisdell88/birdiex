@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "npm run verify:auto-roll && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "pull:event": "tsx scripts/pull-event.ts",
     "build:event": "tsx scripts/build-event.ts",
+    "verify:auto-roll": "tsx scripts/verify-auto-roll-regexes.ts",
     "notify": "tsx scripts/notify.ts"
   },
   "dependencies": {

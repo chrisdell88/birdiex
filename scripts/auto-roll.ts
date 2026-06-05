@@ -28,6 +28,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { execSync } from 'node:child_process';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const SLUG = process.env.SLUG ?? 'cj-cup-byron-nelson-2026';
@@ -103,11 +104,26 @@ function exec(cmd: string): void {
   execSync(cmd, { cwd: ROOT, stdio: 'inherit' });
 }
 
-async function readEventConfig(): Promise<{ picksRound: number }> {
+async function readEventConfig(): Promise<{ picksRound: number; isComplete: boolean; slug: string }> {
   const raw = await readFile(join(ROOT, 'src/config/event.ts'), 'utf8');
   const m = raw.match(/picksRound:\s*(\d+)/);
   if (!m) throw new Error('Could not find picksRound in event.ts');
-  return { picksRound: parseInt(m[1], 10) };
+  const ic = raw.match(/isComplete:\s*(true|false)/);
+  // Look up slug from the data-file import path (e.g., '../data/memorialR1Data').
+  // We map data file prefix back to slug via eventSchedule.
+  const importMatch = raw.match(/from '\.\.\/data\/([a-zA-Z]+)(?:Pre|R\d)Data'/);
+  const prefix = importMatch ? importMatch[1] : '';
+  let slug = '';
+  try {
+    const sched = await import(pathToFileURL(join(ROOT, 'src/data/eventSchedule.ts')).href);
+    const found = sched.EVENT_SCHEDULE.find((e: { dataPrefix: string; slug: string }) => e.dataPrefix === prefix);
+    slug = found?.slug ?? '';
+  } catch { /* schedule file may not exist yet on legacy branches */ }
+  return {
+    picksRound: parseInt(m[1], 10),
+    isComplete: ic ? ic[1] === 'true' : false,
+    slug,
+  };
 }
 
 async function readInPlay(phase: string): Promise<InPlayPlayer[]> {
@@ -224,7 +240,158 @@ async function refreshCurrentRound(picksRound: number): Promise<void> {
   exec(`npx tsx scripts/build-headshots.ts --players ${roundDataOut} --out headshots`);
 }
 
+/**
+ * If currentEvent.isComplete=true and the next scheduled event in
+ * src/data/eventSchedule.ts has its pre-data files present, swap event.ts
+ * to point at the next event + reset state + clear ticker. Returns true
+ * if a switch happened (caller exits without running round refresh).
+ *
+ * Refuses to switch if the next event's pre-data files don't exist —
+ * we never want to ship a half-staged event.
+ */
+async function attemptEventSwitch(): Promise<boolean> {
+  const { isComplete, slug } = await readEventConfig();
+  if (!isComplete) return false;
+
+  const sched = await import(
+    pathToFileURL(join(ROOT, 'src/data/eventSchedule.ts')).href
+  );
+  const next = sched.nextEvent(slug);
+  if (!next) {
+    console.log('Current event is complete and no next event scheduled. No-op.');
+    return false;
+  }
+
+  const prefix = next.dataPrefix;
+  const required = [
+    `src/data/${prefix}PreData.ts`,
+    `src/data/${prefix}R1Outrights.ts`,
+    `src/data/${prefix}R1Matchups.ts`,
+    `src/data/${prefix}SkillEstimates.ts`,
+  ];
+  for (const f of required) {
+    if (!existsSync(join(ROOT, f))) {
+      console.log(`Event switch blocked: ${f} missing. Pre-stage this event before its predecessor ends.`);
+      return false;
+    }
+  }
+
+  console.log(`Switching event: ${slug} → ${next.slug}`);
+  // Rewrite event.ts from a template
+  const eventTs = `/**
+ * Current event configuration — the single source of truth for which
+ * tournament/round the app is showing.
+ *
+ * Auto-switched by scripts/auto-roll.ts on ${new Date().toISOString()}.
+ * To advance a ROUND: this file gets auto-patched by auto-roll.
+ * To override: edit by hand + commit.
+ */
+import type { PlayerData, MatchupOddsEntry, OutrightEntry, PlayerSkillEstimate } from '../types';
+import { roundOnlyData, cumulativeData, generatedAt } from '../data/${prefix}PreData';
+import { roundOnlyData as preTournamentRoundOnly } from '../data/${prefix}PreData';
+import { r1MatchupOddsData } from '../data/${prefix}R1Matchups';
+import { r1OutrightsData } from '../data/${prefix}R1Outrights';
+import { skillEstimatesData } from '../data/${prefix}SkillEstimates';
+import { recommendedFloorForPredictability, floorTierLabel } from '../lib/sizing';
+import { VENUES } from './venues';
+
+export interface CurrentEvent {
+  name: string;
+  course: string;
+  isMajor: boolean;
+  predictability: number;
+  recommendedFloor: number;
+  recommendedFloorLabel: string;
+  picksRound: number;
+  isComplete: boolean;
+  headerBanner: string;
+  dataUpdatedAt: string;
+  rankingsRound: PlayerData[];
+  rankingsCumulative: PlayerData[];
+  preTournamentRankings: PlayerData[];
+  matchups: MatchupOddsEntry[];
+  outrights: OutrightEntry[];
+  skillEstimates: PlayerSkillEstimate[];
+}
+
+const PRED = VENUES['${next.eventId}'].predictability;
+
+export const currentEvent: CurrentEvent = {
+  name: '${next.name}',
+  course: '${next.courseName}',
+  isMajor: ${next.isMajor},
+  predictability: PRED,
+  recommendedFloor: recommendedFloorForPredictability(PRED),
+  recommendedFloorLabel: floorTierLabel(recommendedFloorForPredictability(PRED)),
+  picksRound: 1,
+  isComplete: false,
+  headerBanner: 'PRE-TOURNAMENT · ROUND 1 PICKS',
+  dataUpdatedAt: generatedAt,
+  rankingsRound: roundOnlyData,
+  rankingsCumulative: cumulativeData,
+  preTournamentRankings: preTournamentRoundOnly,
+  matchups: r1MatchupOddsData,
+  outrights: r1OutrightsData,
+  skillEstimates: skillEstimatesData,
+};
+`;
+  await writeFile(join(ROOT, 'src/config/event.ts'), eventTs);
+
+  // Reset state for new event
+  await writeFile(STATE_PATH, JSON.stringify({
+    lastTransitionAt: null,
+    lastCompletedRoundAtTransition: 0,
+    lastBestBetCount: 0,
+  }, null, 2) + '\n');
+
+  // Clear ticker
+  const tickerStub = `// Placeholder. ticker-refresh workflow rebuilds with R1 tee times.
+
+export interface TickerEntry {
+  player: string;
+  teeTime: string;
+  startHole: number;
+  score: number | null;
+  pos: string;
+  thru: number | null;
+}
+
+export const tickerRound = 1;
+export const tickerData: TickerEntry[] = [];
+`;
+  await writeFile(join(ROOT, 'src/data/ticker.ts'), tickerStub);
+
+  // Update workflow env blocks. We sed-style the SLUG/COURSE/SLUG_PREFIX
+  // lines in datagolf-pull.yml and SLUG in ticker-refresh.yml.
+  for (const [path, replacements] of Object.entries({
+    '.github/workflows/datagolf-pull.yml': [
+      [/(^  SLUG:\s*).*$/m, `$1${next.slug}`],
+      [/(^  COURSE:\s*).*$/m, `$1${next.courseKey}`],
+      [/(^  SLUG_PREFIX:\s*).*$/m, `$1${prefix}`],
+    ],
+    '.github/workflows/ticker-refresh.yml': [
+      [/(^  SLUG:\s*).*$/m, `$1${next.slug}`],
+    ],
+  })) {
+    const full = join(ROOT, path);
+    let raw = await readFile(full, 'utf8');
+    for (const [re, sub] of replacements as Array<[RegExp, string]>) {
+      raw = raw.replace(re, sub);
+    }
+    await writeFile(full, raw);
+  }
+
+  console.log(`✅ Event switch complete: now configured for ${next.name}.`);
+  console.log('Exiting. Next auto-roll run will operate on the new event.');
+  return true;
+}
+
 async function main(): Promise<void> {
+  // 0. Event switch check (before anything else). If currentEvent.isComplete
+  //    and a next scheduled event exists with pre-staged data, swap event.ts
+  //    + workflows + state, then exit.
+  if (await attemptEventSwitch()) return;
+
   // 1. Read current state
   const { picksRound } = await readEventConfig();
   const currentCompleted = picksRound - 1;

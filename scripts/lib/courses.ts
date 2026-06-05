@@ -127,6 +127,22 @@ export const COURSES: Record<string, CourseProfile> = {
     source_date: '2026-06-05',
     is_major: false,
   },
+  // RBC Canadian Open — Hamilton G&CC, Ancaster ON. Par 70, ~6,996 yards.
+  // Traditional parkland course, narrow tree-lined fairways. Distance not the
+  // primary edge — premium on driving + iron play accuracy.
+  'hamilton-gcc': {
+    name: 'Hamilton Golf & Country Club',
+    // DataGolf bar pct: 8.97 → 0.0142. Floor: 2.95 (★★★+) — one of the
+    // lowest-predictability PGA Tour venues (rarely hosts, sparse history).
+    predictability: 0.0142,
+    // coefficients: DataGolf Course Fit Tool radar, 2026-06-05 (extracted via
+    // Chrome MCP). Relative Importance OFF.
+    // Radar: DD 0.69, DA 0.49, APP 0.71, ARG 0.43, PUTT 0.47.
+    // ott = max(DD, DA) = 0.69.
+    coefficients: { ott: 0.69, app: 0.71, arg: 0.43, putt: 0.47 },
+    source_date: '2026-06-05',
+    is_major: false,
+  },
 };
 
 /**

@@ -1,0 +1,66 @@
+/**
+ * Forward-looking PGA Tour event schedule for BirdieX.
+ *
+ * auto-roll.ts reads this when the current event hits isComplete=true. If
+ * the next event in this list has a `startsAt` in the past or near future
+ * (within 4 days), auto-roll switches event.ts to it automatically.
+ *
+ * To add an event: bump the next entry's slug + course + startsAt. Course
+ * must already exist in scripts/lib/courses.ts (and venues.ts) with valid
+ * coefficients — auto-switch will FAIL if it doesn't, on purpose, because
+ * we never want to ship with placeholder coefficients.
+ *
+ * The `dataPrefix` is the camelCase prefix used for the event's data files
+ * (e.g. "memorial" → memorialPreData / memorialR1Data / memorialR1Matchups).
+ * Auto-roll uses this for the SLUG_PREFIX in subsequent script calls.
+ */
+
+export interface ScheduledEvent {
+  /** DataGolf event slug — used for pull-event --slug. */
+  slug: string;
+  /** Display name. */
+  name: string;
+  /** Internal courses.ts key. Must exist BEFORE the event runs. */
+  courseKey: string;
+  /** Courses.ts venue display name (for sanity logging). */
+  courseName: string;
+  /** Internal venues.ts EventId — must be added to the union there. */
+  eventId: string;
+  /** SLUG_PREFIX for data file naming (camelCase, no spaces). */
+  dataPrefix: string;
+  /** ISO date of R1 start. Auto-switch fires when current event is complete
+   *  AND today is within 4 days before/after this. */
+  startsAt: string;
+  /** Whether this is a major championship — drives Layer-4 weighting. */
+  isMajor: boolean;
+}
+
+export const EVENT_SCHEDULE: ScheduledEvent[] = [
+  {
+    slug: 'the-memorial-tournament-2026',
+    name: 'The Memorial Tournament',
+    courseKey: 'muirfield-village',
+    courseName: 'Muirfield Village Golf Club',
+    eventId: 'the-memorial-tournament-2026',
+    dataPrefix: 'memorial',
+    startsAt: '2026-06-04T00:00Z',
+    isMajor: false,
+  },
+  {
+    slug: 'rbc-canadian-open-2026',
+    name: 'RBC Canadian Open',
+    courseKey: 'hamilton-gcc',
+    courseName: 'Hamilton Golf & Country Club',
+    eventId: 'rbc-canadian-open-2026',
+    dataPrefix: 'rbcCanadian',
+    startsAt: '2026-06-11T00:00Z',
+    isMajor: false,
+  },
+];
+
+/** Find the next event AFTER the current slug, or null if at the end. */
+export function nextEvent(currentSlug: string): ScheduledEvent | null {
+  const idx = EVENT_SCHEDULE.findIndex((e) => e.slug === currentSlug);
+  if (idx < 0 || idx === EVENT_SCHEDULE.length - 1) return null;
+  return EVENT_SCHEDULE[idx + 1];
+}

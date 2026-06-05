@@ -10,6 +10,10 @@
 import type { PlayerData, MatchupOddsEntry, OutrightEntry, PlayerSkillEstimate } from '../types';
 // The Memorial Tournament — R1 complete, R2 picks active.
 import { roundOnlyData, cumulativeData, generatedAt } from '../data/memorialR1Data';
+// Ticker file is rebuilt every 30 min by the ticker-refresh workflow. We use
+// its timestamp to drive the header "Last Updated" label so it reflects
+// actual liveness, not the (hours-old) rankings build time.
+import { tickerGeneratedAt } from '../data/ticker';
 // Pre-tournament rankings — used as a FROZEN snapshot for the Course Fit
 // Scatter chart. The chart is meant to be a pre-tournament reference, not
 // updated round-by-round. Stays pointed at the pre-tournament file even
@@ -77,7 +81,9 @@ export const currentEvent: CurrentEvent = {
   picksRound: 2,
   isComplete: false,
   headerBanner: 'R1 FINAL · ROUND 2 PICKS',
-  dataUpdatedAt: generatedAt,
+  // Take the most-recent timestamp across rankings build + ticker pull so the
+  // header "Last Updated" always tracks the freshest data source.
+  dataUpdatedAt: new Date(generatedAt).getTime() > new Date(tickerGeneratedAt).getTime() ? generatedAt : tickerGeneratedAt,
   rankingsRound: roundOnlyData,
   rankingsCumulative: cumulativeData,
   preTournamentRankings: preTournamentRoundOnly,

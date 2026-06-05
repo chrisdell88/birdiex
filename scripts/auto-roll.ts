@@ -293,6 +293,7 @@ import { roundOnlyData as preTournamentRoundOnly } from '../data/${prefix}PreDat
 import { r1MatchupOddsData } from '../data/${prefix}R1Matchups';
 import { r1OutrightsData } from '../data/${prefix}R1Outrights';
 import { skillEstimatesData } from '../data/${prefix}SkillEstimates';
+import { tickerGeneratedAt } from '../data/ticker';
 import { recommendedFloorForPredictability, floorTierLabel } from '../lib/sizing';
 import { VENUES } from './venues';
 
@@ -327,7 +328,7 @@ export const currentEvent: CurrentEvent = {
   picksRound: 1,
   isComplete: false,
   headerBanner: 'PRE-TOURNAMENT · ROUND 1 PICKS',
-  dataUpdatedAt: generatedAt,
+  dataUpdatedAt: new Date(generatedAt).getTime() > new Date(tickerGeneratedAt).getTime() ? generatedAt : tickerGeneratedAt,
   rankingsRound: roundOnlyData,
   rankingsCumulative: cumulativeData,
   preTournamentRankings: preTournamentRoundOnly,

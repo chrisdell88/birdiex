@@ -11,6 +11,10 @@ export interface TickerEntry {
 }
 
 export const tickerRound = 2;
+/** ISO timestamp of the latest live-data pull. Header reads this for
+ *  "Last Updated" so it reflects 30-min ticker refreshes, not the
+ *  hours-old rankings build time. */
+export const tickerGeneratedAt = '2026-06-05T22:04:30.829Z';
 export const tickerData: TickerEntry[] = [
   {
     "player": "Poston, J.T.",

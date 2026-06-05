@@ -34,6 +34,13 @@ Just shipping data files is not enough.
 
 ## 📣 Best Bets — Hard Rules (applies to ALL public reporting)
 
+**The model never bets R1.** Picks are issued for R2, R3, R4 only — they
+require a completed prior round of live SG data to drive the X Score
+calculation. Pre-tournament has BirdieX RTG (a different rating, no picks
+attached). R1 results are NOT graded, NOT added to the public record, and
+NOT counted in any all-time totals. This is foundational — do not "discover"
+this rule mid-conversation.
+
 **Best Bet = matchup whose X-Score edge ≥ venue `recommendedFloor`, computed
 using the CUMULATIVE X Scores users see on the matchups page.** Round-only
 X Scores produce different edges and are NOT the basis for Best Bet

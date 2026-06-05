@@ -17,6 +17,11 @@ interface Args {
   phase: 'pre' | 'r1' | 'r2' | 'r3' | 'r4' | 'final';
   course: string;
   out: string;
+  /** When set, the cumulative SG track is built by summing live-stats-r{1..N}.json
+   *  ONLY (instead of reading live-stats-event-cumulative.json). Use this when a
+   *  later round is already in progress but you want the data file to reflect
+   *  R{N}-final state with no contamination. Optional. */
+  lockAtRound?: number;
 }
 
 function parseArgs(): Args {
@@ -29,6 +34,7 @@ function parseArgs(): Args {
     if (key === 'phase') out.phase = val as Args['phase'];
     if (key === 'course') out.course = val;
     if (key === 'out') out.out = val;
+    if (key === 'lock-at-round') out.lockAtRound = parseInt(val, 10);
   }
   for (const k of ['slug', 'phase', 'course', 'out'] as const) {
     if (!out[k]) {
@@ -94,7 +100,7 @@ interface LiveStatsFile {
 }
 
 async function main() {
-  const { slug, phase, course, out } = parseArgs();
+  const { slug, phase, course, out, lockAtRound } = parseArgs();
   const courseProfile = COURSES[course] ?? DEFAULT_LOW_PREDICTABILITY_COURSE;
   if (!COURSES[course]) {
     console.warn(`⚠️  Unknown course '${course}'. Using DEFAULT_LOW_PREDICTABILITY_COURSE.`);
@@ -121,14 +127,84 @@ async function main() {
   console.log(`Loaded ${decompPlayers.length} players from decompositions.`);
 
   // Cumulative track = accumulating SG totals across completed rounds.
-  const liveCum =
-    (await loadJson<LiveStatsFile>(slug, phase, 'live-stats-event-cumulative')) ??
-    // Back-compat: older pulls saved this under the event-avg filename.
-    (await loadJson<LiveStatsFile>(slug, phase, 'live-stats-event-avg'));
+  // Normally we read live-stats-event-cumulative.json — but that reflects
+  // whatever DataGolf has live RIGHT NOW, which can include mid-round
+  // contamination if a later round is in progress when we pull.
+  //
+  // --lock-at-round N opts into a CLEAN cumulative built by summing
+  // live-stats-r{1..N}.json instead. Use this to build a data file that
+  // reflects R{N}-final state regardless of when you ran the pull.
   const liveR1 = await loadJson<LiveStatsFile>(slug, phase, 'live-stats-r1');
   const liveR2 = await loadJson<LiveStatsFile>(slug, phase, 'live-stats-r2');
   const liveR3 = await loadJson<LiveStatsFile>(slug, phase, 'live-stats-r3');
   const liveR4 = await loadJson<LiveStatsFile>(slug, phase, 'live-stats-r4');
+  let liveCum: LiveStatsFile | null;
+  if (lockAtRound) {
+    console.log(`Lock-at-round=${lockAtRound}: cumulative built from sum of live-stats-r1..r${lockAtRound}.json (ignores live-stats-event-cumulative).`);
+    const perRound: LiveStatsFile[] = [];
+    if (lockAtRound >= 1 && liveR1) perRound.push(liveR1);
+    if (lockAtRound >= 2 && liveR2) perRound.push(liveR2);
+    if (lockAtRound >= 3 && liveR3) perRound.push(liveR3);
+    if (lockAtRound >= 4 && liveR4) perRound.push(liveR4);
+    // Sum SG categories per player across the included rounds.
+    const sumByName = new Map<string, LiveStatsPlayer>();
+    for (const file of perRound) {
+      for (const p of file.live_stats ?? []) {
+        const key = p.player_name ?? '';
+        if (!key) continue;
+        const acc = sumByName.get(key);
+        if (!acc) {
+          sumByName.set(key, { ...p });
+        } else {
+          acc.sg_total = (acc.sg_total ?? 0) + (p.sg_total ?? 0);
+          acc.sg_ott = (acc.sg_ott ?? 0) + (p.sg_ott ?? 0);
+          acc.sg_app = (acc.sg_app ?? 0) + (p.sg_app ?? 0);
+          acc.sg_arg = (acc.sg_arg ?? 0) + (p.sg_arg ?? 0);
+          acc.sg_putt = (acc.sg_putt ?? 0) + (p.sg_putt ?? 0);
+          acc.sg_t2g = (acc.sg_t2g ?? 0) + (p.sg_t2g ?? 0);
+        }
+      }
+    }
+    // Derive score-to-par = sum of each round's per-round score-to-par.
+    // Per-round score-to-par lives in field `round` on each player in
+    // live-stats-rN.json. Sum across included rounds for each player.
+    const scoreByName = new Map<string, number>();
+    for (const file of perRound) {
+      for (const p of file.live_stats ?? []) {
+        const key = p.player_name ?? '';
+        if (!key) continue;
+        const r = typeof p.round === 'number' ? p.round : 0;
+        scoreByName.set(key, (scoreByName.get(key) ?? 0) + r);
+      }
+    }
+    // Re-derive position from sorted scores.
+    const ordered = [...sumByName.keys()].map((name) => ({ name, score: scoreByName.get(name) ?? 0 }));
+    ordered.sort((a, b) => a.score - b.score);
+    const posByName = new Map<string, string>();
+    let last = Number.NaN;
+    let lastPos = 0;
+    let runCount = 0;
+    for (let i = 0; i < ordered.length; i++) {
+      const o = ordered[i];
+      if (o.score === last) { runCount++; }
+      else { lastPos = i + 1; last = o.score; runCount = 1; }
+      // Use T-prefix when more than one player tied (look ahead to confirm).
+      const isTied =
+        (i > 0 && ordered[i - 1].score === o.score) ||
+        (i < ordered.length - 1 && ordered[i + 1].score === o.score);
+      posByName.set(o.name, (isTied ? 'T' : '') + lastPos);
+    }
+    // Patch each player record with our recomputed score + position.
+    for (const [name, p] of sumByName) {
+      p.total = scoreByName.get(name) ?? 0;
+      p.position = posByName.get(name) ?? '--';
+    }
+    liveCum = { live_stats: [...sumByName.values()] };
+  } else {
+    liveCum =
+      (await loadJson<LiveStatsFile>(slug, phase, 'live-stats-event-cumulative')) ??
+      (await loadJson<LiveStatsFile>(slug, phase, 'live-stats-event-avg'));
+  }
 
   // Pick the round-only file matching current phase (latest completed round)
   const roundFile =

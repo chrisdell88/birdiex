@@ -116,14 +116,20 @@ export const COURSES: Record<string, CourseProfile> = {
   // historical signal.
   'muirfield-village': {
     name: 'Muirfield Village Golf Club',
-    // DataGolf bar pct: 39.32 → 0.0621. Floor: 2.45 (★★+). Higher predictability
-    // than Colonial — Memorial is one of the more predictable PGA Tour stops.
+    // DataGolf bar pct: 39.32 → 0.0621 (anchored against Augusta=0.1439=91.11%).
+    // Floor: 1.95 (★★+). Moderately predictive — Memorial has long history.
     predictability: 0.0621,
-    // coefficients: DataGolf Course Fit Tool radar, 2026-06-05 (extracted via
-    // Chrome MCP from rendered SVG paths). Relative Importance OFF.
-    // Radar: DD 0.67, DA 0.68, APP 0.76, ARG 0.48, PUTT 0.47.
-    // ott = max(DD, DA) = 0.68.
-    coefficients: { ott: 0.68, app: 0.76, arg: 0.48, putt: 0.47 },
+    // coefficients: DataGolf Course Fit Tool radar, re-verified 2026-06-05.
+    // Read directly from SVG against the "1.0" gridline circle (radius 166.32px).
+    // Relative Importance OFF. Radar axes:
+    //   DD 111.95/166.32 = 0.673
+    //   DA 111.88/166.32 = 0.673
+    //   APP 125.58/166.32 = 0.755
+    //   ARG  79.98/166.32 = 0.481
+    //   PUTT 78.49/166.32 = 0.472
+    // ott = max(DD, DA) = 0.67 (both axes are 0.673).
+    // Previous value was 0.68 — arithmetic error in original extraction.
+    coefficients: { ott: 0.67, app: 0.76, arg: 0.48, putt: 0.47 },
     source_date: '2026-06-05',
     is_major: false,
   },

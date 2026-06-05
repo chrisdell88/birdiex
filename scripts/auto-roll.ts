@@ -172,11 +172,12 @@ async function patchEventConfig(args: {
   const subs: { re: RegExp; to: string; label: string }[] = [
     {
       // Matches the MAIN rankings import — `from '../data/<prefix><Pre|R{n}>Data'`.
-      // Must cover the `Pre` suffix (pre-tournament → R1 advance) and the `csc`
-      // prefix, not just `R\dData` / cjCup|pgaChamp|masters. `.replace` (no /g)
+      // Generic camelCase prefix [a-zA-Z]+ covers every event slug (csc, cjCup,
+      // pgaChamp, masters, memorial, rbcCanadian, etc.) without needing to
+      // update this list when a new tournament is added. `.replace` (no /g)
       // hits the FIRST occurrence, which is always the main rankings import on
       // line 14; the frozen pre-tournament import below it stays untouched.
-      re: /from '\.\.\/data\/(csc|cjCup|pgaChamp|masters)(Pre|R\d)Data'/,
+      re: /from '\.\.\/data\/[a-zA-Z]+(Pre|R\d)Data'/,
       to: `from '../data/${args.roundDataFile}'`,
       label: 'roundData import',
     },

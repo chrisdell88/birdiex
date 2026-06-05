@@ -117,7 +117,7 @@ void pgaR2SummaryRaw; void pgaR3SummaryRaw; void pgaR4SummaryRaw;
 // ─────────────────────────────────────────────────────────────────
 type EventStatus = 'IN PROGRESS' | 'COMPLETE';
 interface EventEntry {
-  id: 'masters-2026' | 'pga-2026' | 'cj-cup-byron-nelson-2026' | 'charles-schwab-challenge-2026';
+  id: 'masters-2026' | 'pga-2026' | 'cj-cup-byron-nelson-2026' | 'charles-schwab-challenge-2026' | 'the-memorial-tournament-2026';
   name: string;
   status: EventStatus;
   wins: number;
@@ -176,7 +176,7 @@ const EVENT_REGISTRY: EventEntry[] = [
   {
     id: 'charles-schwab-challenge-2026',
     name: 'Charles Schwab Challenge 2026',
-    status: 'IN PROGRESS',
+    status: 'COMPLETE',
     wins: cscSummary.wins,
     losses: cscSummary.losses,
     pushes: cscSummary.pushes,
@@ -185,6 +185,19 @@ const EVENT_REGISTRY: EventEntry[] = [
     threshold: cscFloor.floor,
     course: cscFloor.course,
     predictability: cscFloor.predictability,
+  },
+  {
+    id: 'the-memorial-tournament-2026',
+    name: 'The Memorial Tournament 2026',
+    status: 'IN PROGRESS',
+    wins: 0,
+    losses: 0,
+    pushes: 0,
+    units: 0,
+    roi: 0,
+    threshold: floorForEvent('the-memorial-tournament-2026').floor,
+    course: floorForEvent('the-memorial-tournament-2026').course,
+    predictability: floorForEvent('the-memorial-tournament-2026').predictability,
   },
 ];
 
@@ -296,7 +309,7 @@ const sportsbooks: Sportsbook[] = [
 
 const mastersRounds = ['All Rounds', 'Round 2', 'Round 3', 'Round 4'];
 
-type TournamentView = 'all-time' | 'masters-2026' | 'pga-2026' | 'cj-cup-byron-nelson-2026' | 'charles-schwab-challenge-2026';
+type TournamentView = 'all-time' | 'masters-2026' | 'pga-2026' | 'cj-cup-byron-nelson-2026' | 'charles-schwab-challenge-2026' | 'the-memorial-tournament-2026';
 
 // --- Shared style tokens ---
 const mono = "font-['JetBrains_Mono','SF_Mono',monospace]";
@@ -1169,7 +1182,7 @@ function CharlesSchwabView() {
   return (
     <div>
       <TournamentSummaryBanner
-        status="IN PROGRESS"
+        status="COMPLETE"
         eventName="Charles Schwab Challenge 2026"
         course={cscFloor.course}
         threshold={cscFloor.floor}
@@ -1177,7 +1190,7 @@ function CharlesSchwabView() {
         units={cscSummary.units}
         roi={cscSummary.roi}
         bets={cscSummary.bets}
-        recordLabel="Best Bets so far"
+        recordLabel="Best Bets — Final"
       />
 
       {gradedRounds.length === 0 && (
@@ -1223,6 +1236,31 @@ function CharlesSchwabView() {
       <div className="bg-[#0a0a0a] border border-dashed border-[#262626] rounded-lg p-5 text-center">
         <p className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
           Tournament still in progress — later rounds will populate here as they grade.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// --- Memorial Tournament view — pre/in-progress, no graded results yet ---
+function MemorialView() {
+  const memorialFloor = floorForEvent('the-memorial-tournament-2026');
+  return (
+    <div>
+      <TournamentSummaryBanner
+        status="IN PROGRESS"
+        eventName="The Memorial Tournament 2026"
+        course={memorialFloor.course}
+        threshold={memorialFloor.floor}
+        record={{ wins: 0, losses: 0, pushes: 0 }}
+        units={0}
+        roi={0}
+        bets={0}
+        recordLabel="Best Bets so far"
+      />
+      <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-6 text-center">
+        <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">
+          R1 complete. R2 picks live on the Matchups page. Graded results post after each round finishes.
         </p>
       </div>
     </div>
@@ -1318,6 +1356,7 @@ export default function ResultsPage() {
         {activeView === 'pga-2026' && <PGAView />}
         {activeView === 'cj-cup-byron-nelson-2026' && <CJCupView />}
         {activeView === 'charles-schwab-challenge-2026' && <CharlesSchwabView />}
+        {activeView === 'the-memorial-tournament-2026' && <MemorialView />}
       </div>
     </div>
   );

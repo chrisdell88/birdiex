@@ -110,6 +110,23 @@ export const COURSES: Record<string, CourseProfile> = {
     source_date: '2026-05-25',
     is_major: false,
   },
+  // The Memorial Tournament — Muirfield Village Golf Club, Dublin OH. Par 72,
+  // ~7,569 yards. Jack Nicklaus's home tournament. Tree-lined course that
+  // rewards iron play + driving accuracy. Long-tenured PGA stop with strong
+  // historical signal.
+  'muirfield-village': {
+    name: 'Muirfield Village Golf Club',
+    // DataGolf bar pct: 39.32 → 0.0621. Floor: 2.45 (★★+). Higher predictability
+    // than Colonial — Memorial is one of the more predictable PGA Tour stops.
+    predictability: 0.0621,
+    // coefficients: DataGolf Course Fit Tool radar, 2026-06-05 (extracted via
+    // Chrome MCP from rendered SVG paths). Relative Importance OFF.
+    // Radar: DD 0.67, DA 0.68, APP 0.76, ARG 0.48, PUTT 0.47.
+    // ott = max(DD, DA) = 0.68.
+    coefficients: { ott: 0.68, app: 0.76, arg: 0.48, putt: 0.47 },
+    source_date: '2026-06-05',
+    is_major: false,
+  },
 };
 
 /**

@@ -11,7 +11,7 @@
  */
 import { recommendedFloorForPredictability, floorTierLabel } from '../lib/sizing';
 
-export type EventId = 'masters-2026' | 'pga-2026' | 'cj-cup-byron-nelson-2026' | 'charles-schwab-challenge-2026';
+export type EventId = 'masters-2026' | 'pga-2026' | 'cj-cup-byron-nelson-2026' | 'charles-schwab-challenge-2026' | 'the-memorial-tournament-2026';
 
 interface VenueInfo {
   /** Tournament label as shown to users. */
@@ -72,6 +72,12 @@ export const VENUES: Record<EventId, VenueInfo> = {
     course: 'Colonial Country Club',
     // DataGolf bar pct: 31.84 → 0.0503. Floor: 2.45 (★★+).
     predictability: 0.0503,
+  },
+  'the-memorial-tournament-2026': {
+    eventName: 'The Memorial Tournament 2026',
+    course: 'Muirfield Village Golf Club',
+    // DataGolf bar pct: 39.32 → 0.0621. Floor: 2.45 (★★+).
+    predictability: 0.0621,
   },
 };
 

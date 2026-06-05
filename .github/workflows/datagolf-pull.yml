@@ -26,9 +26,9 @@ on:
 # When advancing to a new tournament (not a new round in the same event),
 # update SLUG / COURSE / SLUG_PREFIX manually.
 env:
-  SLUG: charles-schwab-challenge-2026
-  COURSE: colonial-country-club
-  SLUG_PREFIX: csc
+  SLUG: the-memorial-tournament-2026
+  COURSE: muirfield-village
+  SLUG_PREFIX: memorial
 
 permissions:
   contents: write

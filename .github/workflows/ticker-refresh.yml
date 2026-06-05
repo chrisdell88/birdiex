@@ -18,7 +18,7 @@ on:
   workflow_dispatch: {}
 
 env:
-  SLUG: charles-schwab-challenge-2026
+  SLUG: the-memorial-tournament-2026
 
 permissions:
   contents: write

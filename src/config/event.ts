@@ -8,18 +8,16 @@
  * edits needed.
  */
 import type { PlayerData, MatchupOddsEntry, OutrightEntry, PlayerSkillEstimate } from '../types';
-// Pre-tournament: cumulativeData and roundOnlyData are both the pre-tournament
-// snapshot (DataGolf skill estimates only, no live SG yet). Once R1 finishes
-// the auto-roll script rebuilds cscR1Data and swaps this import.
-import { roundOnlyData, cumulativeData, generatedAt } from '../data/cscR3Data';
+// The Memorial Tournament — R1 complete, R2 picks active.
+import { roundOnlyData, cumulativeData, generatedAt } from '../data/memorialR1Data';
 // Pre-tournament rankings — used as a FROZEN snapshot for the Course Fit
 // Scatter chart. The chart is meant to be a pre-tournament reference, not
 // updated round-by-round. Stays pointed at the pre-tournament file even
 // once the main rankings advance.
-import { roundOnlyData as preTournamentRoundOnly } from '../data/cscPreData';
-import { r4MatchupOddsData } from '../data/cscR4Matchups';
-import { r4OutrightsData } from '../data/cscR4Outrights';
-import { skillEstimatesData } from '../data/cscSkillEstimates';
+import { roundOnlyData as preTournamentRoundOnly } from '../data/memorialPreData';
+import { r2MatchupOddsData } from '../data/memorialR2Matchups';
+import { r2OutrightsData } from '../data/memorialR2Outrights';
+import { skillEstimatesData } from '../data/memorialSkillEstimates';
 import { recommendedFloorForPredictability, floorTierLabel } from '../lib/sizing';
 
 export interface CurrentEvent {
@@ -65,25 +63,25 @@ export interface CurrentEvent {
   skillEstimates: PlayerSkillEstimate[];
 }
 
-// DataGolf bar pct: 31.84 → 0.0503 (anchored against Augusta = 0.1439 = 91.11%).
+// DataGolf bar pct: 39.32 → 0.0621 (anchored against Augusta = 0.1439 = 91.11%).
 // Source of truth: src/data/dataGolfPredictability.ts.
-const COLONIAL_PREDICTABILITY = 0.0503;
+const MUIRFIELD_VILLAGE_PREDICTABILITY = 0.0621;
 
 export const currentEvent: CurrentEvent = {
-  name: 'Charles Schwab Challenge',
-  course: 'Colonial Country Club',
+  name: 'The Memorial Tournament',
+  course: 'Muirfield Village Golf Club',
   isMajor: false,
-  predictability: COLONIAL_PREDICTABILITY,
-  recommendedFloor: recommendedFloorForPredictability(COLONIAL_PREDICTABILITY),
-  recommendedFloorLabel: floorTierLabel(recommendedFloorForPredictability(COLONIAL_PREDICTABILITY)),
-  picksRound: 4,
-  isComplete: true,
-  headerBanner: 'TOURNAMENT COMPLETE',
+  predictability: MUIRFIELD_VILLAGE_PREDICTABILITY,
+  recommendedFloor: recommendedFloorForPredictability(MUIRFIELD_VILLAGE_PREDICTABILITY),
+  recommendedFloorLabel: floorTierLabel(recommendedFloorForPredictability(MUIRFIELD_VILLAGE_PREDICTABILITY)),
+  picksRound: 2,
+  isComplete: false,
+  headerBanner: 'R1 FINAL · ROUND 2 PICKS',
   dataUpdatedAt: generatedAt,
   rankingsRound: roundOnlyData,
   rankingsCumulative: cumulativeData,
   preTournamentRankings: preTournamentRoundOnly,
-  matchups: r4MatchupOddsData,
-  outrights: r4OutrightsData,
+  matchups: r2MatchupOddsData,
+  outrights: r2OutrightsData,
   skillEstimates: skillEstimatesData,
 };

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run verify:auto-roll && npm run verify:floor-refs && npm run verify:workflow-env && tsc -b && vite build",
+    "build": "npm run verify:auto-roll && npm run verify:floor-refs && npm run verify:workflow-env && npm run verify:all-time && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "pull:event": "tsx scripts/pull-event.ts",
@@ -13,6 +13,7 @@
     "verify:auto-roll": "tsx scripts/verify-auto-roll-regexes.ts",
     "verify:floor-refs": "tsx scripts/verify-floor-references.ts",
     "verify:workflow-env": "tsx scripts/verify-workflow-env.ts",
+    "verify:all-time": "tsx scripts/verify-all-time-totals.ts",
     "notify": "tsx scripts/notify.ts"
   },
   "dependencies": {

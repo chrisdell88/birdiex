@@ -10,54 +10,52 @@
  * Lives at the top of the Results page All-Time view.
  */
 import type { BetRecord } from '../types';
-import { isTrackedBet } from '../lib/sizing';
 import { floorForEvent } from '../config/venues';
-import { betLog } from '../data/resultsData';
-import { r2Results } from '../data/pgaChampR2Results';
-import { r3Results } from '../data/pgaChampR3Results';
-import { r4Results } from '../data/pgaChampR4Results';
+import { eventBuckets } from '../lib/allTimeStats';
 
 interface CurvePoint {
   betIndex: number;
   cumUnits: number;
   bet: BetRecord;
-  event: 'Masters 2026' | 'PGA Champ 2026';
+  event: string;
 }
 
-// Build chronologically-ordered sequence of tracked bets across all events.
+// Short display labels for the in-chart event boundary markers — keeps the
+// chart legible when 5+ events stack up. Falls back to venues.ts eventName.
+const SHORT_LABEL: Record<string, string> = {
+  'masters-2026': 'MASTERS 26',
+  'pga-2026': 'PGA CHAMP 26',
+  'cj-cup-byron-nelson-2026': 'CJ CUP 26',
+  'charles-schwab-challenge-2026': 'CSC 26',
+  'the-memorial-tournament-2026': 'MEMORIAL 26',
+};
+
+// Build chronologically-ordered sequence of tracked bets across EVERY event
+// from the canonical allTimeStats roll-up. New events flow in automatically.
 function buildSequence(): { points: CurvePoint[]; eventBoundaries: { event: string; betIndex: number }[] } {
-  const mastersFloor = floorForEvent('masters-2026').floor;
-  const pgaFloor = floorForEvent('pga-2026').floor;
-
-  const mastersTracked = betLog.filter((b) => isTrackedBet(b.edge, mastersFloor));
-  const pgaTracked = [...r2Results, ...r3Results, ...r4Results].filter((b) =>
-    isTrackedBet(b.edge, pgaFloor),
-  );
-
-  // Both data sources are already sorted by id (which is chronological within
-  // the event). Sort PGA across rounds first since it spans 3 separate files.
-  pgaTracked.sort((a, b) => a.round - b.round || a.id - b.id);
-
   const seq: CurvePoint[] = [];
+  const boundaries: { event: string; betIndex: number }[] = [];
   let cum = 0;
   let i = 0;
 
-  const boundaries: { event: string; betIndex: number }[] = [
-    { event: 'Masters 2026', betIndex: 0 },
-  ];
+  for (const bucket of eventBuckets) {
+    if (bucket.tracked.length === 0) continue;
+    const label =
+      SHORT_LABEL[bucket.eventId] ??
+      floorForEvent(bucket.eventId).eventName.toUpperCase();
 
-  for (const b of mastersTracked) {
-    cum += b.units;
-    seq.push({ betIndex: i, cumUnits: +cum.toFixed(2), bet: b, event: 'Masters 2026' });
-    i++;
-  }
-  if (pgaTracked.length) {
-    boundaries.push({ event: 'PGA Champ 2026', betIndex: i });
-  }
-  for (const b of pgaTracked) {
-    cum += b.units;
-    seq.push({ betIndex: i, cumUnits: +cum.toFixed(2), bet: b, event: 'PGA Champ 2026' });
-    i++;
+    boundaries.push({ event: label, betIndex: i });
+
+    // Order within an event: by round, then by id within round (chronological).
+    const ordered = [...bucket.tracked].sort(
+      (a, b) => (a.round ?? 1) - (b.round ?? 1) || (a.id ?? 0) - (b.id ?? 0),
+    );
+
+    for (const b of ordered) {
+      cum += b.units;
+      seq.push({ betIndex: i, cumUnits: +cum.toFixed(2), bet: b, event: label });
+      i++;
+    }
   }
   return { points: seq, eventBoundaries: boundaries };
 }

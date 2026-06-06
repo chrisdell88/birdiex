@@ -9,14 +9,13 @@
  * Includes a colored band for each star tier so the size→edge mapping
  * is visible alongside the actual distribution.
  */
-import { betLog } from '../data/resultsData';
-import { r2Results } from '../data/pgaChampR2Results';
-import { r3Results } from '../data/pgaChampR3Results';
-import { r4Results } from '../data/pgaChampR4Results';
+import { eventBuckets } from '../lib/allTimeStats';
 import { starsForEdge } from '../lib/sizing';
 
-// Combine every scored bet (0.95+ — both tracked and below-threshold).
-const ALL_BETS = [...betLog, ...r2Results, ...r3Results, ...r4Results];
+// Every scored bet across every event (0.95+ — both tracked and
+// below-threshold). Sourced from the canonical event roll-up so a new
+// event auto-flows in — no edits to this file when an event is added.
+const ALL_BETS = eventBuckets.flatMap((ev) => ev.raw);
 
 // Bin into 0.1-wide buckets from 0.95 to 5.0.
 const BIN_WIDTH = 0.1;

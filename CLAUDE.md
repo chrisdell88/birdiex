@@ -150,6 +150,54 @@ loop. All three or none.
 
 ---
 
+## 📊 All-Time Stats Source of Truth — `src/lib/allTimeStats.ts`
+
+Bug pattern (2026-06-06): Methodology banner showed `135-70-21 / +85.30u`
+while Results banner showed `161-88-29 / +91.28u` for the same metric.
+Two pages, two different sources, both pretending to be authoritative.
+Five files independently maintained their own per-event import list.
+Adding CJ + CSC + Memorial silently desynced three of them.
+
+**The system now:**
+
+```
+src/data/*Results.ts files (auto-discovered via import.meta.glob)
+  ↓
+src/lib/allTimeStats.ts (ONE source of truth)
+  ↓ exports: allTimeStats, eventBuckets, allTrackedBets, per-event summaries
+src/components/MethodologyPage.tsx     ← banner
+src/components/ResultsPage.tsx         ← banner
+src/components/EquityCurve.tsx         ← chart
+src/components/EdgeDistributionChart.tsx ← chart
+```
+
+**Hard rules — enforced by `scripts/verify-all-time-totals.ts` on every build:**
+
+1. **Every `*Results.ts` file on disk MUST appear in `allTimeStats`.** The
+   guard scans `src/data/` for any `<prefix>R<N>Results.ts` file and asserts
+   its `<prefix>` is registered in `PREFIX_TO_EVENT_ID`. Drop a new event
+   file with no registry entry → build fails loud.
+2. **No component does inline all-time math.** Pattern `const allTimeWins
+   = mastersSummary.wins + …` is blocked. Use `allTimeStats.wins`.
+   `import { allTimeStats } from '../lib/allTimeStats'`.
+3. **Aliasing for readability is fine:** `const allTimeWins =
+   allTimeStats.wins;` passes the guard. Math + literals on the RHS fail.
+
+**Adding a new event:**
+1. Run `grade-round.ts` — it writes `src/data/<prefix>R<N>Results.ts`.
+2. Add `<prefix>: '<eventId>'` to `PREFIX_TO_EVENT_ID` in `allTimeStats.ts`.
+3. Add the eventId to `src/config/venues.ts`.
+That's it. Methodology banner, Results banner, Equity Curve, Edge
+Distribution histogram, BacktestLab — all update on next deploy. No
+component edits.
+
+If `verify:all-time` fails: it tells you exactly what file needs the
+registry entry, or which component is doing forbidden inline math.
+
+Full audit + plan: `docs/DATA_FLOW_AUDIT.md`.
+
+---
+
 ## 📣 Best Bets — Hard Rules (applies to ALL public reporting)
 
 **The model never bets R1.** Picks are issued for R2, R3, R4 only — they

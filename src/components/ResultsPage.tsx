@@ -224,14 +224,22 @@ const EVENT_REGISTRY: EventEntry[] = [
   },
 ];
 
-// --- All-time totals (sum of venue-tracked records across every event) ---
-const allTimeWins = mastersSummary.wins + pgaSummary.wins + cjSummary.wins + cscSummary.wins + memorialSummary.wins;
-const allTimeLosses = mastersSummary.losses + pgaSummary.losses + cjSummary.losses + cscSummary.losses + memorialSummary.losses;
-const allTimePushes = mastersSummary.pushes + pgaSummary.pushes + cjSummary.pushes + cscSummary.pushes + memorialSummary.pushes;
-const allTimeUnits = +(mastersSummary.units + pgaSummary.units + cjSummary.units + cscSummary.units + memorialSummary.units).toFixed(2);
-const allTimeStaked = mastersSummary.staked + pgaSummary.staked + cjSummary.staked + cscSummary.staked + memorialSummary.staked;
-const allTimeROI = allTimeStaked > 0 ? +((allTimeUnits / allTimeStaked) * 100).toFixed(1) : 0;
-const allTimeBets = allTimeWins + allTimeLosses + allTimePushes;
+// --- All-time totals ---
+// SINGLE SOURCE OF TRUTH: src/lib/allTimeStats.ts. The Methodology page
+// banner reads the same export. Adding a new event = drop the Results file
+// + add the prefix to PREFIX_TO_EVENT_ID. No edits here.
+//
+// Verified at build time by scripts/verify-all-time-totals.ts that this
+// roll-up matches the per-event inline summaries above (catches a future
+// drift where someone adds an event to the inline list but forgets the
+// allTimeStats prefix map, or vice versa).
+import { allTimeStats } from '../lib/allTimeStats';
+const allTimeWins = allTimeStats.wins;
+const allTimeLosses = allTimeStats.losses;
+const allTimePushes = allTimeStats.pushes;
+const allTimeUnits = allTimeStats.units;
+const allTimeROI = allTimeStats.roi;
+const allTimeBets = allTimeStats.bets;
 
 // --- Helpers ---
 function formatUnits(u: number): string {

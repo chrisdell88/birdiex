@@ -18,6 +18,12 @@ const cscResultModules = import.meta.glob<Record<string, unknown>>(
   '../data/cscR*Results.ts',
   { eager: true }
 );
+// Same pattern for Memorial — auto-roll drops memorialR<N>Results.ts files
+// as each round grades; the glob picks them up at build time.
+const memorialResultModules = import.meta.glob<Record<string, unknown>>(
+  '../data/memorialR*Results.ts',
+  { eager: true }
+);
 import { starsForEdge, unitsForEdge, stakeToWin1 } from '../lib/sizing';
 import { floorForEvent } from '../config/venues';
 import {
@@ -51,6 +57,7 @@ const mastersFloor = floorForEvent('masters-2026');
 const pgaFloor = floorForEvent('pga-2026');
 const cjCupFloor = floorForEvent('cj-cup-byron-nelson-2026');
 const cscFloor = floorForEvent('charles-schwab-challenge-2026');
+const memorialFloor = floorForEvent('the-memorial-tournament-2026');
 
 // Single source of truth for the trackedAt + summarise pair, shared with
 // BacktestLab. Guarantees both pages cannot disagree about the same
@@ -99,8 +106,24 @@ const cscRounds = Object.entries(cscResultModules)
 const cscTracked = cscRounds.flatMap((r) => r.bets);
 const cscSummary = summarise(cscTracked);
 
-// All-time = Masters + PGA + CJ Cup + Charles Schwab (all tracked Best Bets).
-const ALL_TIME_BETS = [...mastersTracked, ...pgaTracked, ...cjTracked, ...cscTracked];
+// Memorial — same auto-roll-drop-and-glob pattern as CSC.
+const memorialRounds = Object.entries(memorialResultModules)
+  .map(([path, mod]) => {
+    const m = path.match(/memorialR(\d+)Results\.ts$/);
+    if (!m) return null;
+    const round = Number(m[1]);
+    const bets = (mod as Record<string, unknown>)[`r${round}Results`] as BetRecord[] | undefined;
+    if (!Array.isArray(bets)) return null;
+    const tracked = trackedAt(bets, memorialFloor.floor);
+    return { round, bets: tracked, summary: summarise(tracked) };
+  })
+  .filter((x): x is { round: number; bets: BetRecord[]; summary: ReturnType<typeof summarise> } => x !== null)
+  .sort((a, b) => a.round - b.round);
+const memorialTracked = memorialRounds.flatMap((r) => r.bets);
+const memorialSummary = summarise(memorialTracked);
+
+// All-time = Masters + PGA + CJ Cup + Charles Schwab + Memorial (all tracked Best Bets).
+const ALL_TIME_BETS = [...mastersTracked, ...pgaTracked, ...cjTracked, ...cscTracked, ...memorialTracked];
 
 // Silence unused-import warnings — these raw summaries are kept for
 // reference / backtesting comparisons; the venue-aware values above
@@ -190,23 +213,23 @@ const EVENT_REGISTRY: EventEntry[] = [
     id: 'the-memorial-tournament-2026',
     name: 'The Memorial Tournament 2026',
     status: 'IN PROGRESS',
-    wins: 0,
-    losses: 0,
-    pushes: 0,
-    units: 0,
-    roi: 0,
-    threshold: floorForEvent('the-memorial-tournament-2026').floor,
-    course: floorForEvent('the-memorial-tournament-2026').course,
-    predictability: floorForEvent('the-memorial-tournament-2026').predictability,
+    wins: memorialSummary.wins,
+    losses: memorialSummary.losses,
+    pushes: memorialSummary.pushes,
+    units: memorialSummary.units,
+    roi: memorialSummary.roi,
+    threshold: memorialFloor.floor,
+    course: memorialFloor.course,
+    predictability: memorialFloor.predictability,
   },
 ];
 
 // --- All-time totals (sum of venue-tracked records across every event) ---
-const allTimeWins = mastersSummary.wins + pgaSummary.wins + cjSummary.wins + cscSummary.wins;
-const allTimeLosses = mastersSummary.losses + pgaSummary.losses + cjSummary.losses + cscSummary.losses;
-const allTimePushes = mastersSummary.pushes + pgaSummary.pushes + cjSummary.pushes + cscSummary.pushes;
-const allTimeUnits = +(mastersSummary.units + pgaSummary.units + cjSummary.units + cscSummary.units).toFixed(2);
-const allTimeStaked = mastersSummary.staked + pgaSummary.staked + cjSummary.staked + cscSummary.staked;
+const allTimeWins = mastersSummary.wins + pgaSummary.wins + cjSummary.wins + cscSummary.wins + memorialSummary.wins;
+const allTimeLosses = mastersSummary.losses + pgaSummary.losses + cjSummary.losses + cscSummary.losses + memorialSummary.losses;
+const allTimePushes = mastersSummary.pushes + pgaSummary.pushes + cjSummary.pushes + cscSummary.pushes + memorialSummary.pushes;
+const allTimeUnits = +(mastersSummary.units + pgaSummary.units + cjSummary.units + cscSummary.units + memorialSummary.units).toFixed(2);
+const allTimeStaked = mastersSummary.staked + pgaSummary.staked + cjSummary.staked + cscSummary.staked + memorialSummary.staked;
 const allTimeROI = allTimeStaked > 0 ? +((allTimeUnits / allTimeStaked) * 100).toFixed(1) : 0;
 const allTimeBets = allTimeWins + allTimeLosses + allTimePushes;
 
@@ -1242,9 +1265,13 @@ function CharlesSchwabView() {
   );
 }
 
-// --- Memorial Tournament view — pre/in-progress, no graded results yet ---
+// --- Memorial Tournament view — same auto-pick-up-graded-rounds pattern as CSC ---
 function MemorialView() {
-  const memorialFloor = floorForEvent('the-memorial-tournament-2026');
+  // memorialRounds is derived from the memorialR*Results.ts files Vite found
+  // at build time — every new round graded by auto-roll appears here on the
+  // next deploy with zero manual edits. Newest round first.
+  const gradedRounds = [...memorialRounds].reverse();
+
   return (
     <div>
       <TournamentSummaryBanner
@@ -1252,15 +1279,56 @@ function MemorialView() {
         eventName="The Memorial Tournament 2026"
         course={memorialFloor.course}
         threshold={memorialFloor.floor}
-        record={{ wins: 0, losses: 0, pushes: 0 }}
-        units={0}
-        roi={0}
-        bets={0}
+        record={{ wins: memorialSummary.wins, losses: memorialSummary.losses, pushes: memorialSummary.pushes }}
+        units={memorialSummary.units}
+        roi={memorialSummary.roi}
+        bets={memorialSummary.bets}
         recordLabel="Best Bets so far"
       />
-      <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-6 text-center">
-        <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">
-          R1 complete. R2 picks live on the Matchups page. Graded results post after each round finishes.
+
+      {gradedRounds.length === 0 && (
+        <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-6 text-center">
+          <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">
+            Tournament in progress. Graded results post after each round finishes.
+          </p>
+        </div>
+      )}
+
+      {gradedRounds.map(({ round, summary, bets }) => (
+        <div key={round} className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className={`w-0.5 h-5 rounded-full ${summary.units >= 0 ? 'bg-[#22c55e]' : 'bg-[#ef4444]'}`} />
+            <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
+              Round {round} — Best Bets
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+            <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-4">
+              <div className={label}>Record</div>
+              <div className={`text-lg font-bold ${mono} text-[#f5f5f5] mt-1`}>{summary.record}</div>
+            </div>
+            <div className={`bg-[#0a0a0a] border ${borderColor(summary.units)} rounded-lg p-4`}>
+              <div className={label}>Units</div>
+              <div className={`text-lg font-bold ${mono} ${unitColor(summary.units)} mt-1`}>{formatUnits(summary.units)}u</div>
+            </div>
+            <div className={`bg-[#0a0a0a] border ${borderColor(summary.roi)} rounded-lg p-4`}>
+              <div className={label}>ROI</div>
+              <div className={`text-lg font-bold ${mono} ${unitColor(summary.roi)} mt-1`}>{formatROI(summary.roi)}</div>
+            </div>
+            <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-4">
+              <div className={label}>Best Bets</div>
+              <div className={`text-lg font-bold ${mono} text-[#f5f5f5] mt-1`}>{summary.bets}</div>
+            </div>
+          </div>
+
+          <SortableBetTable bets={bets} round={round} floor={memorialFloor.floor} />
+        </div>
+      ))}
+
+      <div className="bg-[#0a0a0a] border border-dashed border-[#262626] rounded-lg p-5 text-center">
+        <p className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
+          Tournament still in progress — later rounds will populate here as they grade.
         </p>
       </div>
     </div>

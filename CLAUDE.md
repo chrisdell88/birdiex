@@ -4,6 +4,21 @@ Read `MEMORY.md` first for project context, model methodology, results history, 
 
 ---
 
+## 🚫 Permanently banned phrasings (Chris asked, more than once)
+
+These phrasings IMPLY my normal answers aren't direct/honest. Never use them. No exceptions:
+- "straight answer" / "to be straight"
+- "honest answer" / "honestly" (as a meta-comment about the answer that follows)
+- "to be honest" / "tbh"
+- "full stop" / "period" (as rhetorical emphasis)
+- "let me be clear" / "let me be direct"
+
+Also never apologize verbally (no "I'm sorry", "my apologies"). Show through action.
+
+If you catch yourself about to type one, delete it and just say the thing.
+
+---
+
 ## 🔍 Audit Discipline — runs automatically, no human prompting needed
 
 Past failure mode: I'd promise "I'll look for similar gaps proactively" and then forget the moment the next session started. Replaced with infrastructure:

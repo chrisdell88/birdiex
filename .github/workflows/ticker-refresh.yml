@@ -19,6 +19,12 @@ on:
 
 env:
   SLUG: the-memorial-tournament-2026
+  # MUST match dataPrefix from src/data/eventSchedule.ts for the current event.
+  # auto-roll.ts patches this on event switch. build-ticker.ts FAILS LOUDLY
+  # if it's missing instead of silently writing wrong-event files (the bug
+  # we hit 2026-06-04→06 — ticker silently wrote Memorial data into csc*
+  # files and never refreshed memorial* matchups/outrights live).
+  SLUG_PREFIX: memorial
 
 permissions:
   contents: write

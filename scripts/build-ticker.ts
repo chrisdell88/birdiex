@@ -151,9 +151,19 @@ async function main() {
   // picks up the refresh. The existing workflow's commit step only stages
   // ticker.ts, which is why we handle the matchups/outrights commit here.
   //
-  // SLUG_PREFIX: derived from env, defaults to 'csc' (current event). When
-  // the event rotates, set SLUG_PREFIX in the ticker-refresh workflow env.
-  const slugPrefix = process.env.SLUG_PREFIX ?? 'csc';
+  // SLUG_PREFIX MUST be set explicitly — no fallback. A wrong default here
+  // silently writes the wrong event's files. The bug: when csc was the
+  // default and Memorial took over, every 30 min tick overwrote
+  // cscR3Matchups.ts with Memorial data, AND the actual memorialR3Matchups.ts
+  // never refreshed live. ticker-refresh.yml MUST have SLUG_PREFIX in its
+  // env block; auto-roll.ts MUST patch it on event switch. Both are guarded
+  // by scripts/verify-workflow-env.ts on every build.
+  const slugPrefix = process.env.SLUG_PREFIX;
+  if (!slugPrefix) {
+    console.error('❌ SLUG_PREFIX env var is required. Set it in ticker-refresh.yml env block.');
+    console.error('   Without it this script would silently write the wrong event\'s matchups/outrights files.');
+    process.exit(1);
+  }
   const matchupsOut = `${slugPrefix}R${roundNum}Matchups`;
   const matchupsExport = `r${roundNum}MatchupOddsData`;
   const outrightsOut = `${slugPrefix}R${roundNum}Outrights`;

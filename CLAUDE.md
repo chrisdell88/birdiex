@@ -108,6 +108,48 @@ hardcoded comparison. Convert it to `tierForEdge(...)` and the build passes.
 
 ---
 
+## 🤖 Workflow Env Source of Truth — `eventSchedule.ts` drives every workflow
+
+Bug pattern (2026-06-04→06): `ticker-refresh.yml` env block had `SLUG:
+the-memorial-tournament-2026` but was MISSING `SLUG_PREFIX:` entirely. The
+build-ticker.ts script silently fell back to its `'csc'` default. Every
+30 minutes for 2 days, the ticker tick wrote Memorial matchups data into
+`src/data/cscR3Matchups.ts` (wrong event entirely), AND the actual
+`memorialR3Matchups.ts` never refreshed live — line shopping stopped
+happening, users saw stale odds.
+
+**The system now:**
+
+```
+src/data/eventSchedule.ts (first entry = active event)
+  ↓ slug, dataPrefix, courseKey
+.github/workflows/datagolf-pull.yml env: SLUG, SLUG_PREFIX, COURSE
+.github/workflows/ticker-refresh.yml env: SLUG, SLUG_PREFIX
+  ↓ consumed by
+scripts/pull-event.ts, scripts/build-ticker.ts
+```
+
+**Hard rules — enforced by `scripts/verify-workflow-env.ts` on every build:**
+
+1. **Every workflow that operates on the current event MUST have its env block
+   in sync with `eventSchedule.ts`'s first entry.** The smoke test compares
+   `SLUG` / `SLUG_PREFIX` / `COURSE` in each workflow against the active
+   schedule entry. Build fails loudly on any mismatch.
+2. **Scripts MUST fail loudly when a required env var is missing.** No silent
+   defaults. `build-ticker.ts` now `process.exit(1)`s if `SLUG_PREFIX` is unset
+   — much louder than silently writing the wrong file.
+3. **`auto-roll.ts::attemptEventSwitch` patches BOTH workflows on event switch.**
+   It updates `datagolf-pull.yml` (SLUG, COURSE, SLUG_PREFIX) AND
+   `ticker-refresh.yml` (SLUG, SLUG_PREFIX). Adding a new env-dependent
+   workflow? Add it to BOTH the patcher and `verify-workflow-env.ts`.
+
+**Adding a new event-driven workflow:** add the env vars to the workflow's
+env block, add a `WorkflowExpectation` entry to `verify-workflow-env.ts`,
+add the regex patch to `auto-roll.ts::attemptEventSwitch`'s workflow-update
+loop. All three or none.
+
+---
+
 ## 📣 Best Bets — Hard Rules (applies to ALL public reporting)
 
 **The model never bets R1.** Picks are issued for R2, R3, R4 only — they

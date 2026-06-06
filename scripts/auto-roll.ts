@@ -375,6 +375,10 @@ export const tickerData: TickerEntry[] = [];
     ],
     '.github/workflows/ticker-refresh.yml': [
       [/(^  SLUG:\s*).*$/m, `$1${next.slug}`],
+      // SLUG_PREFIX MUST stay in sync — build-ticker.ts uses it to write
+      // the right event's matchups/outrights files. Missing this line
+      // caused the 2026-06-04→06 silent-pollution bug.
+      [/(^  SLUG_PREFIX:\s*).*$/m, `$1${prefix}`],
     ],
   })) {
     const full = join(ROOT, path);

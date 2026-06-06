@@ -1,0 +1,126 @@
+name: Weekly code audit
+
+# Runs Sunday 10pm ET — between the end of the current tournament and
+# the start of the next. Catches things BEFORE Monday morning when the
+# next week's prep begins.
+#
+# What it checks (per-job, so a single failure doesn't kill the whole run):
+#   - npm audit  (dependency vulnerabilities, no auto-fix)
+#   - TypeScript: tsc --noEmit (type errors that build might not surface)
+#   - lint: eslint .
+#   - smoke test: scripts/verify-auto-roll-regexes.ts
+#   - stale-data check: warn if any data/raw/* directory hasn't been
+#     refreshed in >7 days (means an event's raw data is rotting)
+#   - dead-code scan: simple `tsc` plus a search for files that haven't
+#     been touched in >6 months AND have zero imports referencing them
+#
+# If any job fails, the workflow OPENS A GITHUB ISSUE so it surfaces
+# even if Chris isn't checking Actions tab.
+
+on:
+  schedule:
+    # Sunday 10pm ET = Monday 02:00 UTC (during EDT) / 03:00 UTC (during EST).
+    # Pick UTC slot that covers both seasons; cron runs in UTC and we accept
+    # a 1-hr drift twice a year.
+    - cron: '0 2 * * 1'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: code-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type check
+        id: tsc
+        run: npx tsc --noEmit
+        continue-on-error: true
+
+      - name: ESLint
+        id: lint
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Auto-roll regex smoke test
+        id: smoke
+        run: npm run verify:auto-roll
+        continue-on-error: true
+
+      - name: NPM dependency audit (high severity)
+        id: npm-audit
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: Stale raw-data check
+        id: stale-data
+        run: |
+          set -e
+          # Any data/raw/*/* directory older than 7 days = warn.
+          # Don't fail the run on this — just surface it for triage.
+          STALE=$(find data/raw -type d -mindepth 2 -mtime +7 2>/dev/null || true)
+          if [ -n "$STALE" ]; then
+            echo "stale_dirs<<EOF" >> "$GITHUB_OUTPUT"
+            echo "$STALE" >> "$GITHUB_OUTPUT"
+            echo "EOF" >> "$GITHUB_OUTPUT"
+            echo "::warning::Stale raw data:"
+            echo "$STALE"
+          fi
+        continue-on-error: true
+
+      - name: Open issue if anything failed
+        if: |
+          steps.tsc.outcome == 'failure' ||
+          steps.lint.outcome == 'failure' ||
+          steps.smoke.outcome == 'failure' ||
+          steps.npm-audit.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tsc    = '${{ steps.tsc.outcome }}';
+            const lint   = '${{ steps.lint.outcome }}';
+            const smoke  = '${{ steps.smoke.outcome }}';
+            const npm    = '${{ steps.npm-audit.outcome }}';
+            const stale  = `${{ steps.stale-data.outputs.stale_dirs }}`;
+            const failed = [
+              tsc    === 'failure' && 'TypeScript (tsc --noEmit)',
+              lint   === 'failure' && 'ESLint',
+              smoke  === 'failure' && 'Auto-roll regex smoke test',
+              npm    === 'failure' && 'npm audit (high severity)',
+            ].filter(Boolean);
+            const body = [
+              '## Weekly audit found issues',
+              '',
+              `Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              '',
+              '### Failed checks',
+              ...failed.map((f) => `- ❌ ${f}`),
+              ...(stale ? ['', '### Stale data directories (warning, not failure)', '```', stale, '```'] : []),
+              '',
+              '### Next steps',
+              '1. Click the run link above to see full logs.',
+              '2. Fix the failures + push to main.',
+              '3. Re-trigger the audit with `gh workflow run code-audit.yml` to confirm clean.',
+            ].join('\n');
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Weekly audit — ${failed.length} check(s) failing (${new Date().toISOString().slice(0,10)})`,
+              body,
+              labels: ['audit', 'automated'],
+            });

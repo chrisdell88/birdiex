@@ -156,27 +156,28 @@ The pattern: anything graded → drop a `*Results.ts` file in `src/data/`
 
 ---
 
-## Next steps (not done yet — flagged for future sprints)
+## Follow-ups — all four shipped 2026-06-06 (same day)
 
-1. **Verify banner numbers match cross-page at build time.** Today's
-   guard ensures both banners SOURCE from the same lib, but doesn't
-   render-test the strings. A small integration test that mounts each
-   page and asserts both banners read identical numbers would catch a
-   future regression where someone reformats one banner but not the other.
+1. **Cross-page banner sync test — DONE.** `src/__tests__/banner-sync.test.tsx`
+   renders both Methodology + Results in jsdom and asserts the banner
+   strings show the SAME wins-losses-pushes, units, and ROI. Wired into
+   `npm test` and into the build chain (so `npm run build` runs the test).
 
-2. **Move PuttingRegressionChart to a frozen snapshot file.** Currently it
-   imports `pgaChampR1Data` / `pgaChampR2Data` directly. If we ever
-   retire those filenames, the chart breaks. Snapshot to a dedicated
-   `methodologyDemoData.ts` file.
+2. **PuttingRegressionChart frozen snapshot — DONE.** Chart now reads from
+   `src/data/methodologyDemoData.json` (44 KB, 156 R1 + 156 R2 player rows
+   with just the 5 fields needed). Decoupled from `pgaChampR1Data` and
+   `pgaChampR2Data` — those files can be reshaped or deleted without
+   breaking the chart. Regenerate via `npx tsx scripts/build-methodology-demo.ts`
+   when the underlying illustration should change.
 
-3. **SgPersistenceChart hardcoded numbers.** The chart shows persistence
-   percentages baked into the source. If the underlying research updates,
-   this needs a manual edit. Future: pull from a research-output JSON file.
+3. **SgPersistenceChart research data → JSON — DONE.** Numbers moved to
+   `src/data/sgPersistence.json` with provenance notes and `max_r_axis`.
+   Edit JSON to update; chart imports it.
 
-4. **MethodologyPage 26.2% ROI mention.** One sentence on the Methodology
-   page (~line 307) references "Masters … +26.2% ROI at the 0.95 floor"
-   inline. If Masters numbers change, this sentence drifts. Should pull
-   from `mastersStats.roi`.
+4. **MethodologyPage hardcoded "+26.2% ROI" — DONE.** That sentence now
+   reads `mastersStats.roi` via `const mastersRoiStr = …toFixed(1) + '%'`
+   at the top of the file. Will track Masters numbers automatically.
 
-These are tracked here so a future Claude session sees the work-list
-without me having to remember.
+No outstanding tech debt from this audit. The next big improvement
+opportunity (out of scope today) is full Supabase data migration —
+explicitly deferred per CLAUDE.md until post-PGA-Championship project window.

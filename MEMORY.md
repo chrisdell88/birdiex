@@ -1,11 +1,12 @@
 # BirdieX — Project Memory
 
-**Last updated:** 2026-05-23
+**Last updated:** 2026-06-06
 **Repo:** https://github.com/chrisdell88/birdiex
 **Live:** https://birdiex.co
 **Project path:** ~/Projects/birdiex
-**Current event:** CJ Cup Byron Nelson 2026 at TPC Craig Ranch — **R2 final, R3 picks live**. Best Bet Matchup Score Threshold: edge ≥ 2.45 (formula → snap-to-NEAREST tier).
-**All-Time tracked record (venue-aware floor):** 135-70-21 · +85.30u · +28.4% ROI (Masters + PGA Champ).
+**Current event:** **The Memorial Tournament 2026** at Muirfield Village — R3 picks live (R2 final). Floor: 2.45 (publishedFloor lock per R2 backtest). DG bar pct 39.32 → predictability 0.0621.
+**All-Time tracked record (venue-aware floor):** 161-88-29 · +91.28u · +22.6% ROI across 5 events (Masters + PGA + CJ + CSC + Memorial). Authoritative source: `src/lib/allTimeStats.ts::allTimeStats`. Every banner on the site reads from this.
+**Next event (pre-staged):** RBC Canadian Open at Hamilton G&CC. Auto-switch fires when Memorial completes.
 
 ## 🚨 READ THIS FIRST (any new Claude session)
 
@@ -30,7 +31,62 @@ The full source-of-truth for BirdieX is **inside this repo** under `docs/`. You 
 3. Read `MEMORY.md` (this file) + `CLAUDE.md`
 4. If you'll touch the model: read `docs/X_SCORE_FORMULA.md`
 5. If you'll add/update a tournament: read `docs/NEW_TOURNAMENT_RUNBOOK.md`
-6. Check `git log --oneline -10` for recent context
+6. **If you'll touch data flow, results, or any displayed stat:** read `docs/DATA_FLOW_AUDIT.md` — the audit + plan that established the single-source-of-truth principle for all-time stats.
+7. Check `git log --oneline -10` for recent context
+
+## Build-time guards (run on every `npm run build`)
+- `verify:auto-roll` — patchEventConfig regexes still match `event.ts`
+- `verify:floor-refs` — no component hardcodes `>= 1.95` / `>= 2.45` etc. (use `tierForEdge(edge, currentEvent.recommendedFloor)`)
+- `verify:workflow-env` — `SLUG`, `SLUG_PREFIX`, `COURSE` in every event-driven workflow match `eventSchedule.ts`'s active entry
+- `verify:all-time` — every `*Results.ts` file is registered in `PREFIX_TO_EVENT_ID`; no component does inline all-time math
+- `npm test -- --run` — vitest renders Methodology + Results pages in jsdom and asserts both banners show identical numbers
+
+If a build fails on one of these, the error tells you exactly what to fix. Don't disable the guard; fix the source of truth.
+
+## Recent session highlights — 2026-06-06
+
+Today was an "infrastructure debt" day, not a feature day. Chris caught
+several silently-stale surfaces; each fix added a guard so the class of
+bug can't recur. In order shipped:
+
+1. **Floor source of truth (commit `c4c25cc`).** Memorial floor was 2.45
+   in `venues.ts` but `event.ts` ignored the `publishedFloor` override,
+   AND `MatchupsView` + `OddsTablePage` hardcoded `>= 1.95` for tier
+   labels. Three layers out of sync. Now: `venues.ts → floorForEvent() →
+   event.ts.recommendedFloor → tierForEdge()`. Guarded by `verify:floor-refs`.
+
+2. **Supabase free-tier pause prevention (commit `6b98f96`).** Project
+   paused mid-day, broke lab login / alerts / notify. Daily 11 UTC
+   keepalive workflow + Sunday audit healthcheck + CLAUDE.md silent-
+   failure-modes section. Initial commit used wrong secret name; fixed
+   in commit `0e9ff2b` (uses `SUPABASE_SERVICE_ROLE_KEY`). Verified
+   working: HTTP 200, run 27073587650.
+
+3. **Ticker SLUG_PREFIX bomb (commit `1c6903b`).** For 2 days the ticker
+   workflow had been writing Memorial matchups/outrights data into
+   `cscR3*` files (silently used `?? 'csc'` fallback because workflow
+   env was missing `SLUG_PREFIX`). Memorial files never got refreshed
+   live. Restored 4 polluted CSC files from pre-pollution commits
+   (`473a7dc`, `1b056da`). Killed the silent default. Auto-roll patcher
+   now updates SLUG_PREFIX in both workflows. Guarded by `verify:workflow-env`.
+
+4. **All-time stats source of truth (commit `cb6dd84`).** Methodology
+   banner showed `135-70-21` while Results banner showed `161-88-29` —
+   `allTimeStats.ts` only imported Masters + PGA; three other consumers
+   each had their own stale event list. Rewrote `allTimeStats.ts` to
+   auto-discover every `*Results.ts` file via `import.meta.glob`.
+   Re-wired EdgeDistributionChart, EquityCurve, ResultsPage. Guarded
+   by `verify:all-time`. Full audit: `docs/DATA_FLOW_AUDIT.md`.
+
+5. **Tech debt cleanup (committed in this session).** PuttingRegression-
+   Chart → frozen `methodologyDemoData.json` snapshot. SgPersistenceChart
+   → `sgPersistence.json`. Methodology `+26.2% ROI` → reads `mastersStats.roi`.
+   Vitest installed; `banner-sync.test.tsx` render-tests both pages and
+   asserts banner numbers match `allTimeStats`.
+
+The pattern across all five: **stop accepting silent fallbacks.** Every
+`?? 'default'` or "I'll update both files" pattern eventually drifts.
+Each fix replaced silent-drift with loud-fail.
 
 ---
 

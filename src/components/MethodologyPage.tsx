@@ -1,4 +1,7 @@
-import { allTimeStats } from '../lib/allTimeStats';
+import { allTimeStats, mastersStats } from '../lib/allTimeStats';
+
+// Helper for formatting Masters ROI in the methodology copy below.
+const mastersRoiStr = (mastersStats.roi >= 0 ? '+' : '') + mastersStats.roi.toFixed(1) + '%';
 import CourseAdaptiveChart from './CourseAdaptiveChart';
 import Glossary from './Glossary';
 import PuttingRegressionChart from './PuttingRegressionChart';
@@ -304,7 +307,7 @@ export default function MethodologyPage({ onNavigateToResults }: MethodologyPage
           </p>
           <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif] leading-relaxed">
             The Best Bet Matchup Score Threshold itself was derived from this approach. After the
-            Masters (high predictability, +26.2% ROI at the 0.95 floor) and PGA Championship (low
+            Masters (high predictability, {mastersRoiStr} ROI at the 0.95 floor) and PGA Championship (low
             predictability, &minus;8.5% at 0.95), we ran a sweep of every edge floor from 0.95 to
             5.00 to find where each venue actually broke even. The relationship between
             predictability and required floor gave us the linear formula behind the chart above.

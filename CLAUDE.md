@@ -194,6 +194,17 @@ component edits.
 If `verify:all-time` fails: it tells you exactly what file needs the
 registry entry, or which component is doing forbidden inline math.
 
+**Render-level test — `src/__tests__/banner-sync.test.tsx`:**
+- Renders both `MethodologyPage` and `ResultsPage` in jsdom (vitest +
+  React Testing Library) and asserts the banner string text actually
+  matches `allTimeStats.wins / losses / pushes / units / roi`. Catches
+  the failure class where source-of-truth is correct but rendering
+  formatting drifts (`.toFixed(1)` vs `.toFixed(2)`, etc.) or someone
+  hardcodes a literal back in.
+- Runs as part of `npm run build` (`npm test -- --run`). Wired between
+  the verify scripts and `tsc -b`.
+- To run tests alone: `npm test` (watch) or `npm test -- --run` (CI).
+
 Full audit + plan: `docs/DATA_FLOW_AUDIT.md`.
 
 ---

@@ -1,0 +1,2194 @@
+{
+  "source_event": "pga-championship-2026",
+  "source_venue": "Aronimink",
+  "source_field_size": 156,
+  "source_snapshotted_at": "2026-06-06",
+  "r1": [
+    {
+      "player_name": "Koepka, Brooks",
+      "sg_ott": 0.89,
+      "sg_app": 3.53,
+      "sg_arg": 0.84,
+      "sg_putt": -2
+    },
+    {
+      "player_name": "Vegas, Jhonattan",
+      "sg_ott": 0.23,
+      "sg_app": 2.12,
+      "sg_arg": 0.77,
+      "sg_putt": -3.86
+    },
+    {
+      "player_name": "Kirk, Chris",
+      "sg_ott": -0.01,
+      "sg_app": 2.33,
+      "sg_arg": 0.64,
+      "sg_putt": -3.7
+    },
+    {
+      "player_name": "Lee, Min Woo",
+      "sg_ott": 1.68,
+      "sg_app": 1.9,
+      "sg_arg": 1.84,
+      "sg_putt": -0.16
+    },
+    {
+      "player_name": "Rahm, Jon",
+      "sg_ott": 0.74,
+      "sg_app": 0.99,
+      "sg_arg": 2.58,
+      "sg_putt": -1.05
+    },
+    {
+      "player_name": "Conners, Corey",
+      "sg_ott": 1.03,
+      "sg_app": 3.39,
+      "sg_arg": 0.86,
+      "sg_putt": -1.02
+    },
+    {
+      "player_name": "Day, Jason",
+      "sg_ott": 0.55,
+      "sg_app": 2.73,
+      "sg_arg": 0.77,
+      "sg_putt": -0.78
+    },
+    {
+      "player_name": "McKibbin, Tom",
+      "sg_ott": 0.08,
+      "sg_app": 0.75,
+      "sg_arg": 0.82,
+      "sg_putt": -3.39
+    },
+    {
+      "player_name": "Niemann, Joaquin",
+      "sg_ott": 1.08,
+      "sg_app": 2.5,
+      "sg_arg": 0.26,
+      "sg_putt": -0.58
+    },
+    {
+      "player_name": "Scott, Adam",
+      "sg_ott": 1.07,
+      "sg_app": -0.87,
+      "sg_arg": 2.24,
+      "sg_putt": -2.18
+    },
+    {
+      "player_name": "Spaun, J.J.",
+      "sg_ott": 0.37,
+      "sg_app": 2.84,
+      "sg_arg": 0.26,
+      "sg_putt": -1.2
+    },
+    {
+      "player_name": "Kitayama, Kurt",
+      "sg_ott": 1.02,
+      "sg_app": 1.34,
+      "sg_arg": 0.85,
+      "sg_putt": -0.95
+    },
+    {
+      "player_name": "Greyserman, Max",
+      "sg_ott": 0.96,
+      "sg_app": 1.18,
+      "sg_arg": 2.08,
+      "sg_putt": 0.05
+    },
+    {
+      "player_name": "Smith, Jordan",
+      "sg_ott": -0.06,
+      "sg_app": 0.35,
+      "sg_arg": 0.29,
+      "sg_putt": -3.32
+    },
+    {
+      "player_name": "Cantlay, Patrick",
+      "sg_ott": 0.59,
+      "sg_app": 2.36,
+      "sg_arg": 0.21,
+      "sg_putt": -0.9
+    },
+    {
+      "player_name": "Henley, Russell",
+      "sg_ott": 0.74,
+      "sg_app": -0.08,
+      "sg_arg": 1.69,
+      "sg_putt": -2.1
+    },
+    {
+      "player_name": "Reed, Patrick",
+      "sg_ott": -0.29,
+      "sg_app": 3.75,
+      "sg_arg": 0.15,
+      "sg_putt": 0.65
+    },
+    {
+      "player_name": "Detry, Thomas",
+      "sg_ott": 1.29,
+      "sg_app": 0.82,
+      "sg_arg": -0.26,
+      "sg_putt": -1.59
+    },
+    {
+      "player_name": "Fitzpatrick, Matt",
+      "sg_ott": 0.01,
+      "sg_app": 1.05,
+      "sg_arg": 1.58,
+      "sg_putt": -0.38
+    },
+    {
+      "player_name": "Schauffele, Xander",
+      "sg_ott": 1.55,
+      "sg_app": 0.33,
+      "sg_arg": 0.92,
+      "sg_putt": 1.45
+    },
+    {
+      "player_name": "Hovland, Viktor",
+      "sg_ott": 0.61,
+      "sg_app": 0.31,
+      "sg_arg": -0.22,
+      "sg_putt": -2.44
+    },
+    {
+      "player_name": "Spieth, Jordan",
+      "sg_ott": 1.94,
+      "sg_app": 1.43,
+      "sg_arg": -0.52,
+      "sg_putt": 0.41
+    },
+    {
+      "player_name": "Hatton, Tyrrell",
+      "sg_ott": -0.2,
+      "sg_app": 1.4,
+      "sg_arg": 0.36,
+      "sg_putt": -1.3
+    },
+    {
+      "player_name": "MacIntyre, Robert",
+      "sg_ott": 1.42,
+      "sg_app": 0.9,
+      "sg_arg": 0.32,
+      "sg_putt": -0.37
+    },
+    {
+      "player_name": "Theegala, Sahith",
+      "sg_ott": 0.42,
+      "sg_app": 2.19,
+      "sg_arg": 0.98,
+      "sg_putt": 0.68
+    },
+    {
+      "player_name": "Thorbjornsen, Michael",
+      "sg_ott": 1.11,
+      "sg_app": -0.8,
+      "sg_arg": -1.47,
+      "sg_putt": -3.58
+    },
+    {
+      "player_name": "Poston, J.T.",
+      "sg_ott": 0.79,
+      "sg_app": -0.87,
+      "sg_arg": 2.18,
+      "sg_putt": -0.83
+    },
+    {
+      "player_name": "Puig, David",
+      "sg_ott": 2.09,
+      "sg_app": -1.02,
+      "sg_arg": 0.75,
+      "sg_putt": -0.56
+    },
+    {
+      "player_name": "Wallace, Matt",
+      "sg_ott": 0.95,
+      "sg_app": 0.12,
+      "sg_arg": 0.83,
+      "sg_putt": -0.63
+    },
+    {
+      "player_name": "Lowry, Shane",
+      "sg_ott": 0.02,
+      "sg_app": 1.25,
+      "sg_arg": 2.27,
+      "sg_putt": 0.72
+    },
+    {
+      "player_name": "Pendrith, Taylor",
+      "sg_ott": -0.13,
+      "sg_app": 0.74,
+      "sg_arg": 0.51,
+      "sg_putt": -0.86
+    },
+    {
+      "player_name": "Lindberg, Mikael",
+      "sg_ott": 1.69,
+      "sg_app": 0.5,
+      "sg_arg": -0.48,
+      "sg_putt": -0.44
+    },
+    {
+      "player_name": "Hisatsune, Ryo",
+      "sg_ott": 2.18,
+      "sg_app": 1.75,
+      "sg_arg": -0.21,
+      "sg_putt": 1.55
+    },
+    {
+      "player_name": "Aberg, Ludvig",
+      "sg_ott": -0.17,
+      "sg_app": 0.68,
+      "sg_arg": 0.77,
+      "sg_putt": -1.01
+    },
+    {
+      "player_name": "McClure, Paul",
+      "sg_ott": 0.25,
+      "sg_app": -0.33,
+      "sg_arg": 0.54,
+      "sg_putt": -3.2
+    },
+    {
+      "player_name": "Novak, Andrew",
+      "sg_ott": 0.78,
+      "sg_app": 1.66,
+      "sg_arg": 0.39,
+      "sg_putt": 0.43
+    },
+    {
+      "player_name": "Rose, Justin",
+      "sg_ott": -1.46,
+      "sg_app": 1.11,
+      "sg_arg": 2.16,
+      "sg_putt": 0.45
+    },
+    {
+      "player_name": "McIlroy, Rory",
+      "sg_ott": 0.1,
+      "sg_app": -0.94,
+      "sg_arg": -0.13,
+      "sg_putt": -0.76
+    },
+    {
+      "player_name": "Hojgaard, Nicolai",
+      "sg_ott": 1.52,
+      "sg_app": 1.09,
+      "sg_arg": -0.33,
+      "sg_putt": 0.98
+    },
+    {
+      "player_name": "Im, Sungjae",
+      "sg_ott": 0.65,
+      "sg_app": -0.9,
+      "sg_arg": 0.75,
+      "sg_putt": -1.24
+    },
+    {
+      "player_name": "Kim, Si Woo",
+      "sg_ott": 0.95,
+      "sg_app": 0.23,
+      "sg_arg": 0.22,
+      "sg_putt": -0.14
+    },
+    {
+      "player_name": "Penge, Marco",
+      "sg_ott": -1.1,
+      "sg_app": 0.57,
+      "sg_arg": -0.16,
+      "sg_putt": -2.04
+    },
+    {
+      "player_name": "Holt, Ian",
+      "sg_ott": -0.06,
+      "sg_app": -0.5,
+      "sg_arg": 1.03,
+      "sg_putt": -2.2
+    },
+    {
+      "player_name": "Brown, Dan",
+      "sg_ott": 0.24,
+      "sg_app": 3.66,
+      "sg_arg": -0.4,
+      "sg_putt": 0.75
+    },
+    {
+      "player_name": "Fleetwood, Tommy",
+      "sg_ott": 1.37,
+      "sg_app": -0.57,
+      "sg_arg": -0.01,
+      "sg_putt": -0.53
+    },
+    {
+      "player_name": "Smylie, Elvis",
+      "sg_ott": 0.06,
+      "sg_app": 1.51,
+      "sg_arg": -0.21,
+      "sg_putt": -1.09
+    },
+    {
+      "player_name": "Burns, Sam",
+      "sg_ott": -0.36,
+      "sg_app": 1.86,
+      "sg_arg": 0.38,
+      "sg_putt": 0.38
+    },
+    {
+      "player_name": "Straka, Sepp",
+      "sg_ott": -1.06,
+      "sg_app": 1.57,
+      "sg_arg": 0.07,
+      "sg_putt": -1.31
+    },
+    {
+      "player_name": "Fowler, Rickie",
+      "sg_ott": 0.29,
+      "sg_app": 1.01,
+      "sg_arg": 0.55,
+      "sg_putt": 0.41
+    },
+    {
+      "player_name": "Harrington, Padraig",
+      "sg_ott": -2.33,
+      "sg_app": 1.24,
+      "sg_arg": 1.17,
+      "sg_putt": -1.81
+    },
+    {
+      "player_name": "Bridgeman, Jacob",
+      "sg_ott": 0.6,
+      "sg_app": -0.88,
+      "sg_arg": 0.4,
+      "sg_putt": -1.85
+    },
+    {
+      "player_name": "Woodland, Gary",
+      "sg_ott": 1.03,
+      "sg_app": -0.17,
+      "sg_arg": 0.03,
+      "sg_putt": -0.63
+    },
+    {
+      "player_name": "Reitan, Kristoffer",
+      "sg_ott": -0.12,
+      "sg_app": 0.1,
+      "sg_arg": 1.47,
+      "sg_putt": -0.19
+    },
+    {
+      "player_name": "Berger, Daniel",
+      "sg_ott": -0.45,
+      "sg_app": 0.35,
+      "sg_arg": 0.17,
+      "sg_putt": -1.8
+    },
+    {
+      "player_name": "Fox, Ryan",
+      "sg_ott": 0,
+      "sg_app": 0.96,
+      "sg_arg": 0.68,
+      "sg_putt": 0.62
+    },
+    {
+      "player_name": "Schmid, Matti",
+      "sg_ott": -0.05,
+      "sg_app": 2.49,
+      "sg_arg": -0.23,
+      "sg_putt": 1.04
+    },
+    {
+      "player_name": "Hoey, Rico",
+      "sg_ott": -0.52,
+      "sg_app": 1.34,
+      "sg_arg": 1.01,
+      "sg_putt": 0.44
+    },
+    {
+      "player_name": "Gotterup, Chris",
+      "sg_ott": 1.26,
+      "sg_app": -0.25,
+      "sg_arg": -0.46,
+      "sg_putt": -0.28
+    },
+    {
+      "player_name": "Walker, Jimmy",
+      "sg_ott": -0.1,
+      "sg_app": 1.51,
+      "sg_arg": -0.24,
+      "sg_putt": 0.09
+    },
+    {
+      "player_name": "Morikawa, Collin",
+      "sg_ott": -0.38,
+      "sg_app": 1.45,
+      "sg_arg": 1.13,
+      "sg_putt": 1.08
+    },
+    {
+      "player_name": "Grillo, Emiliano",
+      "sg_ott": -0.63,
+      "sg_app": -0.32,
+      "sg_arg": -0.22,
+      "sg_putt": -2.56
+    },
+    {
+      "player_name": "McNealy, Maverick",
+      "sg_ott": -0.09,
+      "sg_app": 1.34,
+      "sg_arg": 0.99,
+      "sg_putt": 1.02
+    },
+    {
+      "player_name": "Gerard, Ryan",
+      "sg_ott": 0.21,
+      "sg_app": 0.83,
+      "sg_arg": 1.05,
+      "sg_putt": 1.17
+    },
+    {
+      "player_name": "Cauley, Bud",
+      "sg_ott": -0.1,
+      "sg_app": 1.23,
+      "sg_arg": 0.67,
+      "sg_putt": 1.46
+    },
+    {
+      "player_name": "Brennan, Michael",
+      "sg_ott": 1.98,
+      "sg_app": -0.45,
+      "sg_arg": -1.13,
+      "sg_putt": -0.14
+    },
+    {
+      "player_name": "Cink, Stewart",
+      "sg_ott": 0.35,
+      "sg_app": -1.43,
+      "sg_arg": 0.53,
+      "sg_putt": -1.18
+    },
+    {
+      "player_name": "English, Harris",
+      "sg_ott": -0.15,
+      "sg_app": 0.76,
+      "sg_arg": 0.34,
+      "sg_putt": 0.32
+    },
+    {
+      "player_name": "Gumberg, Jordan",
+      "sg_ott": 1.5,
+      "sg_app": -0.78,
+      "sg_arg": -0.59,
+      "sg_putt": -0.87
+    },
+    {
+      "player_name": "Blanchet, Chandler",
+      "sg_ott": 1.33,
+      "sg_app": 0.78,
+      "sg_arg": 0.31,
+      "sg_putt": 0.85
+    },
+    {
+      "player_name": "Hojgaard, Rasmus",
+      "sg_ott": 0.74,
+      "sg_app": -0.94,
+      "sg_arg": 0.36,
+      "sg_putt": 0.09
+    },
+    {
+      "player_name": "Johnson, Dustin",
+      "sg_ott": 1.18,
+      "sg_app": -0.34,
+      "sg_arg": -0.65,
+      "sg_putt": 0.07
+    },
+    {
+      "player_name": "DeChambeau, Bryson",
+      "sg_ott": 0.82,
+      "sg_app": -0.07,
+      "sg_arg": -3.5,
+      "sg_putt": -0.99
+    },
+    {
+      "player_name": "Bide, Francisco",
+      "sg_ott": 0.03,
+      "sg_app": -1.31,
+      "sg_arg": 0.38,
+      "sg_putt": -2.84
+    },
+    {
+      "player_name": "Ayora, Angel",
+      "sg_ott": 1.11,
+      "sg_app": -1,
+      "sg_arg": 0.19,
+      "sg_putt": -0.04
+    },
+    {
+      "player_name": "Echavarria, Nico",
+      "sg_ott": -1.63,
+      "sg_app": -0.11,
+      "sg_arg": 0.92,
+      "sg_putt": -1.92
+    },
+    {
+      "player_name": "Li, Haotong",
+      "sg_ott": -0.65,
+      "sg_app": 2.27,
+      "sg_arg": -1.27,
+      "sg_putt": 0.91
+    },
+    {
+      "player_name": "Jones, Jared",
+      "sg_ott": 0.19,
+      "sg_app": -3.14,
+      "sg_arg": -1.24,
+      "sg_putt": -3.54
+    },
+    {
+      "player_name": "Clark, Wyndham",
+      "sg_ott": -2.49,
+      "sg_app": 0.56,
+      "sg_arg": 0.22,
+      "sg_putt": -1.03
+    },
+    {
+      "player_name": "Kaymer, Martin",
+      "sg_ott": 0.07,
+      "sg_app": 2.36,
+      "sg_arg": 0.4,
+      "sg_putt": 2.43
+    },
+    {
+      "player_name": "Thomas, Justin",
+      "sg_ott": 0.88,
+      "sg_app": 0.91,
+      "sg_arg": -1.1,
+      "sg_putt": 2.57
+    },
+    {
+      "player_name": "Hall, Harry",
+      "sg_ott": -1.21,
+      "sg_app": 0.55,
+      "sg_arg": 0.7,
+      "sg_putt": 0.23
+    },
+    {
+      "player_name": "Mitchell, Keith",
+      "sg_ott": -0.67,
+      "sg_app": 0.17,
+      "sg_arg": -0.24,
+      "sg_putt": 0
+    },
+    {
+      "player_name": "Bhatia, Akshay",
+      "sg_ott": -0.19,
+      "sg_app": 0.39,
+      "sg_arg": 0.83,
+      "sg_putt": 0.24
+    },
+    {
+      "player_name": "Matsuyama, Hideki",
+      "sg_ott": 0.31,
+      "sg_app": 0.76,
+      "sg_arg": -0.84,
+      "sg_putt": 2.04
+    },
+    {
+      "player_name": "Scheffler, Scottie",
+      "sg_ott": 1.25,
+      "sg_app": 0.57,
+      "sg_arg": 0.07,
+      "sg_putt": 3.37
+    },
+    {
+      "player_name": "McCarty, Matt",
+      "sg_ott": -1.11,
+      "sg_app": -0.87,
+      "sg_arg": -0.11,
+      "sg_putt": -2.64
+    },
+    {
+      "player_name": "Stevens, Sam",
+      "sg_ott": -0.21,
+      "sg_app": 0.76,
+      "sg_arg": 0.49,
+      "sg_putt": 2.22
+    },
+    {
+      "player_name": "Bradley, Keegan",
+      "sg_ott": 0.41,
+      "sg_app": -1.73,
+      "sg_arg": -0.4,
+      "sg_putt": -0.01
+    },
+    {
+      "player_name": "Sullivan, Andy",
+      "sg_ott": 0.01,
+      "sg_app": -0.01,
+      "sg_arg": 0.21,
+      "sg_putt": 0.05
+    },
+    {
+      "player_name": "Shattuck, Braden",
+      "sg_ott": -2.44,
+      "sg_app": -2.19,
+      "sg_arg": 0.43,
+      "sg_putt": -4.53
+    },
+    {
+      "player_name": "Young, Cameron",
+      "sg_ott": 1.69,
+      "sg_app": -0.9,
+      "sg_arg": -1.03,
+      "sg_putt": 1.51
+    },
+    {
+      "player_name": "Hillier, Daniel",
+      "sg_ott": 0.42,
+      "sg_app": -0.44,
+      "sg_arg": 0.07,
+      "sg_putt": 1.21
+    },
+    {
+      "player_name": "Highsmith, Joe",
+      "sg_ott": -0.95,
+      "sg_app": -0.54,
+      "sg_arg": 0.69,
+      "sg_putt": 0.07
+    },
+    {
+      "player_name": "Valimaki, Sami",
+      "sg_ott": 0.01,
+      "sg_app": -0.86,
+      "sg_arg": 0.23,
+      "sg_putt": -0.12
+    },
+    {
+      "player_name": "Homa, Max",
+      "sg_ott": 0.96,
+      "sg_app": -1.8,
+      "sg_arg": -1.08,
+      "sg_putt": -0.82
+    },
+    {
+      "player_name": "Yang, Y.E.",
+      "sg_ott": -0.17,
+      "sg_app": 0.42,
+      "sg_arg": -0.72,
+      "sg_putt": 0.73
+    },
+    {
+      "player_name": "Putnam, Andrew",
+      "sg_ott": -0.1,
+      "sg_app": -0.43,
+      "sg_arg": 1.7,
+      "sg_putt": 2.1
+    },
+    {
+      "player_name": "Bezuidenhout, Christiaan",
+      "sg_ott": -0.93,
+      "sg_app": -0.29,
+      "sg_arg": 1.03,
+      "sg_putt": 0.45
+    },
+    {
+      "player_name": "Schenk, Adam",
+      "sg_ott": -0.41,
+      "sg_app": 0.33,
+      "sg_arg": -2.33,
+      "sg_putt": -0.33
+    },
+    {
+      "player_name": "Jarvis, Casey",
+      "sg_ott": -0.48,
+      "sg_app": 1.16,
+      "sg_arg": 0.1,
+      "sg_putt": 1.48
+    },
+    {
+      "player_name": "Higa, Kazuki",
+      "sg_ott": 0.47,
+      "sg_app": 2.19,
+      "sg_arg": -2.14,
+      "sg_putt": 0.74
+    },
+    {
+      "player_name": "Lipsky, David",
+      "sg_ott": -0.38,
+      "sg_app": -0.76,
+      "sg_arg": 0.17,
+      "sg_putt": -0.76
+    },
+    {
+      "player_name": "Kaneko, Kota",
+      "sg_ott": -0.9,
+      "sg_app": 1.33,
+      "sg_arg": -0.73,
+      "sg_putt": -0.44
+    },
+    {
+      "player_name": "Wiseman, Timothy",
+      "sg_ott": 1.29,
+      "sg_app": -2.08,
+      "sg_arg": -0.81,
+      "sg_putt": -1.15
+    },
+    {
+      "player_name": "Fitzpatrick, Alex",
+      "sg_ott": 0.25,
+      "sg_app": 1.03,
+      "sg_arg": -1.85,
+      "sg_putt": 0.84
+    },
+    {
+      "player_name": "Smyth, Trav",
+      "sg_ott": -1.44,
+      "sg_app": -0.21,
+      "sg_arg": 0.48,
+      "sg_putt": -0.57
+    },
+    {
+      "player_name": "Parry, John",
+      "sg_ott": -0.08,
+      "sg_app": -0.89,
+      "sg_arg": 0,
+      "sg_putt": 0.22
+    },
+    {
+      "player_name": "Haynes, Zach",
+      "sg_ott": -0.94,
+      "sg_app": -1.7,
+      "sg_arg": 0.56,
+      "sg_putt": -1.66
+    },
+    {
+      "player_name": "Castillo, Ricky",
+      "sg_ott": -1.19,
+      "sg_app": 0.69,
+      "sg_arg": -1.31,
+      "sg_putt": 0.07
+    },
+    {
+      "player_name": "Smalley, Alex",
+      "sg_ott": -0.15,
+      "sg_app": 1.62,
+      "sg_arg": 0.46,
+      "sg_putt": 3.34
+    },
+    {
+      "player_name": "Yellamaraju, Sudarshan",
+      "sg_ott": 0.97,
+      "sg_app": -1.81,
+      "sg_arg": -1.38,
+      "sg_putt": -0.53
+    },
+    {
+      "player_name": "Hoge, Tom",
+      "sg_ott": -0.72,
+      "sg_app": -0.56,
+      "sg_arg": 0.76,
+      "sg_putt": 0.79
+    },
+    {
+      "player_name": "Noren, Alex",
+      "sg_ott": -0.38,
+      "sg_app": -1.26,
+      "sg_arg": 1.54,
+      "sg_putt": 1.37
+    },
+    {
+      "player_name": "Donald, Luke",
+      "sg_ott": -0.95,
+      "sg_app": -0.57,
+      "sg_arg": 1.77,
+      "sg_putt": 1.01
+    },
+    {
+      "player_name": "Wiesberger, Bernd",
+      "sg_ott": -0.4,
+      "sg_app": -1,
+      "sg_arg": 0.64,
+      "sg_putt": 1.01
+    },
+    {
+      "player_name": "Snedeker, Brandt",
+      "sg_ott": 0.01,
+      "sg_app": -0.19,
+      "sg_arg": -0.41,
+      "sg_putt": 0.86
+    },
+    {
+      "player_name": "Vermeer, Ryan",
+      "sg_ott": -2.66,
+      "sg_app": -1.28,
+      "sg_arg": 0.73,
+      "sg_putt": -1.52
+    },
+    {
+      "player_name": "Harman, Brian",
+      "sg_ott": -1.63,
+      "sg_app": 1.95,
+      "sg_arg": -0.26,
+      "sg_putt": 2.2
+    },
+    {
+      "player_name": "Lenahan, Ryan",
+      "sg_ott": -1.27,
+      "sg_app": -0.81,
+      "sg_arg": 0.62,
+      "sg_putt": -1.28
+    },
+    {
+      "player_name": "Horschel, Billy",
+      "sg_ott": -0.32,
+      "sg_app": -0.62,
+      "sg_arg": -1.01,
+      "sg_putt": 0.21
+    },
+    {
+      "player_name": "Kern, Ben",
+      "sg_ott": -0.62,
+      "sg_app": -0.22,
+      "sg_arg": -0.85,
+      "sg_putt": -0.04
+    },
+    {
+      "player_name": "Saddier, Adrien",
+      "sg_ott": 0.1,
+      "sg_app": -1.61,
+      "sg_arg": -1.33,
+      "sg_putt": 0.1
+    },
+    {
+      "player_name": "Schaper, Jayden",
+      "sg_ott": 0.17,
+      "sg_app": -1.07,
+      "sg_arg": -1.55,
+      "sg_putt": -0.28
+    },
+    {
+      "player_name": "Kim, Michael",
+      "sg_ott": 1.04,
+      "sg_app": -2.01,
+      "sg_arg": -0.49,
+      "sg_putt": 0.72
+    },
+    {
+      "player_name": "Kartrude, Michael",
+      "sg_ott": 0.39,
+      "sg_app": -3.94,
+      "sg_arg": -0.75,
+      "sg_putt": -2.44
+    },
+    {
+      "player_name": "Rai, Aaron",
+      "sg_ott": 0.19,
+      "sg_app": -0.23,
+      "sg_arg": -0.29,
+      "sg_putt": 2.6
+    },
+    {
+      "player_name": "Collet, Tyler",
+      "sg_ott": -0.42,
+      "sg_app": -0.84,
+      "sg_arg": -0.94,
+      "sg_putt": -0.54
+    },
+    {
+      "player_name": "Jaeger, Stephan",
+      "sg_ott": 0.71,
+      "sg_app": -0.19,
+      "sg_arg": 0.46,
+      "sg_putt": 4.28
+    },
+    {
+      "player_name": "Rodgers, Patrick",
+      "sg_ott": 0.16,
+      "sg_app": -2.45,
+      "sg_arg": -1.43,
+      "sg_putt": -1.01
+    },
+    {
+      "player_name": "McCarthy, Denny",
+      "sg_ott": -0.49,
+      "sg_app": -0.82,
+      "sg_arg": 0.27,
+      "sg_putt": 2.31
+    },
+    {
+      "player_name": "Taylor, Nick",
+      "sg_ott": 0.24,
+      "sg_app": -0.91,
+      "sg_arg": 0.89,
+      "sg_putt": 3.04
+    },
+    {
+      "player_name": "Smotherman, Austin",
+      "sg_ott": -0.62,
+      "sg_app": -0.69,
+      "sg_arg": -0.14,
+      "sg_putt": 1.71
+    },
+    {
+      "player_name": "McGreevy, Max",
+      "sg_ott": -0.58,
+      "sg_app": -2.48,
+      "sg_arg": -0.24,
+      "sg_putt": -0.43
+    },
+    {
+      "player_name": "Keefer, Johnny",
+      "sg_ott": 0.8,
+      "sg_app": -1.2,
+      "sg_arg": -1.21,
+      "sg_putt": 1.88
+    },
+    {
+      "player_name": "Griffin, Ben",
+      "sg_ott": -0.21,
+      "sg_app": -0.74,
+      "sg_arg": -0.44,
+      "sg_putt": 2.64
+    },
+    {
+      "player_name": "Neergaard-Petersen, Rasmus",
+      "sg_ott": 1.45,
+      "sg_app": -2.7,
+      "sg_arg": -0.47,
+      "sg_putt": 1.99
+    },
+    {
+      "player_name": "Higgo, Garrick",
+      "sg_ott": -1.31,
+      "sg_app": 0.16,
+      "sg_arg": 0.61,
+      "sg_putt": 3.8
+    },
+    {
+      "player_name": "Block, Michael",
+      "sg_ott": -0.38,
+      "sg_app": 0.04,
+      "sg_arg": 0.33,
+      "sg_putt": 2.28
+    },
+    {
+      "player_name": "Campbell, Brian",
+      "sg_ott": -0.67,
+      "sg_app": -0.61,
+      "sg_arg": 0.08,
+      "sg_putt": 1.46
+    },
+    {
+      "player_name": "Riley, Davis",
+      "sg_ott": -1.13,
+      "sg_app": -2.97,
+      "sg_arg": -0.81,
+      "sg_putt": -0.82
+    },
+    {
+      "player_name": "Sapp, Garrett",
+      "sg_ott": -1.9,
+      "sg_app": -0.21,
+      "sg_arg": -0.5,
+      "sg_putt": -0.12
+    },
+    {
+      "player_name": "Smith, Cameron",
+      "sg_ott": -0.63,
+      "sg_app": 0.51,
+      "sg_arg": -0.46,
+      "sg_putt": 3.85
+    },
+    {
+      "player_name": "Mouw, William",
+      "sg_ott": -0.66,
+      "sg_app": -2.05,
+      "sg_arg": -0.31,
+      "sg_putt": 1.27
+    },
+    {
+      "player_name": "Potgieter, Aldrich",
+      "sg_ott": -0.47,
+      "sg_app": 1,
+      "sg_arg": -0.47,
+      "sg_putt": 5.2
+    },
+    {
+      "player_name": "Geddes, Mark",
+      "sg_ott": -1.96,
+      "sg_app": -1.03,
+      "sg_arg": -3.14,
+      "sg_putt": -2.61
+    },
+    {
+      "player_name": "Glover, Lucas",
+      "sg_ott": -0.83,
+      "sg_app": -0.55,
+      "sg_arg": -2.42,
+      "sg_putt": 0.06
+    },
+    {
+      "player_name": "Droemer, Jesse",
+      "sg_ott": -2.11,
+      "sg_app": -2.02,
+      "sg_arg": 0.13,
+      "sg_putt": -0.74
+    },
+    {
+      "player_name": "Fisk, Steven",
+      "sg_ott": -0.5,
+      "sg_app": -2.6,
+      "sg_arg": -1.48,
+      "sg_putt": 0.84
+    },
+    {
+      "player_name": "Dufner, Jason",
+      "sg_ott": 0.1,
+      "sg_app": -2.17,
+      "sg_arg": -1.85,
+      "sg_putt": 1.19
+    },
+    {
+      "player_name": "Gabriele, Chris",
+      "sg_ott": -0.69,
+      "sg_app": -2.73,
+      "sg_arg": -1.19,
+      "sg_putt": -0.12
+    },
+    {
+      "player_name": "Hurt, Austin",
+      "sg_ott": -0.95,
+      "sg_app": -3.73,
+      "sg_arg": -1.32,
+      "sg_putt": -0.74
+    },
+    {
+      "player_name": "Coody, Pierceson",
+      "sg_ott": -0.13,
+      "sg_app": -1.79,
+      "sg_arg": -0.69,
+      "sg_putt": 3.88
+    },
+    {
+      "player_name": "Berg, Derek",
+      "sg_ott": -1.1,
+      "sg_app": -3.48,
+      "sg_arg": -1.29,
+      "sg_putt": 0.13
+    },
+    {
+      "player_name": "Polland, Ben",
+      "sg_ott": -1.46,
+      "sg_app": -1.66,
+      "sg_arg": -0.55,
+      "sg_putt": 2.93
+    },
+    {
+      "player_name": "Fisher, Bryce",
+      "sg_ott": -1.71,
+      "sg_app": -2.32,
+      "sg_arg": -2.91,
+      "sg_putt": 0.2
+    },
+    {
+      "player_name": "Micheel, Shaun",
+      "sg_ott": -1.57,
+      "sg_app": -2.04,
+      "sg_arg": -2.96,
+      "sg_putt": 1.83
+    }
+  ],
+  "r2": [
+    {
+      "player_name": "Riley, Davis",
+      "sg_ott": 0.39,
+      "sg_app": 0.95,
+      "sg_arg": 1.85,
+      "sg_putt": -3.59
+    },
+    {
+      "player_name": "McGreevy, Max",
+      "sg_ott": 0.96,
+      "sg_app": 2.74,
+      "sg_arg": 1.03,
+      "sg_putt": -2.12
+    },
+    {
+      "player_name": "Spieth, Jordan",
+      "sg_ott": 1.06,
+      "sg_app": 0.59,
+      "sg_arg": 1.07,
+      "sg_putt": -2.11
+    },
+    {
+      "player_name": "Hoey, Rico",
+      "sg_ott": 2.02,
+      "sg_app": 1.82,
+      "sg_arg": 0.33,
+      "sg_putt": -1.56
+    },
+    {
+      "player_name": "Hovland, Viktor",
+      "sg_ott": 0.15,
+      "sg_app": 1.17,
+      "sg_arg": 1.6,
+      "sg_putt": -2.31
+    },
+    {
+      "player_name": "Scheffler, Scottie",
+      "sg_ott": 0.06,
+      "sg_app": 3.03,
+      "sg_arg": 0.02,
+      "sg_putt": -1.5
+    },
+    {
+      "player_name": "Fitzpatrick, Matt",
+      "sg_ott": 0.47,
+      "sg_app": 1.09,
+      "sg_arg": 0.9,
+      "sg_putt": -1.85
+    },
+    {
+      "player_name": "Hillier, Daniel",
+      "sg_ott": -0.09,
+      "sg_app": 2.58,
+      "sg_arg": 1.86,
+      "sg_putt": -0.74
+    },
+    {
+      "player_name": "McNealy, Maverick",
+      "sg_ott": 0.55,
+      "sg_app": 3.16,
+      "sg_arg": 1.56,
+      "sg_putt": 0.35
+    },
+    {
+      "player_name": "Ayora, Angel",
+      "sg_ott": 1.38,
+      "sg_app": -0.35,
+      "sg_arg": 0.75,
+      "sg_putt": -3.18
+    },
+    {
+      "player_name": "Niemann, Joaquin",
+      "sg_ott": 0.53,
+      "sg_app": 0.63,
+      "sg_arg": 0.44,
+      "sg_putt": -2
+    },
+    {
+      "player_name": "Bradley, Keegan",
+      "sg_ott": 0.79,
+      "sg_app": 1.56,
+      "sg_arg": -0.31,
+      "sg_putt": -1.42
+    },
+    {
+      "player_name": "Conners, Corey",
+      "sg_ott": 0.02,
+      "sg_app": 1.86,
+      "sg_arg": 0.15,
+      "sg_putt": -2.43
+    },
+    {
+      "player_name": "Thomas, Justin",
+      "sg_ott": 0.08,
+      "sg_app": 2.39,
+      "sg_arg": 0.66,
+      "sg_putt": 0.48
+    },
+    {
+      "player_name": "Poston, J.T.",
+      "sg_ott": 1.54,
+      "sg_app": 0.28,
+      "sg_arg": -0.56,
+      "sg_putt": -2.66
+    },
+    {
+      "player_name": "Reitan, Kristoffer",
+      "sg_ott": 0.78,
+      "sg_app": 2.62,
+      "sg_arg": -1.15,
+      "sg_putt": -1.64
+    },
+    {
+      "player_name": "Gumberg, Jordan",
+      "sg_ott": 0.6,
+      "sg_app": 1.34,
+      "sg_arg": 0.04,
+      "sg_putt": -2.38
+    },
+    {
+      "player_name": "Aberg, Ludvig",
+      "sg_ott": 1.22,
+      "sg_app": 3.46,
+      "sg_arg": 0.31,
+      "sg_putt": 1.62
+    },
+    {
+      "player_name": "McIlroy, Rory",
+      "sg_ott": 1.36,
+      "sg_app": 1.34,
+      "sg_arg": 0.73,
+      "sg_putt": 2.18
+    },
+    {
+      "player_name": "Smith, Jordan",
+      "sg_ott": -0.57,
+      "sg_app": 1.25,
+      "sg_arg": -1.31,
+      "sg_putt": -3.76
+    },
+    {
+      "player_name": "Spaun, J.J.",
+      "sg_ott": -0.31,
+      "sg_app": -0.44,
+      "sg_arg": 0.77,
+      "sg_putt": -3.41
+    },
+    {
+      "player_name": "Rai, Aaron",
+      "sg_ott": 1.05,
+      "sg_app": 2.23,
+      "sg_arg": 0.13,
+      "sg_putt": 0.2
+    },
+    {
+      "player_name": "Hatton, Tyrrell",
+      "sg_ott": 0.38,
+      "sg_app": 1.28,
+      "sg_arg": -1.24,
+      "sg_putt": -1.81
+    },
+    {
+      "player_name": "Matsuyama, Hideki",
+      "sg_ott": 0.47,
+      "sg_app": 1.78,
+      "sg_arg": 1.46,
+      "sg_putt": 1.9
+    },
+    {
+      "player_name": "Lee, Min Woo",
+      "sg_ott": 0.23,
+      "sg_app": 0.84,
+      "sg_arg": 1.15,
+      "sg_putt": 0.4
+    },
+    {
+      "player_name": "Kitayama, Kurt",
+      "sg_ott": 0.73,
+      "sg_app": -0.32,
+      "sg_arg": 2.52,
+      "sg_putt": 0.67
+    },
+    {
+      "player_name": "Rodgers, Patrick",
+      "sg_ott": -0.31,
+      "sg_app": 2.84,
+      "sg_arg": 0.35,
+      "sg_putt": -0.28
+    },
+    {
+      "player_name": "Gotterup, Chris",
+      "sg_ott": 0.78,
+      "sg_app": 3.15,
+      "sg_arg": 0.97,
+      "sg_putt": 2.71
+    },
+    {
+      "player_name": "Straka, Sepp",
+      "sg_ott": -0.77,
+      "sg_app": 1.55,
+      "sg_arg": 0.49,
+      "sg_putt": -1.66
+    },
+    {
+      "player_name": "Harrington, Padraig",
+      "sg_ott": -0.53,
+      "sg_app": 3.32,
+      "sg_arg": 0.35,
+      "sg_putt": 0.47
+    },
+    {
+      "player_name": "Higgo, Garrick",
+      "sg_ott": 0.63,
+      "sg_app": 0.07,
+      "sg_arg": -1.37,
+      "sg_putt": -2.73
+    },
+    {
+      "player_name": "McKibbin, Tom",
+      "sg_ott": 0.48,
+      "sg_app": 0.28,
+      "sg_arg": -0.04,
+      "sg_putt": -1.11
+    },
+    {
+      "player_name": "Kirk, Chris",
+      "sg_ott": -0.26,
+      "sg_app": 2.73,
+      "sg_arg": -0.12,
+      "sg_putt": 0.26
+    },
+    {
+      "player_name": "Cantlay, Patrick",
+      "sg_ott": 1.3,
+      "sg_app": 0.67,
+      "sg_arg": 0.93,
+      "sg_putt": 0.71
+    },
+    {
+      "player_name": "Lipsky, David",
+      "sg_ott": -0.86,
+      "sg_app": 1.41,
+      "sg_arg": 1.62,
+      "sg_putt": -1.57
+    },
+    {
+      "player_name": "English, Harris",
+      "sg_ott": 0.78,
+      "sg_app": 2.77,
+      "sg_arg": 0.28,
+      "sg_putt": 1.78
+    },
+    {
+      "player_name": "Gerard, Ryan",
+      "sg_ott": 0.03,
+      "sg_app": 2.42,
+      "sg_arg": -1.09,
+      "sg_putt": -0.76
+    },
+    {
+      "player_name": "Hall, Harry",
+      "sg_ott": 0.48,
+      "sg_app": -1.12,
+      "sg_arg": 0.57,
+      "sg_putt": -2.32
+    },
+    {
+      "player_name": "Stevens, Sam",
+      "sg_ott": 1.78,
+      "sg_app": -1.92,
+      "sg_arg": 0.73,
+      "sg_putt": -0.97
+    },
+    {
+      "player_name": "Jones, Jared",
+      "sg_ott": 0.3,
+      "sg_app": 0.57,
+      "sg_arg": -0.88,
+      "sg_putt": -1.39
+    },
+    {
+      "player_name": "Potgieter, Aldrich",
+      "sg_ott": 0.99,
+      "sg_app": 0.74,
+      "sg_arg": 0.48,
+      "sg_putt": 0.4
+    },
+    {
+      "player_name": "Scott, Adam",
+      "sg_ott": -0.32,
+      "sg_app": -0.01,
+      "sg_arg": -0.92,
+      "sg_putt": -2.15
+    },
+    {
+      "player_name": "Koepka, Brooks",
+      "sg_ott": 0.58,
+      "sg_app": -0.89,
+      "sg_arg": 0.63,
+      "sg_putt": 0.29
+    },
+    {
+      "player_name": "Day, Jason",
+      "sg_ott": -0.43,
+      "sg_app": 1.22,
+      "sg_arg": 0.98,
+      "sg_putt": 0.84
+    },
+    {
+      "player_name": "Neergaard-Petersen, Rasmus",
+      "sg_ott": 0.86,
+      "sg_app": 0.32,
+      "sg_arg": -0.01,
+      "sg_putt": -0.56
+    },
+    {
+      "player_name": "Penge, Marco",
+      "sg_ott": -0.37,
+      "sg_app": 0.63,
+      "sg_arg": -1.98,
+      "sg_putt": -2.67
+    },
+    {
+      "player_name": "Hisatsune, Ryo",
+      "sg_ott": 0.53,
+      "sg_app": -0.06,
+      "sg_arg": 0.04,
+      "sg_putt": -0.91
+    },
+    {
+      "player_name": "Greyserman, Max",
+      "sg_ott": 0.69,
+      "sg_app": -0.02,
+      "sg_arg": 1.88,
+      "sg_putt": 1.06
+    },
+    {
+      "player_name": "Schaper, Jayden",
+      "sg_ott": -0.32,
+      "sg_app": 0.68,
+      "sg_arg": -0.44,
+      "sg_putt": -2.31
+    },
+    {
+      "player_name": "Reed, Patrick",
+      "sg_ott": -0.21,
+      "sg_app": 0.09,
+      "sg_arg": 0.81,
+      "sg_putt": -0.08
+    },
+    {
+      "player_name": "Griffin, Ben",
+      "sg_ott": 1.48,
+      "sg_app": -1.04,
+      "sg_arg": 1.47,
+      "sg_putt": 0.69
+    },
+    {
+      "player_name": "McCarthy, Denny",
+      "sg_ott": -0.14,
+      "sg_app": 1.66,
+      "sg_arg": 0.05,
+      "sg_putt": 0.04
+    },
+    {
+      "player_name": "Smith, Cameron",
+      "sg_ott": -1.16,
+      "sg_app": 1.52,
+      "sg_arg": 1.22,
+      "sg_putt": 0.04
+    },
+    {
+      "player_name": "Kim, Si Woo",
+      "sg_ott": 0.87,
+      "sg_app": 1.06,
+      "sg_arg": 1.27,
+      "sg_putt": 2.41
+    },
+    {
+      "player_name": "Rahm, Jon",
+      "sg_ott": 0.21,
+      "sg_app": 0.04,
+      "sg_arg": 1.21,
+      "sg_putt": 1.15
+    },
+    {
+      "player_name": "Smylie, Elvis",
+      "sg_ott": -1.24,
+      "sg_app": 1.65,
+      "sg_arg": 0.94,
+      "sg_putt": -0.74
+    },
+    {
+      "player_name": "Woodland, Gary",
+      "sg_ott": 0.66,
+      "sg_app": 0.66,
+      "sg_arg": -1.43,
+      "sg_putt": -1.28
+    },
+    {
+      "player_name": "Vegas, Jhonattan",
+      "sg_ott": 1.6,
+      "sg_app": -0.14,
+      "sg_arg": -0.11,
+      "sg_putt": 0.27
+    },
+    {
+      "player_name": "Jaeger, Stephan",
+      "sg_ott": 1.25,
+      "sg_app": 1.13,
+      "sg_arg": -0.59,
+      "sg_putt": 0.82
+    },
+    {
+      "player_name": "Glover, Lucas",
+      "sg_ott": -0.16,
+      "sg_app": 0.92,
+      "sg_arg": 0.31,
+      "sg_putt": -1.46
+    },
+    {
+      "player_name": "Grillo, Emiliano",
+      "sg_ott": 1.25,
+      "sg_app": 0.04,
+      "sg_arg": -0.37,
+      "sg_putt": -0.3
+    },
+    {
+      "player_name": "Fox, Ryan",
+      "sg_ott": 1.79,
+      "sg_app": 0.27,
+      "sg_arg": -0.48,
+      "sg_putt": 1.02
+    },
+    {
+      "player_name": "Collet, Tyler",
+      "sg_ott": -0.6,
+      "sg_app": 2.62,
+      "sg_arg": 0.01,
+      "sg_putt": -0.42
+    },
+    {
+      "player_name": "Mouw, William",
+      "sg_ott": 1.31,
+      "sg_app": 1.69,
+      "sg_arg": -1.17,
+      "sg_putt": 0.78
+    },
+    {
+      "player_name": "Dufner, Jason",
+      "sg_ott": 0.04,
+      "sg_app": 1.08,
+      "sg_arg": -0.55,
+      "sg_putt": -0.97
+    },
+    {
+      "player_name": "Keefer, Johnny",
+      "sg_ott": 0.87,
+      "sg_app": -0.06,
+      "sg_arg": 0.07,
+      "sg_putt": -0.27
+    },
+    {
+      "player_name": "Hojgaard, Nicolai",
+      "sg_ott": 1.01,
+      "sg_app": -1.66,
+      "sg_arg": -0.45,
+      "sg_putt": -1.3
+    },
+    {
+      "player_name": "Theegala, Sahith",
+      "sg_ott": 0.72,
+      "sg_app": -2.06,
+      "sg_arg": 1.48,
+      "sg_putt": -0.53
+    },
+    {
+      "player_name": "DeChambeau, Bryson",
+      "sg_ott": 0.72,
+      "sg_app": 0.13,
+      "sg_arg": -0.67,
+      "sg_putt": 1.44
+    },
+    {
+      "player_name": "Fowler, Rickie",
+      "sg_ott": -0.2,
+      "sg_app": 0.28,
+      "sg_arg": 0.98,
+      "sg_putt": 0.54
+    },
+    {
+      "player_name": "Horschel, Billy",
+      "sg_ott": -0.09,
+      "sg_app": -0.59,
+      "sg_arg": 0.36,
+      "sg_putt": -1.08
+    },
+    {
+      "player_name": "McCarty, Matt",
+      "sg_ott": -0.78,
+      "sg_app": 0.43,
+      "sg_arg": 0.44,
+      "sg_putt": -1.48
+    },
+    {
+      "player_name": "Lowry, Shane",
+      "sg_ott": 0.49,
+      "sg_app": -2,
+      "sg_arg": 0.18,
+      "sg_putt": -2.06
+    },
+    {
+      "player_name": "Yellamaraju, Sudarshan",
+      "sg_ott": 0.05,
+      "sg_app": -0.7,
+      "sg_arg": -0.18,
+      "sg_putt": -1.56
+    },
+    {
+      "player_name": "Higa, Kazuki",
+      "sg_ott": -0.28,
+      "sg_app": 1.03,
+      "sg_arg": 1.11,
+      "sg_putt": -0.25
+    },
+    {
+      "player_name": "Young, Cameron",
+      "sg_ott": 0.95,
+      "sg_app": 1.02,
+      "sg_arg": 0.76,
+      "sg_putt": 2.88
+    },
+    {
+      "player_name": "Detry, Thomas",
+      "sg_ott": -0.3,
+      "sg_app": 0.16,
+      "sg_arg": 0.02,
+      "sg_putt": -0.27
+    },
+    {
+      "player_name": "Novak, Andrew",
+      "sg_ott": 0.82,
+      "sg_app": 0.06,
+      "sg_arg": 0.7,
+      "sg_putt": 1.02
+    },
+    {
+      "player_name": "Henley, Russell",
+      "sg_ott": 0.39,
+      "sg_app": -0.37,
+      "sg_arg": 0.08,
+      "sg_putt": -0.5
+    },
+    {
+      "player_name": "Fleetwood, Tommy",
+      "sg_ott": 0.57,
+      "sg_app": -0.47,
+      "sg_arg": -0.4,
+      "sg_putt": -0.08
+    },
+    {
+      "player_name": "Kartrude, Michael",
+      "sg_ott": -0.71,
+      "sg_app": -1.77,
+      "sg_arg": 0.01,
+      "sg_putt": -3.92
+    },
+    {
+      "player_name": "Schmid, Matti",
+      "sg_ott": -0.71,
+      "sg_app": -0.28,
+      "sg_arg": 1.41,
+      "sg_putt": 0.19
+    },
+    {
+      "player_name": "Coody, Pierceson",
+      "sg_ott": 0.36,
+      "sg_app": -0.34,
+      "sg_arg": -1.23,
+      "sg_putt": -1.18
+    },
+    {
+      "player_name": "Saddier, Adrien",
+      "sg_ott": -0.3,
+      "sg_app": -0.86,
+      "sg_arg": -1.06,
+      "sg_putt": -2.17
+    },
+    {
+      "player_name": "Schenk, Adam",
+      "sg_ott": -0.58,
+      "sg_app": 0.27,
+      "sg_arg": 0.93,
+      "sg_putt": 1
+    },
+    {
+      "player_name": "Hoge, Tom",
+      "sg_ott": -0.21,
+      "sg_app": 1.37,
+      "sg_arg": 0.38,
+      "sg_putt": 1.07
+    },
+    {
+      "player_name": "Valimaki, Sami",
+      "sg_ott": 0.57,
+      "sg_app": 0.8,
+      "sg_arg": 0.17,
+      "sg_putt": 1.06
+    },
+    {
+      "player_name": "Highsmith, Joe",
+      "sg_ott": -0.61,
+      "sg_app": -2.15,
+      "sg_arg": 1.7,
+      "sg_putt": -1.33
+    },
+    {
+      "player_name": "Bridgeman, Jacob",
+      "sg_ott": 0.35,
+      "sg_app": 0.56,
+      "sg_arg": -1.6,
+      "sg_putt": -0.7
+    },
+    {
+      "player_name": "Brennan, Michael",
+      "sg_ott": 1.16,
+      "sg_app": 0.19,
+      "sg_arg": -1.34,
+      "sg_putt": 0.6
+    },
+    {
+      "player_name": "Blanchet, Chandler",
+      "sg_ott": -1.32,
+      "sg_app": 0.94,
+      "sg_arg": 0.62,
+      "sg_putt": -0.63
+    },
+    {
+      "player_name": "Droemer, Jesse",
+      "sg_ott": -0.5,
+      "sg_app": -2.55,
+      "sg_arg": -0.33,
+      "sg_putt": -5.01
+    },
+    {
+      "player_name": "Clark, Wyndham",
+      "sg_ott": 0,
+      "sg_app": 0.53,
+      "sg_arg": 0.16,
+      "sg_putt": 1.91
+    },
+    {
+      "player_name": "Schauffele, Xander",
+      "sg_ott": 1.14,
+      "sg_app": -1.81,
+      "sg_arg": -1.01,
+      "sg_putt": 1.29
+    },
+    {
+      "player_name": "Castillo, Ricky",
+      "sg_ott": -0.91,
+      "sg_app": -1.25,
+      "sg_arg": 1.74,
+      "sg_putt": 0.03
+    },
+    {
+      "player_name": "MacIntyre, Robert",
+      "sg_ott": -0.22,
+      "sg_app": -2.12,
+      "sg_arg": 0.75,
+      "sg_putt": -0.8
+    },
+    {
+      "player_name": "Mitchell, Keith",
+      "sg_ott": 0.89,
+      "sg_app": 1.46,
+      "sg_arg": -1.22,
+      "sg_putt": 2.48
+    },
+    {
+      "player_name": "Cauley, Bud",
+      "sg_ott": 0.32,
+      "sg_app": 0.15,
+      "sg_arg": -0.79,
+      "sg_putt": 0.92
+    },
+    {
+      "player_name": "Homa, Max",
+      "sg_ott": -0.58,
+      "sg_app": -1.69,
+      "sg_arg": -0.13,
+      "sg_putt": -1.99
+    },
+    {
+      "player_name": "Harman, Brian",
+      "sg_ott": -0.74,
+      "sg_app": 0.76,
+      "sg_arg": -0.6,
+      "sg_putt": 0.19
+    },
+    {
+      "player_name": "Jarvis, Casey",
+      "sg_ott": 0.21,
+      "sg_app": 0.28,
+      "sg_arg": -0.19,
+      "sg_putt": 0.3
+    },
+    {
+      "player_name": "Fisk, Steven",
+      "sg_ott": 0.56,
+      "sg_app": 0.68,
+      "sg_arg": -1.42,
+      "sg_putt": 0.8
+    },
+    {
+      "player_name": "Berger, Daniel",
+      "sg_ott": -0.04,
+      "sg_app": -0.29,
+      "sg_arg": 1.37,
+      "sg_putt": 1.57
+    },
+    {
+      "player_name": "Wallace, Matt",
+      "sg_ott": -1.68,
+      "sg_app": 1.17,
+      "sg_arg": 0.71,
+      "sg_putt": 1.41
+    },
+    {
+      "player_name": "Hojgaard, Rasmus",
+      "sg_ott": 1.22,
+      "sg_app": -0.06,
+      "sg_arg": -1.13,
+      "sg_putt": 1.58
+    },
+    {
+      "player_name": "Rose, Justin",
+      "sg_ott": -1.33,
+      "sg_app": -0.55,
+      "sg_arg": 0.71,
+      "sg_putt": 0.78
+    },
+    {
+      "player_name": "Vermeer, Ryan",
+      "sg_ott": -0.82,
+      "sg_app": -3.44,
+      "sg_arg": 0.23,
+      "sg_putt": -3.37
+    },
+    {
+      "player_name": "Lindberg, Mikael",
+      "sg_ott": -0.18,
+      "sg_app": -1.15,
+      "sg_arg": 1.33,
+      "sg_putt": 1.61
+    },
+    {
+      "player_name": "Thorbjornsen, Michael",
+      "sg_ott": 1,
+      "sg_app": -1.81,
+      "sg_arg": -0.9,
+      "sg_putt": 0.32
+    },
+    {
+      "player_name": "Wiesberger, Bernd",
+      "sg_ott": 0.04,
+      "sg_app": -2.61,
+      "sg_arg": 0.27,
+      "sg_putt": -1.09
+    },
+    {
+      "player_name": "Morikawa, Collin",
+      "sg_ott": 0.6,
+      "sg_app": -0.59,
+      "sg_arg": -0.62,
+      "sg_putt": 1.22
+    },
+    {
+      "player_name": "Donald, Luke",
+      "sg_ott": -1.13,
+      "sg_app": -0.16,
+      "sg_arg": 0.87,
+      "sg_putt": 0.02
+    },
+    {
+      "player_name": "Smalley, Alex",
+      "sg_ott": 0.32,
+      "sg_app": 0.95,
+      "sg_arg": -0.14,
+      "sg_putt": 2.49
+    },
+    {
+      "player_name": "Pendrith, Taylor",
+      "sg_ott": 2.2,
+      "sg_app": -0.44,
+      "sg_arg": -2.87,
+      "sg_putt": 1.72
+    },
+    {
+      "player_name": "Snedeker, Brandt",
+      "sg_ott": 0.05,
+      "sg_app": -1.61,
+      "sg_arg": 0.32,
+      "sg_putt": -0.15
+    },
+    {
+      "player_name": "Puig, David",
+      "sg_ott": 0.52,
+      "sg_app": 1.62,
+      "sg_arg": -0.56,
+      "sg_putt": 4.02
+    },
+    {
+      "player_name": "Polland, Ben",
+      "sg_ott": -3.03,
+      "sg_app": 0.24,
+      "sg_arg": 2.22,
+      "sg_putt": 0.18
+    },
+    {
+      "player_name": "Echavarria, Nico",
+      "sg_ott": -0.1,
+      "sg_app": -0.76,
+      "sg_arg": -0.88,
+      "sg_putt": -0.66
+    },
+    {
+      "player_name": "Burns, Sam",
+      "sg_ott": 0.36,
+      "sg_app": -1.12,
+      "sg_arg": -0.02,
+      "sg_putt": 1.38
+    },
+    {
+      "player_name": "Kern, Ben",
+      "sg_ott": 0.15,
+      "sg_app": 1.99,
+      "sg_arg": -0.03,
+      "sg_putt": 3.5
+    },
+    {
+      "player_name": "Walker, Jimmy",
+      "sg_ott": -1.24,
+      "sg_app": -1.6,
+      "sg_arg": 1.16,
+      "sg_putt": 0.29
+    },
+    {
+      "player_name": "Johnson, Dustin",
+      "sg_ott": -1.94,
+      "sg_app": 1.53,
+      "sg_arg": 0.6,
+      "sg_putt": 2.42
+    },
+    {
+      "player_name": "Im, Sungjae",
+      "sg_ott": -0.06,
+      "sg_app": 0.53,
+      "sg_arg": -1.72,
+      "sg_putt": 1.86
+    },
+    {
+      "player_name": "Noren, Alex",
+      "sg_ott": 0.02,
+      "sg_app": -1.2,
+      "sg_arg": -0.2,
+      "sg_putt": 0.98
+    },
+    {
+      "player_name": "Kim, Michael",
+      "sg_ott": 0.27,
+      "sg_app": -1.88,
+      "sg_arg": 1.86,
+      "sg_putt": 2.36
+    },
+    {
+      "player_name": "Yang, Y.E.",
+      "sg_ott": -1.49,
+      "sg_app": -2.38,
+      "sg_arg": 0.42,
+      "sg_putt": -0.95
+    },
+    {
+      "player_name": "Putnam, Andrew",
+      "sg_ott": -1.47,
+      "sg_app": -0.9,
+      "sg_arg": 1.96,
+      "sg_putt": 2.01
+    },
+    {
+      "player_name": "Hurt, Austin",
+      "sg_ott": -0.27,
+      "sg_app": -2.12,
+      "sg_arg": -0.46,
+      "sg_putt": -0.55
+    },
+    {
+      "player_name": "Sullivan, Andy",
+      "sg_ott": -0.34,
+      "sg_app": 0.15,
+      "sg_arg": -1.07,
+      "sg_putt": 0.86
+    },
+    {
+      "player_name": "Taylor, Nick",
+      "sg_ott": -0.1,
+      "sg_app": -1.09,
+      "sg_arg": 0.22,
+      "sg_putt": 1.58
+    },
+    {
+      "player_name": "Fitzpatrick, Alex",
+      "sg_ott": 1.1,
+      "sg_app": -1.42,
+      "sg_arg": 0.14,
+      "sg_putt": 2.8
+    },
+    {
+      "player_name": "Smyth, Trav",
+      "sg_ott": -1.7,
+      "sg_app": 0.13,
+      "sg_arg": 0.13,
+      "sg_putt": 1.05
+    },
+    {
+      "player_name": "Li, Haotong",
+      "sg_ott": 0.34,
+      "sg_app": -0.21,
+      "sg_arg": -0.48,
+      "sg_putt": 3.95
+    },
+    {
+      "player_name": "Brown, Dan",
+      "sg_ott": -0.83,
+      "sg_app": -1.28,
+      "sg_arg": -0.45,
+      "sg_putt": 0.17
+    },
+    {
+      "player_name": "Kaneko, Kota",
+      "sg_ott": -0.29,
+      "sg_app": -0.63,
+      "sg_arg": 0.17,
+      "sg_putt": 1.36
+    },
+    {
+      "player_name": "Bide, Francisco",
+      "sg_ott": -1.23,
+      "sg_app": -2.02,
+      "sg_arg": -1.13,
+      "sg_putt": -2.01
+    },
+    {
+      "player_name": "Kaymer, Martin",
+      "sg_ott": -1.34,
+      "sg_app": -1.5,
+      "sg_arg": 0.01,
+      "sg_putt": 0.44
+    },
+    {
+      "player_name": "Wiseman, Timothy",
+      "sg_ott": -1.35,
+      "sg_app": -1.84,
+      "sg_arg": -1.94,
+      "sg_putt": -2.27
+    },
+    {
+      "player_name": "Bhatia, Akshay",
+      "sg_ott": -1.44,
+      "sg_app": -1.26,
+      "sg_arg": 0.51,
+      "sg_putt": 0.8
+    },
+    {
+      "player_name": "Cink, Stewart",
+      "sg_ott": -0.58,
+      "sg_app": -1.1,
+      "sg_arg": -0.21,
+      "sg_putt": 2.51
+    },
+    {
+      "player_name": "Micheel, Shaun",
+      "sg_ott": -2.65,
+      "sg_app": -0.11,
+      "sg_arg": 0.97,
+      "sg_putt": 1.4
+    },
+    {
+      "player_name": "Smotherman, Austin",
+      "sg_ott": 0.69,
+      "sg_app": -2.24,
+      "sg_arg": -1.93,
+      "sg_putt": 1.09
+    },
+    {
+      "player_name": "Gabriele, Chris",
+      "sg_ott": -0.67,
+      "sg_app": -1.47,
+      "sg_arg": -2.04,
+      "sg_putt": -0.22
+    },
+    {
+      "player_name": "Campbell, Brian",
+      "sg_ott": -1.33,
+      "sg_app": 0.23,
+      "sg_arg": -0.55,
+      "sg_putt": 2.26
+    },
+    {
+      "player_name": "Parry, John",
+      "sg_ott": -1.9,
+      "sg_app": 0.91,
+      "sg_arg": -0.56,
+      "sg_putt": 3.16
+    },
+    {
+      "player_name": "Sapp, Garrett",
+      "sg_ott": -1.77,
+      "sg_app": -1.58,
+      "sg_arg": 0.44,
+      "sg_putt": 1.52
+    },
+    {
+      "player_name": "Lenahan, Ryan",
+      "sg_ott": -1.28,
+      "sg_app": -3.74,
+      "sg_arg": -0.77,
+      "sg_putt": -1.61
+    },
+    {
+      "player_name": "Bezuidenhout, Christiaan",
+      "sg_ott": -0.6,
+      "sg_app": -1.41,
+      "sg_arg": -0.53,
+      "sg_putt": 3.15
+    },
+    {
+      "player_name": "Block, Michael",
+      "sg_ott": -0.81,
+      "sg_app": -3.25,
+      "sg_arg": 0.53,
+      "sg_putt": 1.15
+    },
+    {
+      "player_name": "McClure, Paul",
+      "sg_ott": 0.36,
+      "sg_app": -1.93,
+      "sg_arg": -3.05,
+      "sg_putt": 1.22
+    },
+    {
+      "player_name": "Geddes, Mark",
+      "sg_ott": -0.5,
+      "sg_app": -4.47,
+      "sg_arg": -1.37,
+      "sg_putt": -1.05
+    },
+    {
+      "player_name": "Holt, Ian",
+      "sg_ott": -1.09,
+      "sg_app": -3.42,
+      "sg_arg": -1.52,
+      "sg_putt": 0.64
+    },
+    {
+      "player_name": "Berg, Derek",
+      "sg_ott": -1.27,
+      "sg_app": -4.58,
+      "sg_arg": -0.28,
+      "sg_putt": 0.73
+    },
+    {
+      "player_name": "Haynes, Zach",
+      "sg_ott": -0.86,
+      "sg_app": -2.72,
+      "sg_arg": -2.61,
+      "sg_putt": 0.8
+    },
+    {
+      "player_name": "Shattuck, Braden",
+      "sg_ott": -0.09,
+      "sg_app": 0.35,
+      "sg_arg": -5.33,
+      "sg_putt": 2.68
+    },
+    {
+      "player_name": "Fisher, Bryce",
+      "sg_ott": -2.43,
+      "sg_app": -3.77,
+      "sg_arg": -4.07,
+      "sg_putt": -0.12
+    }
+  ]
+}

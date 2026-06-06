@@ -3,11 +3,10 @@
  * grouped into "Ball Striking" (the skill side: OTT + APP) vs the
  * "Short Game" (the variance side: ARG + PUTT).
  *
- * Numbers are widely cited PGA Tour research (DataGolf, FantasyNational,
- * @LouStagner, multiple academic studies). The thesis BirdieX is built
- * on: ball striking persists across seasons; the short game regresses
- * harder, even when a player has had a "good" year putting/chipping.
+ * Data source: `src/data/sgPersistence.json` (committed research findings,
+ * with notes on provenance). Edit the JSON to update — never hardcode here.
  */
+import sgPersistence from '../data/sgPersistence.json';
 
 interface Row {
   label: string;
@@ -17,16 +16,8 @@ interface Row {
   caption: string;
 }
 
-const ROWS: Row[] = [
-  // Ball striking — the persistent side
-  { label: 'OTT', fullName: 'Off-the-Tee', group: 'ball-striking', r: 0.69, caption: 'Most persistent skill on Tour' },
-  { label: 'APP', fullName: 'Approach',    group: 'ball-striking', r: 0.60, caption: 'Sticky, with some variance' },
-  // Short game — the regress-to-the-mean side
-  { label: 'PUTT', fullName: 'Putting',    group: 'short-game',    r: 0.54, caption: 'Nearly half regresses to the mean' },
-  { label: 'ARG', fullName: 'Around the Green', group: 'short-game', r: 0.40, caption: 'The most variance-driven category' },
-];
-
-const MAX_R = 0.8;
+const ROWS: Row[] = sgPersistence.rows as Row[];
+const MAX_R = sgPersistence.max_r_axis;
 
 export default function SgPersistenceChart() {
   const ballStriking = ROWS.filter((r) => r.group === 'ball-striking');

@@ -13,13 +13,21 @@
  * mostly noise round-to-round. The X Score subtracts putting and weights
  * OTT/APP heavily because of exactly this.
  *
- * Data computed at import time from pgaChampR1Data + pgaChampR2Data.
+ * Data source: src/data/methodologyDemoData.json — a FROZEN snapshot of
+ * the 2026 PGA Championship R1+R2 SG-by-category data. Decoupled from
+ * the live pgaChamp* event files so they can be reshaped/deleted without
+ * breaking this chart. The chart illustrates the methodology, not the
+ * current event — refreshing the snapshot is a deliberate edit, not
+ * automatic. Regenerate via scripts/build-methodology-demo.ts when the
+ * source-of-truth illustration should change.
  */
-import { roundOnlyData as r1 } from '../data/pgaChampR1Data';
-import { roundOnlyData as r2 } from '../data/pgaChampR2Data';
+import methodologyDemo from '../data/methodologyDemoData.json';
 
 interface Pair { x: number; y: number; }
 type SgKey = 'sg_ott' | 'sg_app' | 'sg_arg' | 'sg_putt';
+
+const r1 = methodologyDemo.r1 as Array<{ player_name: string; sg_ott: number; sg_app: number; sg_arg: number; sg_putt: number }>;
+const r2 = methodologyDemo.r2 as Array<{ player_name: string; sg_ott: number; sg_app: number; sg_arg: number; sg_putt: number }>;
 
 const r1Map = new Map(r1.map((p) => [p.player_name, p]));
 

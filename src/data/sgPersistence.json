@@ -1,0 +1,35 @@
+{
+  "$schema_comment": "PGA Tour SG persistence research findings — sourced from DataGolf, FantasyNational, @LouStagner and multiple academic studies. The r-value is year-over-year correlation of each SG category. Edit this file (NOT the chart component) when the research updates.",
+  "source_notes": "Widely cited PGA Tour analytics literature, last reviewed 2026-05-09.",
+  "max_r_axis": 0.8,
+  "rows": [
+    {
+      "label": "OTT",
+      "fullName": "Off-the-Tee",
+      "group": "ball-striking",
+      "r": 0.69,
+      "caption": "Most persistent skill on Tour"
+    },
+    {
+      "label": "APP",
+      "fullName": "Approach",
+      "group": "ball-striking",
+      "r": 0.60,
+      "caption": "Sticky, with some variance"
+    },
+    {
+      "label": "PUTT",
+      "fullName": "Putting",
+      "group": "short-game",
+      "r": 0.54,
+      "caption": "Nearly half regresses to the mean"
+    },
+    {
+      "label": "ARG",
+      "fullName": "Around the Green",
+      "group": "short-game",
+      "r": 0.40,
+      "caption": "The most variance-driven category"
+    }
+  ]
+}

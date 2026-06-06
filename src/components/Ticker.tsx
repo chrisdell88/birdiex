@@ -37,11 +37,28 @@ export default function Ticker() {
   return (
     <div className="border-b border-[#262626] bg-[#0a0a0a]">
       <div className="max-w-7xl mx-auto flex items-stretch">
-        <div className="flex-shrink-0 bg-[#22c55e]/10 border-r border-[#262626] px-3 md:px-4 flex items-center">
-          <span className="text-[10px] uppercase tracking-wider font-bold text-[#22c55e] whitespace-nowrap font-['Inter',system-ui,sans-serif]">
-            {isFinal ? 'Final Leaderboard' : `R${tickerRound} Tee Times / Leaderboard`}
-          </span>
-        </div>
+        {(() => {
+          // Manual override (set only when Chris explicitly tells us play is
+          // delayed / suspended; otherwise undefined). Red accent so it's
+          // clearly different from the normal green title.
+          const override = !isFinal ? currentEvent.tickerTitleOverride : null;
+          if (override) {
+            return (
+              <div className="flex-shrink-0 bg-[#ef4444]/10 border-r border-[#262626] px-3 md:px-4 flex items-center">
+                <span className="text-[10px] uppercase tracking-wider font-bold text-[#ef4444] whitespace-nowrap font-['Inter',system-ui,sans-serif]">
+                  {override}
+                </span>
+              </div>
+            );
+          }
+          return (
+            <div className="flex-shrink-0 bg-[#22c55e]/10 border-r border-[#262626] px-3 md:px-4 flex items-center">
+              <span className="text-[10px] uppercase tracking-wider font-bold text-[#22c55e] whitespace-nowrap font-['Inter',system-ui,sans-serif]">
+                {isFinal ? 'Final Leaderboard' : `R${tickerRound} Tee Times / Leaderboard`}
+              </span>
+            </div>
+          );
+        })()}
         <div className="overflow-hidden flex-1">
           <div className="ticker-track flex w-max">
             {items.map((e, i) => {

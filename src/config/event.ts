@@ -54,6 +54,13 @@ export interface CurrentEvent {
   isComplete: boolean;
   /** Header badge status text, e.g. "R2 FINAL · ROUND 3 PICKS". */
   headerBanner: string;
+  /** Optional manual override for the ticker title bar — set ONLY when
+   *  Chris explicitly tells Claude play has been delayed/suspended.
+   *  Never auto-set. Cleared when Chris says play resumed. Examples:
+   *    'R3 — SUSPENDED', 'R3 RESUMING 7:30 AM', 'DELAY — WEATHER'.
+   *  When null/undefined, ticker uses its normal "R{N} Tee Times /
+   *  Leaderboard" title. */
+  tickerTitleOverride?: string | null;
   /** ISO timestamp of the latest data pull — drives the "Last Updated" line. */
   dataUpdatedAt: string;
   /** Round-only rankings data (latest completed round). */
@@ -87,6 +94,8 @@ export const currentEvent: CurrentEvent = {
   picksRound: 3,
   isComplete: false,
   headerBanner: 'R2 FINAL · ROUND 3 PICKS',
+  // Set by Chris 2026-06-06 — R3 suspended for weather. Clear when Chris confirms resumption.
+  tickerTitleOverride: 'R3 — SUSPENDED',
   // Take the most-recent timestamp across rankings build + ticker pull so the
   // header "Last Updated" always tracks the freshest data source.
   dataUpdatedAt: new Date(generatedAt).getTime() > new Date(tickerGeneratedAt).getTime() ? generatedAt : tickerGeneratedAt,

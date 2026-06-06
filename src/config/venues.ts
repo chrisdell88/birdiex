@@ -76,8 +76,18 @@ export const VENUES: Record<EventId, VenueInfo> = {
   'the-memorial-tournament-2026': {
     eventName: 'The Memorial Tournament 2026',
     course: 'Muirfield Village Golf Club',
-    // DataGolf bar pct: 39.32 → 0.0621. Floor: 2.45 (★★+).
+    // DataGolf bar pct: 39.32 → 0.0621 → formula floor 1.95.
     predictability: 0.0621,
+    // publishedFloor LOCKED at 2.45 per Chris 2026-06-06 based on R2 backtest.
+    // R2 per-floor:
+    //   0.95: 29 bets, 15-13-1, -5.35u (-19.8% ROI)
+    //   1.45: 13 bets, 4-9-0,  -8.60u (-44.1% ROI)
+    //   1.95: 9 bets,  3-6-0,  -5.44u (-35.1% ROI)  ← formula default
+    //   2.45: 4 bets,  3-1-0,  +4.33u (+54.1% ROI)  ← published
+    //   2.95: 0 bets
+    // The 1.95–2.44 band went 0-5-0 in R2; that band drags 1.95 negative.
+    // Tiny sample (4 at 2.45); revisit after R3 + R4 grade.
+    publishedFloor: 2.45,
   },
 };
 

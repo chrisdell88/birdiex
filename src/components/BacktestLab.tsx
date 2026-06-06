@@ -38,6 +38,22 @@ const cscRoundsList = Object.entries(cscResultModules)
   .filter((x): x is { round: number; bets: BetRecord[] } => x !== null)
   .sort((a, b) => a.round - b.round);
 
+// Memorial Tournament — same dynamic-glob pattern as Charles Schwab.
+const memorialResultModules = import.meta.glob<Record<string, unknown>>(
+  '../data/memorialR*Results.ts',
+  { eager: true }
+);
+const memorialRoundsList = Object.entries(memorialResultModules)
+  .map(([path, mod]) => {
+    const m = path.match(/memorialR(\d+)Results\.ts$/);
+    if (!m) return null;
+    const round = Number(m[1]);
+    const bets = (mod as Record<string, unknown>)[`r${round}Results`] as BetRecord[] | undefined;
+    return Array.isArray(bets) ? { round, bets } : null;
+  })
+  .filter((x): x is { round: number; bets: BetRecord[] } => x !== null)
+  .sort((a, b) => a.round - b.round);
+
 // Masters 2026 — bets live in resultsData.betLog with a `dataSet` field
 // distinguishing "round-only" vs "cumulative". Each round can have both
 // variants. To avoid double-counting in the all-time roll-up, we include
@@ -55,10 +71,14 @@ interface EventBucket {
 }
 
 // Every graded round across every event, ORDERED NEWEST EVENT FIRST.
-// Charles Schwab's per-round entries are derived dynamically from the
-// Vite glob above, so the auto-roll just needs to drop a new
-// cscR<N>Results.ts file and it shows up here on the next deploy.
+// Charles Schwab + Memorial entries are derived dynamically from the
+// Vite globs above, so the auto-roll just needs to drop a new
+// <prefix>R<N>Results.ts file and it shows up here on the next deploy.
 const EVENTS: EventBucket[] = [
+  {
+    label: 'The Memorial Tournament 2026',
+    rounds: memorialRoundsList.map((r) => ({ label: `R${r.round}`, bets: r.bets })),
+  },
   {
     label: 'Charles Schwab Challenge 2026',
     rounds: cscRoundsList.map((r) => ({ label: `R${r.round}`, bets: r.bets })),
@@ -119,6 +139,7 @@ function computeStats(bets: BetRecord[], lower: number, upper: number | undefine
 // Map each Lab EVENT label → the venues.ts EventId so we can pass the
 // matching venue floor into the StatsTable for visual highlighting.
 const LABEL_TO_EVENT_ID: Record<string, EventId> = {
+  'The Memorial Tournament 2026': 'the-memorial-tournament-2026',
   'Charles Schwab Challenge 2026': 'charles-schwab-challenge-2026',
   'CJ Cup Byron Nelson 2026': 'cj-cup-byron-nelson-2026',
   'PGA Championship 2026': 'pga-2026',

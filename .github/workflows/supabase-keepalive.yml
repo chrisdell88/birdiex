@@ -1,0 +1,91 @@
+name: Supabase keepalive + healthcheck
+
+# Free-tier Supabase projects auto-pause after 7 days of no activity.
+# When that happens, the lab page password check fails (503), the alerts
+# email signup breaks, and notify.ts can't read the subscriber list —
+# all SILENTLY. This workflow:
+#
+#   1. Pings the project once a day to keep the inactivity counter at 0
+#      (a single read request resets the timer).
+#   2. Verifies the RPC returns a 200 — if not (project paused, RPC missing,
+#      bad anon key), opens a GitHub issue so we know within 24 hrs instead
+#      of finding out when something breaks.
+#
+# Cost: 1 free-tier workflow run / day. Effort to maintain: zero.
+
+on:
+  schedule:
+    # Daily 11am UTC = 7am ET (EDT) — outside tournament play hours so it
+    # doesn't compete with auto-roll workflow runs.
+    - cron: '0 11 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: supabase-keepalive
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping verify_lab_password RPC
+        id: ping
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          # Use a deliberately-wrong password — the RPC still executes
+          # (returns boolean false), which counts as activity. We DO NOT
+          # need to know the real password to keep the DB alive.
+          STATUS=$(curl -sS -o /tmp/body.json -w "%{http_code}" \
+            -X POST "$SUPABASE_URL/rest/v1/rpc/verify_lab_password" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"pw": "keepalive-ping-do-not-match"}')
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+          BODY=$(cat /tmp/body.json | head -c 200)
+          echo "body=$BODY" >> "$GITHUB_OUTPUT"
+          echo "HTTP $STATUS — body: $BODY"
+          # 2xx = healthy. Anything else = problem.
+          if [ "$STATUS" != "200" ]; then
+            echo "::warning::Supabase RPC returned non-200 (got $STATUS)"
+            exit 1
+          fi
+
+      - name: Open issue if Supabase ping failed
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ steps.ping.outputs.status }}';
+            const body = `${{ steps.ping.outputs.body }}`;
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Supabase keepalive failed — HTTP ${status}`,
+              body: [
+                '## Supabase RPC ping returned a non-200 status.',
+                '',
+                `**Status:** ${status}`,
+                `**Body:** \`${body}\``,
+                '',
+                '### Common causes',
+                '- 503: free-tier project auto-paused after 7 days inactivity → resume at https://supabase.com/dashboard/project/xcgjmzinpanrbseyogqe',
+                '- 401: anon key rotated / invalid → check Vercel + GitHub Actions secrets',
+                '- 404: verify_lab_password RPC dropped / not deployed → re-apply supabase/schema.sql',
+                '- 5xx: Supabase outage → check https://status.supabase.com',
+                '',
+                '### Impact while broken',
+                '- Lab page password verification fails (users see "Wrong password")',
+                '- Alerts subscribe page breaks',
+                '- notify.ts cannot read the subscriber list (no email alerts go out)',
+                '',
+                `Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              ].join('\n'),
+              labels: ['supabase', 'automated', 'P0'],
+            });

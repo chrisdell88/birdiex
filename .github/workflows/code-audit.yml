@@ -67,6 +67,22 @@ jobs:
         run: npm audit --audit-level=high
         continue-on-error: true
 
+      - name: Supabase RPC healthcheck
+        id: supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          STATUS=$(curl -sS -o /dev/null -w "%{http_code}" \
+            -X POST "$SUPABASE_URL/rest/v1/rpc/verify_lab_password" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"pw": "audit-keepalive-ping"}')
+          echo "HTTP $STATUS"
+          [ "$STATUS" = "200" ]
+        continue-on-error: true
+
       - name: Stale raw-data check
         id: stale-data
         run: |
@@ -88,7 +104,8 @@ jobs:
           steps.tsc.outcome == 'failure' ||
           steps.lint.outcome == 'failure' ||
           steps.smoke.outcome == 'failure' ||
-          steps.npm-audit.outcome == 'failure'
+          steps.npm-audit.outcome == 'failure' ||
+          steps.supabase.outcome == 'failure'
         uses: actions/github-script@v7
         with:
           script: |
@@ -96,12 +113,14 @@ jobs:
             const lint   = '${{ steps.lint.outcome }}';
             const smoke  = '${{ steps.smoke.outcome }}';
             const npm    = '${{ steps.npm-audit.outcome }}';
+            const sup    = '${{ steps.supabase.outcome }}';
             const stale  = `${{ steps.stale-data.outputs.stale_dirs }}`;
             const failed = [
               tsc    === 'failure' && 'TypeScript (tsc --noEmit)',
               lint   === 'failure' && 'ESLint',
               smoke  === 'failure' && 'Auto-roll regex smoke test',
               npm    === 'failure' && 'npm audit (high severity)',
+              sup    === 'failure' && 'Supabase RPC healthcheck (likely free-tier paused)',
             ].filter(Boolean);
             const body = [
               '## Weekly audit found issues',

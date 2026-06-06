@@ -24,10 +24,16 @@ If you catch yourself about to type one, delete it and just say the thing.
 Past failure mode: I'd promise "I'll look for similar gaps proactively" and then forget the moment the next session started. Replaced with infrastructure:
 
 1. **`scripts/verify-auto-roll-regexes.ts`** — runs on every `npm run build` (in CI + locally). Fails build if any patchEventConfig regex stops matching `src/config/event.ts`. This is the test that would have caught the 2026-06-05 memorial-prefix break.
-2. **`.github/workflows/code-audit.yml`** — fires every Sunday 10pm ET (Mon 02:00 UTC). Runs tsc, lint, npm audit, smoke test, stale-data check. Opens a GitHub issue if anything fails so it's visible even if I'm not actively looking.
-3. **`birdiex-weekly-audit` scheduled Claude task** — fires every Sunday 9:10pm ET. Reads MEMORY.md, audits the codebase for code smells / hard-coded values / stale comments / drift, writes findings to `docs/AUDIT_LOG.md` with severity tags (P0–P3), opens a GitHub issue for any P0.
+2. **`.github/workflows/code-audit.yml`** — fires every Sunday 10pm ET (Mon 02:00 UTC). Runs tsc, lint, npm audit, smoke test, stale-data check, **Supabase RPC healthcheck**. Opens a GitHub issue if anything fails so it's visible even if I'm not actively looking.
+3. **`.github/workflows/supabase-keepalive.yml`** — fires daily 11am UTC (7am ET). Pings the Supabase RPC to keep the free-tier inactivity counter at 0. Project gets auto-paused after 7 days without a request, breaking lab login + alerts + notifications SILENTLY. The 2026-06-06 lab login failure was this exact mode.
+4. **`birdiex-weekly-audit` scheduled Claude task** — fires every Sunday 9:10pm ET. Reads MEMORY.md, audits the codebase for code smells / hard-coded values / stale comments / drift, writes findings to `docs/AUDIT_LOG.md` with severity tags (P0–P3), opens a GitHub issue for any P0.
 
 When adding a new patch like the regex check, add it to BOTH `scripts/verify-auto-roll-regexes.ts` (build-time) AND the weekly Claude audit prompt at `~/.claude/scheduled-tasks/birdiex-weekly-audit/SKILL.md`. Do not rely on remembering — encode it.
+
+### Known silent-failure modes — check these first when something breaks
+- **Supabase free-tier project paused** (7 days inactivity): lab login fails with "Wrong password", alerts signup fails, notify.ts can't read subscribers. Fix: resume at https://supabase.com/dashboard/project/xcgjmzinpanrbseyogqe. The daily keepalive workflow above prevents this.
+- **patchEventConfig regex doesn't match new event prefix**: auto-roll round transition fails silently, site stays on previous round. Smoke test catches this at build time.
+- **DataGolf API key rotated**: every workflow that pulls fails. Update in Vercel + GH Actions secret + local .env.
 
 ---
 

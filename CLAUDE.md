@@ -4,6 +4,34 @@ Read `MEMORY.md` first for project context, model methodology, results history, 
 
 ---
 
+## 🛑 NEVER ship without explicit "do it" — questions ≠ authorization
+
+Pattern that has burned Chris multiple times: he asks a clarifying or
+exploratory question ("can you see X through the API?", "is there a way
+to do Y?", "what would it take to Z?") and the assistant treats the
+question as a green light to build the answer + ship it. That's wrong
+EVERY TIME.
+
+**The rule:**
+- A question gets a factual answer. Nothing else. Then wait.
+- Code/refactors/commits/pushes happen ONLY when Chris uses explicit
+  build language: "do it", "build it", "ship it", "yes", "go ahead",
+  "make the change", "do that", "OK do this".
+- "What do you think?" / "Can we?" / "Is it possible?" / "How would
+  that work?" = NOT authorization. Answer the question, then stop.
+- If even 1% unsure whether Chris has authorized the build, ASK FIRST
+  via AskUserQuestion. Better one extra question than one unwanted change.
+- Heuristic detection / auto-classification on user-visible content
+  (suspensions, statuses, anything that affects what the user sees) is
+  especially off-limits without explicit per-feature sign-off — false
+  positives kill trust on every adjacent feature.
+
+This rule overrides any "auto mode" / efficiency framing. Auto mode
+means executing tasks Chris told you to do without re-asking on every
+small detail — it does NOT mean inferring tasks from questions.
+
+---
+
 ## 🚫 Permanently banned phrasings (Chris asked, more than once)
 
 These phrasings IMPLY my normal answers aren't direct/honest. Never use them. No exceptions:

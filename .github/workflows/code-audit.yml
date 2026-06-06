@@ -70,13 +70,16 @@ jobs:
       - name: Supabase RPC healthcheck
         id: supabase
         env:
+          # Service-role key — already in GH secrets; works for the
+          # read-only ping. VITE_SUPABASE_ANON_KEY isn't a secret on the
+          # Actions side and adding one just for this audit is churn.
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           STATUS=$(curl -sS -o /dev/null -w "%{http_code}" \
             -X POST "$SUPABASE_URL/rest/v1/rpc/verify_lab_password" \
-            -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
             -H "Content-Type: application/json" \
             -d '{"pw": "audit-keepalive-ping"}')
           echo "HTTP $STATUS"

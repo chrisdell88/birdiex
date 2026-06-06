@@ -35,16 +35,21 @@ jobs:
       - name: Ping verify_lab_password RPC
         id: ping
         env:
+          # Use the service-role key (already configured in GH secrets as
+          # SUPABASE_SERVICE_ROLE_KEY). The anon key would also work but
+          # isn't registered as a separate Actions secret — and adding one
+          # more secret just for keepalive is unnecessary churn. Service
+          # role works for read-only ping.
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           # Use a deliberately-wrong password — the RPC still executes
           # (returns boolean false), which counts as activity. We DO NOT
           # need to know the real password to keep the DB alive.
           STATUS=$(curl -sS -o /tmp/body.json -w "%{http_code}" \
             -X POST "$SUPABASE_URL/rest/v1/rpc/verify_lab_password" \
-            -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
             -H "Content-Type: application/json" \
             -d '{"pw": "keepalive-ping-do-not-match"}')
           echo "status=$STATUS" >> "$GITHUB_OUTPUT"
@@ -59,24 +64,30 @@ jobs:
 
       - name: Open issue if Supabase ping failed
         if: failure()
+        env:
+          # Pass via env to avoid template-string injection bugs — the
+          # response body can contain backticks (e.g. "No `apikey` header
+          # found"), which break inline `${{ ... }}` interpolation.
+          PING_STATUS: ${{ steps.ping.outputs.status }}
+          PING_BODY: ${{ steps.ping.outputs.body }}
         uses: actions/github-script@v7
         with:
           script: |
-            const status = '${{ steps.ping.outputs.status }}';
-            const body = `${{ steps.ping.outputs.body }}`;
+            const status = process.env.PING_STATUS || 'unknown';
+            const body = process.env.PING_BODY || '(no body captured)';
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `🚨 Supabase keepalive failed — HTTP ${status}`,
+              title: '🚨 Supabase keepalive failed — HTTP ' + status,
               body: [
                 '## Supabase RPC ping returned a non-200 status.',
                 '',
-                `**Status:** ${status}`,
-                `**Body:** \`${body}\``,
+                '**Status:** ' + status,
+                '**Body:** ```' + body + '```',
                 '',
                 '### Common causes',
                 '- 503: free-tier project auto-paused after 7 days inactivity → resume at https://supabase.com/dashboard/project/xcgjmzinpanrbseyogqe',
-                '- 401: anon key rotated / invalid → check Vercel + GitHub Actions secrets',
+                '- 401: SUPABASE_SERVICE_ROLE_KEY rotated / invalid → check GitHub Actions secrets',
                 '- 404: verify_lab_password RPC dropped / not deployed → re-apply supabase/schema.sql',
                 '- 5xx: Supabase outage → check https://status.supabase.com',
                 '',
@@ -85,7 +96,7 @@ jobs:
                 '- Alerts subscribe page breaks',
                 '- notify.ts cannot read the subscriber list (no email alerts go out)',
                 '',
-                `Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+                'Run: ' + context.serverUrl + '/' + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId,
               ].join('\n'),
               labels: ['supabase', 'automated', 'P0'],
             });

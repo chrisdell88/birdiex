@@ -265,21 +265,34 @@ async function main() {
   // Also compute the Best-Bets-only summary at the venue floor. This is
   // the ONLY number safe to quote to users / reports / notifications —
   // the raw line above includes scored-only picks below the venue floor.
+  //
+  // Preferred path: venues.ts (respects publishedFloor override). Falls back
+  // to the formula via courses.ts predictability for historical events whose
+  // slug doesn't match the venues.ts EventId union.
+  const { VENUES, floorForEvent } = await import(
+    pathToFileURL(join(PROJECT_ROOT, 'src', 'config', 'venues.ts')).href
+  );
   const { recommendedFloorForPredictability } = await import(
     pathToFileURL(join(PROJECT_ROOT, 'src', 'lib', 'sizing.ts')).href
   );
   const { COURSES, DEFAULT_LOW_PREDICTABILITY_COURSE } = await import(
     pathToFileURL(join(PROJECT_ROOT, 'scripts', 'lib', 'courses.ts')).href
   );
-  // Venue lookup by slug fragment — best-effort. Falls back to a generic
-  // low-predictability floor if we don't have a venue profile.
   type CourseProfile = { predictability: number };
   type CourseMap = Record<string, CourseProfile>;
-  const coursesMap = COURSES as CourseMap;
-  const slugLower = args.slug.toLowerCase();
-  const venueKey = Object.keys(coursesMap).find((k) => slugLower.includes(k)) ?? '';
-  const profile = (venueKey ? coursesMap[venueKey] : (DEFAULT_LOW_PREDICTABILITY_COURSE as CourseProfile));
-  const floor: number = recommendedFloorForPredictability(profile.predictability);
+  type Venues = Record<string, { publishedFloor?: number; predictability: number }>;
+  let floor: number;
+  if ((VENUES as Venues)[args.slug]) {
+    // Modern path: slug == EventId in venues.ts. Honors publishedFloor.
+    floor = (floorForEvent as (id: string) => { floor: number })(args.slug).floor;
+  } else {
+    // Fallback path: historical slug doesn't map to a venues.ts EventId.
+    const coursesMap = COURSES as CourseMap;
+    const slugLower = args.slug.toLowerCase();
+    const venueKey = Object.keys(coursesMap).find((k) => slugLower.includes(k)) ?? '';
+    const profile = (venueKey ? coursesMap[venueKey] : (DEFAULT_LOW_PREDICTABILITY_COURSE as CourseProfile));
+    floor = recommendedFloorForPredictability(profile.predictability);
+  }
 
   const bb = bets.filter((b) => b.edge >= floor);
   const bbW = bb.filter((b) => b.result === 'W').length;

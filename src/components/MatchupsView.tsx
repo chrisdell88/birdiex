@@ -6,7 +6,7 @@ import SignalBadge from './SignalBadge';
 import PlayerSearch from './PlayerSearch';
 import Avatar from './Avatar';
 import RecommendedFloorBadge from './RecommendedFloorBadge';
-import { starsForEdge } from '../lib/sizing';
+import { starsForEdge, tierForEdge } from '../lib/sizing';
 import { isBuy, isFade, signalTextColorClass } from '../lib/signalDisplay';
 import MatchupsGlossary from './MatchupsGlossary';
 import { formatPlayerName } from '../lib/formatName';
@@ -93,9 +93,9 @@ function generateMatchups(data: PlayerData[], oddsData: MatchupOddsEntry[]): Mat
       bestBook = 'datagolf';
     }
 
-    let tier: Matchup['tier'] = 'LEAN';
-    if (matchupScore >= 1.95) tier = 'BEST BET';
-    else if (matchupScore >= 1.45) tier = 'STRONG PLAY';
+    // Tier is venue-aware: BEST BET ≥ venue floor, STRONG PLAY ≥ floor−0.5.
+    // Single source of truth lives in src/lib/sizing.ts::tierForEdge.
+    const tier: Matchup['tier'] = tierForEdge(matchupScore, currentEvent.recommendedFloor);
 
     const bucket = getBucket(pick, opponent);
     const isDoubleSignal =

@@ -22,9 +22,13 @@ import { roundOnlyData as preTournamentRoundOnly } from '../data/memorialPreData
 import { r3MatchupOddsData } from '../data/memorialR3Matchups';
 import { r3OutrightsData } from '../data/memorialR3Outrights';
 import { skillEstimatesData } from '../data/memorialSkillEstimates';
-import { recommendedFloorForPredictability, floorTierLabel } from '../lib/sizing';
+import { floorForEvent, type EventId } from './venues';
 
 export interface CurrentEvent {
+  /** EventId — index into VENUES (src/config/venues.ts). Drives floor lookup
+   *  so that any change to `publishedFloor` in venues.ts propagates here
+   *  automatically. */
+  eventId: EventId;
   /** Tournament name, e.g. "PGA Championship". */
   name: string;
   /** Venue, e.g. "Aronimink". */
@@ -67,17 +71,19 @@ export interface CurrentEvent {
   skillEstimates: PlayerSkillEstimate[];
 }
 
-// DataGolf bar pct: 39.32 → 0.0621 (anchored against Augusta = 0.1439 = 91.11%).
-// Source of truth: src/data/dataGolfPredictability.ts.
-const MUIRFIELD_VILLAGE_PREDICTABILITY = 0.0621;
+// EventId for venues.ts lookup — drives recommendedFloor + label.
+// Changing publishedFloor in venues.ts AUTOMATICALLY updates everywhere.
+const EVENT_ID: EventId = 'the-memorial-tournament-2026';
+const VENUE_INFO = floorForEvent(EVENT_ID);
 
 export const currentEvent: CurrentEvent = {
+  eventId: EVENT_ID,
   name: 'The Memorial Tournament',
-  course: 'Muirfield Village Golf Club',
+  course: VENUE_INFO.course,
   isMajor: false,
-  predictability: MUIRFIELD_VILLAGE_PREDICTABILITY,
-  recommendedFloor: recommendedFloorForPredictability(MUIRFIELD_VILLAGE_PREDICTABILITY),
-  recommendedFloorLabel: floorTierLabel(recommendedFloorForPredictability(MUIRFIELD_VILLAGE_PREDICTABILITY)),
+  predictability: VENUE_INFO.predictability,
+  recommendedFloor: VENUE_INFO.floor,
+  recommendedFloorLabel: VENUE_INFO.label,
   picksRound: 3,
   isComplete: false,
   headerBanner: 'R2 FINAL · ROUND 3 PICKS',

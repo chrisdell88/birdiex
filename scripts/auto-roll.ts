@@ -294,10 +294,10 @@ import { r1MatchupOddsData } from '../data/${prefix}R1Matchups';
 import { r1OutrightsData } from '../data/${prefix}R1Outrights';
 import { skillEstimatesData } from '../data/${prefix}SkillEstimates';
 import { tickerGeneratedAt } from '../data/ticker';
-import { recommendedFloorForPredictability, floorTierLabel } from '../lib/sizing';
-import { VENUES } from './venues';
+import { floorForEvent, type EventId } from './venues';
 
 export interface CurrentEvent {
+  eventId: EventId;
   name: string;
   course: string;
   isMajor: boolean;
@@ -316,15 +316,17 @@ export interface CurrentEvent {
   skillEstimates: PlayerSkillEstimate[];
 }
 
-const PRED = VENUES['${next.eventId}'].predictability;
+const EVENT_ID: EventId = '${next.eventId}';
+const VENUE_INFO = floorForEvent(EVENT_ID);
 
 export const currentEvent: CurrentEvent = {
+  eventId: EVENT_ID,
   name: '${next.name}',
-  course: '${next.courseName}',
+  course: VENUE_INFO.course,
   isMajor: ${next.isMajor},
-  predictability: PRED,
-  recommendedFloor: recommendedFloorForPredictability(PRED),
-  recommendedFloorLabel: floorTierLabel(recommendedFloorForPredictability(PRED)),
+  predictability: VENUE_INFO.predictability,
+  recommendedFloor: VENUE_INFO.floor,
+  recommendedFloorLabel: VENUE_INFO.label,
   picksRound: 1,
   isComplete: false,
   headerBanner: 'PRE-TOURNAMENT · ROUND 1 PICKS',

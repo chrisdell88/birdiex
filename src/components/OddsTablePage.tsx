@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import type { PlayerData, MatchupOddsEntry, DataSet } from '../types';
 import { currentEvent } from '../config/event';
-import { starsForEdge } from '../lib/sizing';
+import { starsForEdge, tierForEdge } from '../lib/sizing';
 import DataSetToggle from './DataSetToggle';
 import RecommendedFloorBadge from './RecommendedFloorBadge';
 import OutrightsTable from './OutrightsTable';
@@ -103,9 +103,9 @@ function buildH2HRows(data: PlayerData[], oddsData: MatchupOddsEntry[]): H2HRow[
     const edge = +(pickXScore - oppXScore).toFixed(4);
     // No floor — every H2H matchup DataGolf returns is listed here.
 
-    let tier: H2HRow['tier'] = 'LEAN';
-    if (edge >= 1.95) tier = 'BEST BET';
-    else if (edge >= 1.45) tier = 'STRONG PLAY';
+    // Tier is venue-aware: BEST BET ≥ venue floor, STRONG PLAY ≥ floor−0.5.
+    // Single source of truth lives in src/lib/sizing.ts::tierForEdge.
+    const tier: H2HRow['tier'] = tierForEdge(edge, currentEvent.recommendedFloor);
 
     const bookOdds: Record<string, string> = {};
     let bestOddsVal = -Infinity;

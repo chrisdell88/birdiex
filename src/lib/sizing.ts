@@ -171,3 +171,22 @@ export function floorTierLabel(floor: number): string {
 export function isTrackedBet(edge: number, floor: number): boolean {
   return Math.round(edge * 10000) >= Math.round(floor * 10000);
 }
+
+/**
+ * Tier label for a matchup edge, given the venue floor.
+ *
+ * SINGLE SOURCE OF TRUTH for "BEST BET" / "STRONG PLAY" / "LEAN" labels —
+ * every component (MatchupsView, OddsTablePage, anywhere else) MUST call
+ * this instead of inlining `if (edge >= 1.95) ...`. Hardcoded floor
+ * comparisons in components are blocked at build time by
+ * `scripts/verify-floor-references.ts`.
+ *
+ *   BEST BET    → edge ≥ venue floor
+ *   STRONG PLAY → edge ≥ floor − 0.5 (one tier below) but < floor
+ *   LEAN        → everything below
+ */
+export function tierForEdge(edge: number, floor: number): 'BEST BET' | 'STRONG PLAY' | 'LEAN' {
+  if (edge >= floor) return 'BEST BET';
+  if (edge >= floor - 0.5) return 'STRONG PLAY';
+  return 'LEAN';
+}

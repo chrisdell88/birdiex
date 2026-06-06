@@ -65,6 +65,49 @@ Just shipping data files is not enough.
 
 ---
 
+## 🎯 Floor / Threshold Source of Truth — ONE place, propagates everywhere
+
+Bug pattern (2026-06-06): venue floor was locked in `venues.ts` at 2.45, but
+the Matchups + Odds pages kept showing edges ≥ 1.95 as "BEST BET" because
+the tier comparison was hardcoded in two `.tsx` files. This MUST never
+happen again. Hardcoded thresholds = always wrong eventually.
+
+**Source of truth flows in ONE direction:**
+
+```
+src/config/venues.ts           ← edit publishedFloor here, nowhere else
+  ↓ floorForEvent(eventId)
+src/config/event.ts            ← reads via VENUE_INFO = floorForEvent(EVENT_ID)
+  ↓ currentEvent.recommendedFloor
+Every component               ← uses tierForEdge(edge, currentEvent.recommendedFloor)
+```
+
+**Hard rules — enforced by `scripts/verify-floor-references.ts` on every build:**
+
+1. **Components NEVER hardcode `>= 1.95` / `>= 2.45` / etc. in tier logic.**
+   Use `tierForEdge(edge, currentEvent.recommendedFloor)` from `src/lib/sizing.ts`.
+   The build fails loudly if any component reintroduces a hardcoded floor.
+2. **Event configs NEVER call `recommendedFloorForPredictability(...)` directly.**
+   Use `floorForEvent(eventId)` from `venues.ts` — it respects `publishedFloor`
+   overrides. The formula is the fallback; the override is canonical.
+3. **`event.ts` carries `eventId: EventId`** so the venues lookup is type-safe.
+   The auto-roll event-switch template (`scripts/auto-roll.ts::attemptEventSwitch`)
+   writes this field on every event switch.
+4. **Grading reads venues.ts first.** `scripts/grade-round.ts` tries
+   `floorForEvent(args.slug)` before falling back to the predictability formula —
+   so Best Bets summaries always use the published floor.
+
+**When a floor changes (Chris locks a new `publishedFloor` for a venue):**
+1. Edit ONLY `src/config/venues.ts` — change `publishedFloor: X.YY` on that event.
+2. Build (`npm run build`). Verify `npm run verify:floor-refs` passes.
+3. That's it. Every page (Matchups tier badges, Odds tier badges, Results
+   filter, MethodologyPage banner, BacktestLab, alerts gate) auto-updates.
+
+If the build fails on `verify-floor-references.ts`, somebody added a new
+hardcoded comparison. Convert it to `tierForEdge(...)` and the build passes.
+
+---
+
 ## 📣 Best Bets — Hard Rules (applies to ALL public reporting)
 
 **The model never bets R1.** Picks are issued for R2, R3, R4 only — they

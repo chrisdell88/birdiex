@@ -1,29 +1,28 @@
 /**
- * NextRoundPreview — renders the NEXT round's matchup cards using the EXACT
- * same visual format as the current-round Best Bets cards (matchup score,
- * stars, X-Score per side, Signal Badge, Purity, Best Odds, sportsbook).
+ * NextRoundPreview — renders Best Bets / Leans for the NEXT round's
+ * matchups using cumulative-through-{N-1} X-Scores. Same visual format
+ * as the current-round cards because BOTH render via the canonical
+ * `MatchupCard` template. No copy-pasted JSX here — if the card layout
+ * needs to change, edit MatchupCard.tsx and every surface updates
+ * identically.
  *
- * Data inputs:
- *   - `rankings`: PlayerData[] containing X-Scores for the next round.
- *     For Memorial R4 picks this is cumulative-through-R3 X-Scores (only
- *     the 21 players who completed R3 will have clean values; books only
- *     post R4 matchups for those players so the other 32 are not in the
- *     matchups list anyway).
- *   - `matchups`: MatchupOddsEntry[] from src/data/<event>R<N+1>Matchups.ts.
+ * Data flow:
+ *   - `rankings`: PlayerData[] with cumulative-through-{N-1} X-Scores
+ *     (Memorial R4 = cumulative-through-R3 SG sum for the 21 finished
+ *     players; built via build-event.ts --lock-at-round 3).
+ *   - `matchups`: MatchupOddsEntry[] from <event>R{N}Matchups.ts.
  *
- * Why this exists: when R3 suspends mid-round but the 21 finished players
- * have clean cumulative data + books have posted R4 lines for them, this
- * shows real R4 picks (not a "preview") with the same matchup-card format
- * as the current round. Renders ABOVE the current-round view.
+ * Books only post next-round H2H lines for players who completed the
+ * prior round, so edges are clean for every matchup that enters this
+ * section. Players missing from the rankings (unfinished prior round)
+ * are silently skipped because their matchups don't exist in the
+ * sportsbook data anyway.
  */
 import { useMemo, useState } from 'react';
 import type { PlayerData, MatchupOddsEntry, Matchup, BucketType } from '../types';
-import { starsForEdge, tierForEdge } from '../lib/sizing';
-import { isBuy, isFade, signalTextColorClass } from '../lib/signalDisplay';
-import { formatPlayerName } from '../lib/formatName';
-import SignalBadge from './SignalBadge';
-import PurityIcon from './PurityIcon';
-import Avatar from './Avatar';
+import { tierForEdge } from '../lib/sizing';
+import { isBuy, isFade } from '../lib/signalDisplay';
+import MatchupCard from './MatchupCard';
 
 interface Props {
   roundNumber: number;
@@ -88,7 +87,7 @@ function generateNextMatchups(rankings: PlayerData[], oddsData: MatchupOddsEntry
   for (const entry of oddsData) {
     const p1 = playerMap.get(entry.p1_player_name);
     const p2 = playerMap.get(entry.p2_player_name);
-    if (!p1 || !p2) continue; // skip if either player isn't in our rankings (e.g. unfinished R3)
+    if (!p1 || !p2) continue;
 
     const pick = p1.x_score >= p2.x_score ? p1 : p2;
     const opponent = pick === p1 ? p2 : p1;
@@ -110,80 +109,18 @@ function generateNextMatchups(rankings: PlayerData[], oddsData: MatchupOddsEntry
         bestBook = book;
       }
     }
-    if (!bestBook && dgOdds) {
-      bestOdds = dgOdds;
-      bestBook = 'datagolf';
-    }
+    if (!bestBook && dgOdds) { bestOdds = dgOdds; bestBook = 'datagolf'; }
     const tier = tierForEdge(matchupScore, floor);
     matchups.push({
       pick, opponent, matchupScore, tier,
       bucket: getBucket(pick, opponent),
       bestOdds,
-      bestBook: BOOK_DISPLAY[bestBook] ?? bestBook,
+      bestBook,
       dgOdds,
       isDoubleSignal: false,
     });
   }
   return matchups.sort((a, b) => b.matchupScore - a.matchupScore);
-}
-
-const fmtXScore = (v: number) => (v > 0 ? `+${v.toFixed(2)}` : v.toFixed(2));
-
-function MatchupCard({ m }: { m: Matchup }) {
-  const stars = starsForEdge(m.matchupScore);
-  return (
-    <div className="bg-[#0a0a0a] border border-[#262626] border-l-4 border-l-[#22c55e] rounded-lg p-4 hover:bg-[#111111] transition-colors">
-      <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-medium font-['Inter',system-ui,sans-serif]">Matchup Score</span>
-          <span className="text-sm font-bold font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">{m.matchupScore.toFixed(2)}</span>
-          <span className={`text-[#22c55e] text-sm tracking-tight ${stars === 5 ? 'star-glow' : ''}`}>{'★'.repeat(stars)}</span>
-          {m.tier === 'BEST BET' && (
-            <span className="text-[9px] uppercase tracking-wider font-bold font-['Inter',system-ui,sans-serif] bg-[#22c55e]/15 text-[#22c55e] border border-[#22c55e]/40 rounded-full px-2 py-0.5">Best Bet</span>
-          )}
-        </div>
-        {/* Dataset chip — R4 picks are computed off cumulative-through-R3 SG,
-            same data source the R3 cumulative card uses. Matches the R3
-            card's top-right chip exactly. */}
-        <span className="text-[9px] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif] bg-[#1a1a1a] text-[#a1a1aa] rounded-full px-2 py-0.5">
-          Cumulative data
-        </span>
-      </div>
-      <div className="border-t border-[#1a1a1a] mb-3" />
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 flex items-start gap-2 min-w-0">
-          <Avatar playerName={m.pick.player_name} size="sm" />
-          <div className="min-w-0">
-            <div className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif] leading-snug">{formatPlayerName(m.pick.player_name)}</div>
-            <div className={`mt-1 text-xs font-['JetBrains_Mono','SF_Mono',monospace] ${signalTextColorClass(m.pick.signal, m.pick.purity === 'CONFLICTED')}`}>X Score: {fmtXScore(m.pick.x_score)}</div>
-            <div className="mt-1 flex items-center gap-2">
-              <SignalBadge signal={m.pick.signal} compact conflicted={m.pick.purity === 'CONFLICTED'} />
-              <PurityIcon player={m.pick} />
-            </div>
-          </div>
-        </div>
-        <div className="text-[#d4d4d4] text-xs font-bold font-['Inter',system-ui,sans-serif] shrink-0 mt-1">vs</div>
-        <div className="flex-1 flex items-start gap-2 justify-end min-w-0">
-          <div className="min-w-0 text-right">
-            <div className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif] leading-snug">{formatPlayerName(m.opponent.player_name)}</div>
-            <div className={`mt-1 text-xs font-['JetBrains_Mono','SF_Mono',monospace] ${signalTextColorClass(m.opponent.signal, m.opponent.purity === 'CONFLICTED')}`}>X Score: {fmtXScore(m.opponent.x_score)}</div>
-            <div className="mt-1 flex items-center justify-end gap-2">
-              <SignalBadge signal={m.opponent.signal} compact conflicted={m.opponent.purity === 'CONFLICTED'} />
-              <PurityIcon player={m.opponent} align="right" />
-            </div>
-          </div>
-          <Avatar playerName={m.opponent.player_name} size="sm" />
-        </div>
-      </div>
-      <div className="border-t border-[#1a1a1a] mt-3 pt-3">
-        <div className="text-xs font-['Inter',system-ui,sans-serif]">
-          <span className="text-[#d4d4d4]">Best Odds: </span>
-          <span className="text-[#f5f5f5] font-bold font-['JetBrains_Mono','SF_Mono',monospace]">{m.bestOdds}</span>{' '}
-          <SportsbookLink bookKey={m.bestBook} />
-        </div>
-      </div>
-    </div>
-  );
 }
 
 export default function NextRoundPreview({ roundNumber, rankings, matchups, floor, course }: Props) {
@@ -194,11 +131,30 @@ export default function NextRoundPreview({ roundNumber, rankings, matchups, floo
 
   if (matchups.length === 0) return null;
 
+  const renderCards = (set: Matchup[]) => (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      {set.map((m, i) => (
+        <MatchupCard
+          key={i}
+          matchupScore={m.matchupScore}
+          tier={m.tier}
+          pick={m.pick}
+          opponent={m.opponent}
+          bestOdds={m.bestOdds}
+          sportsbookLink={<SportsbookLink bookKey={m.bestBook} />}
+          datasetChip="Cumulative data"
+        />
+      ))}
+    </div>
+  );
+
   return (
     <div className="mb-10">
       <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-lg p-5 mb-6">
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="bg-[#22c55e]/15 text-[#22c55e] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">Round {roundNumber} · Picks</span>
+          <span className="bg-[#22c55e]/15 text-[#22c55e] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
+            Round {roundNumber} · Picks
+          </span>
           <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
             {bestBets.length} Best Bet{bestBets.length === 1 ? '' : 's'} · {allMatchups.length} total matchups
           </span>
@@ -212,11 +168,11 @@ export default function NextRoundPreview({ roundNumber, rankings, matchups, floo
         <div className="mb-6">
           <h3 className="text-sm font-semibold text-[#f5f5f5] uppercase tracking-wider font-['JetBrains_Mono','SF_Mono',monospace] mb-3">
             R{roundNumber} Best Bets
-            <span className="ml-2 text-[10px] font-bold font-['JetBrains_Mono','SF_Mono',monospace] bg-[#22c55e]/15 text-[#22c55e] rounded-full px-2 py-0.5 align-middle">{bestBets.length}</span>
+            <span className="ml-2 text-[10px] font-bold font-['JetBrains_Mono','SF_Mono',monospace] bg-[#22c55e]/15 text-[#22c55e] rounded-full px-2 py-0.5 align-middle">
+              {bestBets.length}
+            </span>
           </h3>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            {bestBets.map((m, i) => <MatchupCard key={i} m={m} />)}
-          </div>
+          {renderCards(bestBets)}
         </div>
       )}
 
@@ -224,12 +180,14 @@ export default function NextRoundPreview({ roundNumber, rankings, matchups, floo
         <div className="mb-6">
           <h3 className="text-sm font-semibold text-[#f5f5f5] uppercase tracking-wider font-['JetBrains_Mono','SF_Mono',monospace] mb-2">
             R{roundNumber} Leans
-            <span className="ml-2 text-[10px] font-bold font-['JetBrains_Mono','SF_Mono',monospace] bg-[#22c55e]/15 text-[#22c55e] rounded-full px-2 py-0.5 align-middle">{leans.length}</span>
+            <span className="ml-2 text-[10px] font-bold font-['JetBrains_Mono','SF_Mono',monospace] bg-[#22c55e]/15 text-[#22c55e] rounded-full px-2 py-0.5 align-middle">
+              {leans.length}
+            </span>
           </h3>
-          <p className="text-xs text-[#a1a1aa] mb-3 font-['Inter',system-ui,sans-serif]">No matchups cleared the {floor.toFixed(2)} floor. Showing edges between {(floor - 0.5).toFixed(2)} and {floor.toFixed(2)}.</p>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            {leans.map((m, i) => <MatchupCard key={i} m={m} />)}
-          </div>
+          <p className="text-xs text-[#a1a1aa] mb-3 font-['Inter',system-ui,sans-serif]">
+            No matchups cleared the {floor.toFixed(2)} floor. Showing edges between {(floor - 0.5).toFixed(2)} and {floor.toFixed(2)}.
+          </p>
+          {renderCards(leans)}
         </div>
       )}
 
@@ -241,11 +199,7 @@ export default function NextRoundPreview({ roundNumber, rankings, matchups, floo
           >
             {showAll ? 'Hide other matchups' : `Show all ${allMatchups.length} R${roundNumber} matchups`}
           </button>
-          {showAll && (
-            <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {allMatchups.map((m, i) => <MatchupCard key={i} m={m} />)}
-            </div>
-          )}
+          {showAll && <div className="mt-4">{renderCards(allMatchups)}</div>}
         </div>
       )}
     </div>

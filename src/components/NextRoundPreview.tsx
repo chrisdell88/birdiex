@@ -18,7 +18,7 @@
  */
 import { useMemo, useState } from 'react';
 import type { PlayerData, MatchupOddsEntry, Matchup, BucketType } from '../types';
-import { starsForEdge, tierForEdge, unitsForEdge } from '../lib/sizing';
+import { starsForEdge, tierForEdge } from '../lib/sizing';
 import { isBuy, isFade, signalTextColorClass } from '../lib/signalDisplay';
 import { formatPlayerName } from '../lib/formatName';
 import SignalBadge from './SignalBadge';
@@ -131,7 +131,6 @@ const fmtXScore = (v: number) => (v > 0 ? `+${v.toFixed(2)}` : v.toFixed(2));
 
 function MatchupCard({ m }: { m: Matchup }) {
   const stars = starsForEdge(m.matchupScore);
-  const units = unitsForEdge(m.matchupScore);
   return (
     <div className="bg-[#0a0a0a] border border-[#262626] border-l-4 border-l-[#22c55e] rounded-lg p-4 hover:bg-[#111111] transition-colors">
       <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
@@ -143,7 +142,12 @@ function MatchupCard({ m }: { m: Matchup }) {
             <span className="text-[9px] uppercase tracking-wider font-bold font-['Inter',system-ui,sans-serif] bg-[#22c55e]/15 text-[#22c55e] border border-[#22c55e]/40 rounded-full px-2 py-0.5">Best Bet</span>
           )}
         </div>
-        <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">{units}u</span>
+        {/* Dataset chip — R4 picks are computed off cumulative-through-R3 SG,
+            same data source the R3 cumulative card uses. Matches the R3
+            card's top-right chip exactly. */}
+        <span className="text-[9px] uppercase tracking-wider font-medium font-['Inter',system-ui,sans-serif] bg-[#1a1a1a] text-[#a1a1aa] rounded-full px-2 py-0.5">
+          Cumulative data
+        </span>
       </div>
       <div className="border-t border-[#1a1a1a] mb-3" />
       <div className="flex items-start justify-between gap-4">

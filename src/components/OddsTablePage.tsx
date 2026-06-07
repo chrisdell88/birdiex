@@ -245,13 +245,15 @@ export default function OddsTablePage({ data, dataSet, onDataSetChange }: OddsTa
 
   return (
     <div className="max-w-full mx-auto">
-      {/* Next-round preview — sportsbook H2H lines for the upcoming round when
-          books post them ahead of the current round finishing. Renders above
-          the current-round odds tabs so users see the freshest action first. */}
-      {currentEvent.nextRoundMatchups && currentEvent.nextRoundNumber && (
+      {/* Next-round picks — full matchup cards using cumulative-through-{N-1}
+          X-Scores for the players who completed the prior round. */}
+      {currentEvent.nextRoundMatchups && currentEvent.nextRoundNumber && currentEvent.nextRoundRankings && (
         <NextRoundPreview
           roundNumber={currentEvent.nextRoundNumber}
+          rankings={currentEvent.nextRoundRankings}
           matchups={currentEvent.nextRoundMatchups}
+          floor={currentEvent.recommendedFloor}
+          course={currentEvent.course}
         />
       )}
 

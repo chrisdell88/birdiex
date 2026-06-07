@@ -508,14 +508,18 @@ export default function MatchupsView(_: MatchupsViewProps) {
 
   return (
     <div>
-      {/* Next-round preview — only renders when sportsbooks have posted the
-          next round's matchups ahead of the current round finishing (e.g.
-          R4 lines available while R3 is in play/suspended). Renders ABOVE
-          the current round so users see the freshest available action first. */}
-      {currentEvent.nextRoundMatchups && currentEvent.nextRoundNumber && (
+      {/* Next-round picks — when sportsbooks post the next round's H2H lines
+          ahead of the current round finishing (e.g. R4 while R3 is suspended),
+          render the same Best Bets cards using cumulative-through-{N-1}
+          X-Scores. Books only post matchups for players who completed the
+          prior round, so edges are clean for everyone in the section. */}
+      {currentEvent.nextRoundMatchups && currentEvent.nextRoundNumber && currentEvent.nextRoundRankings && (
         <NextRoundPreview
           roundNumber={currentEvent.nextRoundNumber}
+          rankings={currentEvent.nextRoundRankings}
           matchups={currentEvent.nextRoundMatchups}
+          floor={currentEvent.recommendedFloor}
+          course={currentEvent.course}
         />
       )}
 

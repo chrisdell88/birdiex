@@ -218,6 +218,21 @@ async function patchEventConfig(args: {
     content = content.replace(re, to);
   }
 
+  // ─── Suspension-era cleanup ───────────────────────────────────────────────
+  // On round transition, strip out the special fields that were added for
+  // the R3-suspension scenario. They become stale (and break the build) when
+  // a new round starts: aliased imports for next-round + r3-picks rankings,
+  // currentEvent fields that point at the OLD round's data, and the manual
+  // tickerTitleOverride. These all default to "absent" for a normal event.
+  // Strip aliased memorial imports + multi-line ones + r3PicksRankings imports
+  content = content.replace(/^import \{[^}]*as memorial[A-Z][^}]*\} from '\.\.\/data\/memorial[^']+';\n/gm, '');
+  content = content.replace(/^import \{\n(?:\s*\w+ as \w+,?\n)+\} from '\.\.\/data\/memorial[^']+';\n/gm, '');
+  content = content.replace(/^import \{[^}]*r3PicksRankings[^}]*\} from '\.\.\/data\/memorial[^']+';\n/gm, '');
+  // Strip suspension-era fields from currentEvent literal
+  content = content.replace(/^\s*(nextRoundMatchups|nextRoundNumber|nextRoundRankings|nextRoundRankingsRound|r3PicksRankingsCumulative|r3PicksRankingsRound|tickerTitleOverride):\s*[^,\n]*,\s*(?:\/\/[^\n]*)?\n/gm, '');
+  // Strip orphan comments that referred to the removed fields
+  content = content.replace(/^\s*\/\/[^\n]*tickerTitleOverride[^\n]*\n/gm, '');
+
   await writeFile(path, content);
 }
 

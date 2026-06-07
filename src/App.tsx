@@ -120,7 +120,7 @@ function App() {
                   view. Each instance owns its own filter / sort / Best
                   Bets toggle state. Cards render through MatchupCard so
                   R4 + R3 look identical. */}
-              {currentEvent.nextRoundMatchups && currentEvent.nextRoundNumber && currentEvent.nextRoundRankings && (
+              {currentEvent.nextRoundMatchups && currentEvent.nextRoundNumber && currentEvent.nextRoundNumber > currentEvent.picksRound && currentEvent.nextRoundRankings && (
                 <MatchupsView
                   data={activeData}
                   dataSet={dataSet}

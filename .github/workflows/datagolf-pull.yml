@@ -15,10 +15,13 @@ name: DataGolf auto-roll (detect round done + advance picks)
 
 on:
   schedule:
-    # Once per hour from 6pm to 12am ET (EDT = UTC-4 → 22-23, 0-4 UTC).
-    # Catches round-end states on the PGA Tour. During EST (Nov–Mar) shift
-    # these UTC hours by +1 → 23,0-5.
-    - cron: '0 22,23,0,1,2,3,4 * * *'
+    # Every 2 hours, 24/7. Old schedule was 6pm-midnight ET only, which
+    # missed daytime round transitions (e.g. weather-suspended R3 that
+    # resumes + finishes Sunday morning wouldn't fire auto-roll until
+    # 6pm ET, delaying the next round's picks by 7+ hours). Every 2 hrs
+    # catches a round transition within 2 hours of it actually happening,
+    # at any time of day.
+    - cron: '0 */2 * * *'
   workflow_dispatch:
 
 # ─── Active event configuration ──────────────────────────────────────────

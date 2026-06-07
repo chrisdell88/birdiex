@@ -66,6 +66,9 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
                       Updated{' '}
                       {new Date(currentEvent.dataUpdatedAt).toLocaleString('en-US', {
                         timeZone: 'America/New_York',
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
                         hour: 'numeric',
                         minute: '2-digit',
                         hour12: true,

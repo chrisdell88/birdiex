@@ -21,14 +21,16 @@ interface DataSetToggleProps {
 export default function DataSetToggle({ dataSet, onChange }: DataSetToggleProps) {
   const [showTip, setShowTip] = useState(false);
 
-  // The "latest completed round":
-  //   - Mid-tournament: picksRound - 1 (e.g., picksRound=4 → R3 just finished,
-  //     picks are for R4 → toggle says "Round 3 Data" for the round-only side).
-  //   - Post-final (isComplete): picksRound itself (e.g., picksRound=4 +
-  //     isComplete → R4 finished, toggle says "Round 4 Data").
+  // The round whose data populates `roundOnlyData` in the rankings file.
+  // Tied to the --phase arg passed to build-event.ts: phase=r3 → R3 SG.
+  //   - Mid-tournament with the picksRound's round currently being played
+  //     (picksRound=3 with R3 in progress/suspended) → R3 round-only data.
+  //     The label says "Round 3 Data" even when some players haven't
+  //     completed R3 yet (those rows get gray-cell treatment in the table).
+  //   - Post-final (isComplete): picksRound = the final round played.
   const completedRound = currentEvent.isComplete
     ? currentEvent.picksRound
-    : Math.max(1, currentEvent.picksRound - 1);
+    : Math.max(1, currentEvent.picksRound);
   // Cumulative only makes sense once 2+ rounds have been played.
   const cumulativeEnabled = completedRound >= 2;
 

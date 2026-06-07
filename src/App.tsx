@@ -127,7 +127,7 @@ function App() {
                   onDataSetChange={setDataSet}
                   matchupsOverride={currentEvent.nextRoundMatchups}
                   rankingsCumulativeOverride={currentEvent.nextRoundRankings}
-                  rankingsRoundOverride={currentEvent.nextRoundRankings}
+                  rankingsRoundOverride={currentEvent.nextRoundRankingsRound ?? currentEvent.nextRoundRankings}
                   picksRoundOverride={currentEvent.nextRoundNumber}
                   floorOverride={currentEvent.recommendedFloor}
                   courseOverride={currentEvent.course}

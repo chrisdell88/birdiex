@@ -32,7 +32,10 @@ import { r3OutrightsData } from '../data/memorialR3Outrights';
 import { r4MatchupOddsData as memorialR4Matchups } from '../data/memorialR4Matchups';
 // Through-R3 cumulative X-Scores for R4 matchup edge math — same file as
 // the main rankings, aliased for clarity at the call site below.
-import { cumulativeData as memorialR3CumulativeData } from '../data/memorialR3Data';
+import {
+  cumulativeData as memorialR3CumulativeData,
+  roundOnlyData as memorialR3RoundOnly,
+} from '../data/memorialR3Data';
 import { skillEstimatesData } from '../data/memorialSkillEstimates';
 import { floorForEvent, type EventId } from './venues';
 
@@ -95,10 +98,15 @@ export interface CurrentEvent {
   nextRoundMatchups?: MatchupOddsEntry[];
   /** Round number for nextRoundMatchups (e.g. 4 if currentEvent.picksRound is 3). */
   nextRoundNumber?: number;
-  /** X-Score rankings used to compute edges for nextRoundMatchups. MUST be
-   *  cumulative through the round just finished (so for R4 picks during a
-   *  suspended R3, this is R1+R2+R3 SG sum for the finished players). */
+  /** X-Score rankings (CUMULATIVE) used to compute edges for nextRoundMatchups.
+   *  MUST be cumulative through the round just finished (so for R4 picks
+   *  during a suspended R3, this is R1+R2+R3 SG sum for the finished
+   *  players). */
   nextRoundRankings?: PlayerData[];
+  /** X-Score rankings (ROUND-ONLY) for nextRoundMatchups — drives the
+   *  "Round-only" half of the dual-data view on the matchups page. For R4
+   *  picks this is R3 round-only SG. */
+  nextRoundRankingsRound?: PlayerData[];
 }
 
 // EventId for venues.ts lookup — drives recommendedFloor + label.
@@ -131,4 +139,5 @@ export const currentEvent: CurrentEvent = {
   nextRoundMatchups: memorialR4Matchups,
   nextRoundNumber: 4,
   nextRoundRankings: memorialR3CumulativeData,
+  nextRoundRankingsRound: memorialR3RoundOnly,
 };

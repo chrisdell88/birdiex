@@ -19,7 +19,6 @@ import { roundOnlyData, cumulativeData, generatedAt } from '../data/memorialR3Da
 // R3 picks were announced when R2 ended (no partial data); the same
 // X-Scores must be used to compute the displayed R3 BBs so the count + edges
 // don't drift as R3 plays out. This file's values never change during R3.
-import { cumulativeData as r3PicksRankingsCumulative_, roundOnlyData as r3PicksRankingsRound_ } from '../data/memorialR2Data';
 // Ticker file is rebuilt every 30 min by the ticker-refresh workflow. We use
 // its timestamp to drive the header "Last Updated" label so it reflects
 // actual liveness, not the (hours-old) rankings build time.
@@ -29,15 +28,10 @@ import { tickerGeneratedAt } from '../data/ticker';
 // updated round-by-round. Stays pointed at the pre-tournament file even
 // once the main rankings advance.
 import { roundOnlyData as preTournamentRoundOnly } from '../data/memorialPreData';
-import { r3MatchupOddsData } from '../data/memorialR3Matchups';
-import { r3OutrightsData } from '../data/memorialR3Outrights';
-import { r4MatchupOddsData as memorialR4Matchups } from '../data/memorialR4Matchups';
+import { r4MatchupOddsData } from '../data/memorialR4Matchups';
+import { r4OutrightsData } from '../data/memorialR4Outrights';
 // Through-R3 cumulative X-Scores for R4 matchup edge math — same file as
 // the main rankings, aliased for clarity at the call site below.
-import {
-  cumulativeData as memorialR3CumulativeData,
-  roundOnlyData as memorialR3RoundOnly,
-} from '../data/memorialR3Data';
 import { skillEstimatesData } from '../data/memorialSkillEstimates';
 import { floorForEvent, type EventId } from './venues';
 
@@ -130,27 +124,18 @@ export const currentEvent: CurrentEvent = {
   predictability: VENUE_INFO.predictability,
   recommendedFloor: VENUE_INFO.floor,
   recommendedFloorLabel: VENUE_INFO.label,
-  picksRound: 3,
+  picksRound: 4,
   isComplete: false,
-  headerBanner: 'R2 FINAL · ROUND 3 PICKS',
+  headerBanner: 'R3 FINAL · ROUND 4 PICKS',
   // Set by Chris 2026-06-06 — R3 suspended for weather. Clear when Chris confirms resumption.
-  tickerTitleOverride: 'R3 — SUSPENDED',
-  // Take the most-recent timestamp across rankings build + ticker pull so the
   // header "Last Updated" always tracks the freshest data source.
   dataUpdatedAt: new Date(generatedAt).getTime() > new Date(tickerGeneratedAt).getTime() ? generatedAt : tickerGeneratedAt,
   rankingsRound: roundOnlyData,
   rankingsCumulative: cumulativeData,
   preTournamentRankings: preTournamentRoundOnly,
-  matchups: r3MatchupOddsData,
-  outrights: r3OutrightsData,
+  matchups: r4MatchupOddsData,
+  outrights: r4OutrightsData,
   skillEstimates: skillEstimatesData,
-  nextRoundMatchups: memorialR4Matchups,
-  nextRoundNumber: 4,
-  nextRoundRankings: memorialR3CumulativeData,
-  nextRoundRankingsRound: memorialR3RoundOnly,
-  // R3 picks are graded on R2-final cumulative — same X-Scores Chris's
   // R3 announcement was sent against. App.tsx passes these as overrides
   // to the R3 MatchupsView instance so its BB edges don't drift.
-  r3PicksRankingsCumulative: r3PicksRankingsCumulative_,
-  r3PicksRankingsRound: r3PicksRankingsRound_,
 };

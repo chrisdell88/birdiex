@@ -4,6 +4,33 @@ Read `MEMORY.md` first for project context, model methodology, results history, 
 
 ---
 
+## 👀 VERIFY EVERY UI CHANGE ON THE LIVE SITE — don't make Chris do QA
+
+Pattern that has burned Chris repeatedly: ship a UI change, say "live in
+~60 sec," move on. Chris loads the page, finds a bug I'd have caught
+if I'd just looked at the page myself. Examples in one session:
+- Banner said "R2 In Progress" instead of "R3 In Progress"
+- Dataset toggle said "Round 2 Data" when the data was R3
+- NextRoundPreview card showed unit size instead of dataset chip
+
+**The rule:**
+- For ANY change that affects the UI (component code, event.ts data
+  swap, banner text, column changes, anything visible), after pushing
+  to main I MUST:
+  1. Wait ~60 sec for Vercel to deploy
+  2. Navigate to the affected page (or pages) with Chrome MCP
+  3. Take a screenshot
+  4. Read the screenshot — confirm the change rendered correctly,
+     check labels/copy/colors/data values
+  5. If anything's wrong, fix BEFORE telling Chris it's shipped
+- Only AFTER that round-trip can I say "live + verified."
+- Don't say "live in ~60 sec" and move on. That dumps QA on Chris.
+
+This is non-negotiable. Chris's time is more valuable than my screenshot
+round-trip. Skip this step → I'm just shifting work onto him.
+
+---
+
 ## 🛑 NEVER ship without explicit "do it" — questions ≠ authorization
 
 Pattern that has burned Chris multiple times: he asks a clarifying or

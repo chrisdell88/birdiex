@@ -769,8 +769,10 @@ export default function MatchupsView(props: MatchupsViewProps) {
         );
       })()}
 
-      {/* Glossary — always at the bottom, mirrors the Rankings page. */}
-      <MatchupsGlossary />
+      {/* Glossary — only on the "primary" instance (no override props). When
+          the page renders two MatchupsView instances (R4 above R3), only the
+          R3 default instance shows the glossary so it doesn't appear twice. */}
+      {!props.picksRoundOverride && <MatchupsGlossary />}
     </div>
   );
 }

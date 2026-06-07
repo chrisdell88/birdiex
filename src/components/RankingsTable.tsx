@@ -521,9 +521,6 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
                     </div>
                   </td>
                   {!isComplete && (() => {
-                    // Mid-round: latest_round_complete=false means the player
-                    // hasn't finished the round whose data feeds this X-Score.
-                    // Gray the value so users know it's not finalized.
                     const midRound = player.latest_round_complete === false;
                     const xCls = midRound
                       ? 'text-[#525252]'

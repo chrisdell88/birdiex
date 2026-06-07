@@ -9,15 +9,17 @@
  */
 import type { PlayerData, MatchupOddsEntry, OutrightEntry, PlayerSkillEstimate } from '../types';
 // The Memorial Tournament — R1 complete, R2 picks active.
-// Through-R3 data file — drives the Rankings page. Cumulative is R1+R2+R3
-// SG sum per player; for the 21 players who completed R3 (thru=18) the
-// values are fully clean. For the 32 still mid-R3 they reflect partial-
-// round SG through the holes actually played. The Rankings page grays
-// every column derived from this partial data for those 32 — that's the
-// visual cue that a row's stats aren't finalized. When a player finishes
-// R3 (next ticker refresh after their round completes), their gray flips
-// to normal automatically.
+// Through-R3 data file — drives the Rankings page DISPLAY. Cumulative is
+// R1+R2+R3 SG sum per player; partial for the 32 mid-R3 players. Those
+// rows render in gray on the Rankings page (their X-Score + SG values
+// haven't finalized yet). 21 finished players render in normal color.
+// Live in-play position + thru baked in.
 import { roundOnlyData, cumulativeData, generatedAt } from '../data/memorialR3Data';
+// FROZEN R2-final cumulative — drives R3 matchup BB edge computation only.
+// R3 picks were announced when R2 ended (no partial data); the same
+// X-Scores must be used to compute the displayed R3 BBs so the count + edges
+// don't drift as R3 plays out. This file's values never change during R3.
+import { cumulativeData as r3PicksRankingsCumulative_, roundOnlyData as r3PicksRankingsRound_ } from '../data/memorialR2Data';
 // Ticker file is rebuilt every 30 min by the ticker-refresh workflow. We use
 // its timestamp to drive the header "Last Updated" label so it reflects
 // actual liveness, not the (hours-old) rankings build time.
@@ -107,6 +109,12 @@ export interface CurrentEvent {
    *  "Round-only" half of the dual-data view on the matchups page. For R4
    *  picks this is R3 round-only SG. */
   nextRoundRankingsRound?: PlayerData[];
+  /** FROZEN X-Score rankings for computing R3 BB edges. R3 picks were
+   *  announced based on R2-final cumulative SG; the displayed BB count +
+   *  edges must use THAT data, not the live Rankings cumulative (which
+   *  evolves as R3 plays out and would otherwise inflate the BB count). */
+  r3PicksRankingsCumulative?: PlayerData[];
+  r3PicksRankingsRound?: PlayerData[];
 }
 
 // EventId for venues.ts lookup — drives recommendedFloor + label.
@@ -140,4 +148,9 @@ export const currentEvent: CurrentEvent = {
   nextRoundNumber: 4,
   nextRoundRankings: memorialR3CumulativeData,
   nextRoundRankingsRound: memorialR3RoundOnly,
+  // R3 picks are graded on R2-final cumulative — same X-Scores Chris's
+  // R3 announcement was sent against. App.tsx passes these as overrides
+  // to the R3 MatchupsView instance so its BB edges don't drift.
+  r3PicksRankingsCumulative: r3PicksRankingsCumulative_,
+  r3PicksRankingsRound: r3PicksRankingsRound_,
 };

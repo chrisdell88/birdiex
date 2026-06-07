@@ -133,7 +133,16 @@ function App() {
                   courseOverride={currentEvent.course}
                 />
               )}
-              <MatchupsView data={activeData} dataSet={dataSet} onDataSetChange={setDataSet} />
+              {/* Default R3 instance — uses FROZEN R2-final cumulative for
+                  edge math (the same X-Scores R3 picks were announced on)
+                  so the BB count + edges don't drift as R3 plays out. */}
+              <MatchupsView
+                data={activeData}
+                dataSet={dataSet}
+                onDataSetChange={setDataSet}
+                rankingsCumulativeOverride={currentEvent.r3PicksRankingsCumulative}
+                rankingsRoundOverride={currentEvent.r3PicksRankingsRound}
+              />
             </>
           )}
           {activeTab === 'odds' && <OddsTablePage data={activeData} dataSet={dataSet} onDataSetChange={setDataSet} />}

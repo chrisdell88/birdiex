@@ -129,11 +129,24 @@ async function main() {
     ),
   }));
 
+  // Active player set: who shows up in TODAY's DataGolf response. Pairings
+  // involving anyone NOT in this set are dropped from the merge, because
+  // DataGolf stops returning a pairing once a player gets cut / WD'd. The
+  // line-shopping merge below used to PERSIST those stale pre-cut pairings
+  // forever — that's the 2026-06-07 bug Chris caught (Rose vs Fowler still
+  // listed as a R3 matchup hours after Fowler missed the cut).
+  const activePlayers = new Set<string>();
+  for (const m of list) {
+    if (m.p1_player_name) activePlayers.add(m.p1_player_name);
+    if (m.p2_player_name) activePlayers.add(m.p2_player_name);
+  }
+
   // ─── Line-shopping merge with the existing committed file (if it exists) ───
   // For each (pair, book): keep whichever side has the lower stake-to-win-1
   // (= more favorable price for the bettor). Pairings only in the existing
-  // file are preserved — we never silently drop a previously-published
-  // matchup. Pairings only in the new pull are added.
+  // file are preserved IF BOTH PLAYERS ARE STILL IN THE CURRENT RESPONSE
+  // (still active). When DataGolf drops a pairing because a player got cut
+  // or WD'd, we drop it too. Pairings only in the new pull are added.
   const outPath = join(PROJECT_ROOT, 'src', 'data', `${out}.ts`);
   const existingByKey = new Map<string, Entry>();
   if (existsSync(outPath)) {
@@ -142,6 +155,10 @@ async function main() {
       const existingArr: Entry[] | undefined = mod[exportName];
       if (Array.isArray(existingArr)) {
         for (const e of existingArr) {
+          // Drop entries where either player isn't in the current pull —
+          // they're cut/WD/no-longer-offered. Sportsbooks don't book bets
+          // on those pairings anymore so we shouldn't show them either.
+          if (!activePlayers.has(e.p1_player_name) || !activePlayers.has(e.p2_player_name)) continue;
           existingByKey.set(pairKey(e.p1_player_name, e.p2_player_name), e);
         }
       }

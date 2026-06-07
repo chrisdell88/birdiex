@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import type { PlayerData, MatchupOddsEntry, DataSet } from '../types';
 import { currentEvent } from '../config/event';
 import { starsForEdge, tierForEdge } from '../lib/sizing';
+import NextRoundPreview from './NextRoundPreview';
 import DataSetToggle from './DataSetToggle';
 import RecommendedFloorBadge from './RecommendedFloorBadge';
 import OutrightsTable from './OutrightsTable';
@@ -244,6 +245,16 @@ export default function OddsTablePage({ data, dataSet, onDataSetChange }: OddsTa
 
   return (
     <div className="max-w-full mx-auto">
+      {/* Next-round preview — sportsbook H2H lines for the upcoming round when
+          books post them ahead of the current round finishing. Renders above
+          the current-round odds tabs so users see the freshest action first. */}
+      {currentEvent.nextRoundMatchups && currentEvent.nextRoundNumber && (
+        <NextRoundPreview
+          roundNumber={currentEvent.nextRoundNumber}
+          matchups={currentEvent.nextRoundMatchups}
+        />
+      )}
+
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-start justify-between gap-3 flex-wrap">

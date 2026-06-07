@@ -21,6 +21,7 @@ import { tickerGeneratedAt } from '../data/ticker';
 import { roundOnlyData as preTournamentRoundOnly } from '../data/memorialPreData';
 import { r3MatchupOddsData } from '../data/memorialR3Matchups';
 import { r3OutrightsData } from '../data/memorialR3Outrights';
+import { r4MatchupOddsData as memorialR4Matchups } from '../data/memorialR4Matchups';
 import { skillEstimatesData } from '../data/memorialSkillEstimates';
 import { floorForEvent, type EventId } from './venues';
 
@@ -76,6 +77,13 @@ export interface CurrentEvent {
   outrights: OutrightEntry[];
   /** DataGolf skill estimates + projected probs (input to the simulator). */
   skillEstimates: PlayerSkillEstimate[];
+  /** Optional NEXT-round matchups — populated by the ticker-refresh workflow
+   *  when sportsbooks post the next round's H2H lines early (e.g. R4 while
+   *  R3 is still in play). Matchups + Odds pages render this section
+   *  ABOVE the current round when present, both clearly labeled. */
+  nextRoundMatchups?: MatchupOddsEntry[];
+  /** Round number for nextRoundMatchups (e.g. 4 if currentEvent.picksRound is 3). */
+  nextRoundNumber?: number;
 }
 
 // EventId for venues.ts lookup — drives recommendedFloor + label.
@@ -105,4 +113,6 @@ export const currentEvent: CurrentEvent = {
   matchups: r3MatchupOddsData,
   outrights: r3OutrightsData,
   skillEstimates: skillEstimatesData,
+  nextRoundMatchups: memorialR4Matchups,
+  nextRoundNumber: 4,
 };

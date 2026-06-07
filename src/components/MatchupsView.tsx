@@ -7,6 +7,7 @@ import PlayerSearch from './PlayerSearch';
 import Avatar from './Avatar';
 import RecommendedFloorBadge from './RecommendedFloorBadge';
 import { starsForEdge, tierForEdge } from '../lib/sizing';
+import NextRoundPreview from './NextRoundPreview';
 import { isBuy, isFade, signalTextColorClass } from '../lib/signalDisplay';
 import MatchupsGlossary from './MatchupsGlossary';
 import { formatPlayerName } from '../lib/formatName';
@@ -507,6 +508,17 @@ export default function MatchupsView(_: MatchupsViewProps) {
 
   return (
     <div>
+      {/* Next-round preview — only renders when sportsbooks have posted the
+          next round's matchups ahead of the current round finishing (e.g.
+          R4 lines available while R3 is in play/suspended). Renders ABOVE
+          the current round so users see the freshest available action first. */}
+      {currentEvent.nextRoundMatchups && currentEvent.nextRoundNumber && (
+        <NextRoundPreview
+          roundNumber={currentEvent.nextRoundNumber}
+          matchups={currentEvent.nextRoundMatchups}
+        />
+      )}
+
       {/* Round picks banner */}
       <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-lg p-5 mb-6">
         <div className="flex items-center gap-3 flex-wrap">

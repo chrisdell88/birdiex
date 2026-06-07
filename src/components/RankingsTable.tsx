@@ -406,7 +406,7 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
             R{currentEvent.picksRound} In Progress · {midRoundCounts.complete} of {midRoundCounts.total} Players Complete
           </span>
           <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
-            Leaderboard reflects live in-play; X-Scores based on completed-round SG
+            Greyed values are mid-round (DataGolf live data through holes played)
           </span>
         </div>
       )}
@@ -520,18 +520,31 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
                       </span>
                     </div>
                   </td>
-                  {!isComplete && (
-                    <td className="px-3 py-2.5">
-                      <span className={`text-base font-bold font-['JetBrains_Mono','SF_Mono',monospace] ${
-                        player.x_score > 0 ? 'text-[#22c55e]' : player.x_score < 0 ? 'text-red-400' : 'text-[#f5f5f5]'
-                      }`}>
-                        {player.x_score > 0 ? '+' : ''}{player.x_score.toFixed(2)}
-                      </span>
-                    </td>
-                  )}
+                  {!isComplete && (() => {
+                    // Mid-round: latest_round_complete=false means the player
+                    // hasn't finished the round whose data feeds this X-Score.
+                    // Gray the value so users know it's not finalized.
+                    const midRound = player.latest_round_complete === false;
+                    const xCls = midRound
+                      ? 'text-[#525252]'
+                      : player.x_score > 0 ? 'text-[#22c55e]' : player.x_score < 0 ? 'text-red-400' : 'text-[#f5f5f5]';
+                    return (
+                      <td className="px-3 py-2.5">
+                        <span
+                          className={`text-base font-bold font-['JetBrains_Mono','SF_Mono',monospace] ${xCls}`}
+                          title={midRound ? `Mid-round (thru ${player.thru_latest_round ?? '?'}) — finalizes when R${currentEvent.picksRound} completes` : undefined}
+                        >
+                          {player.x_score > 0 ? '+' : ''}{player.x_score.toFixed(2)}
+                        </span>
+                      </td>
+                    );
+                  })()}
                   {!isPreTournament && !isComplete && (
                     <td className="px-3 py-2.5">
-                      <div className="flex items-center gap-1.5">
+                      <div
+                        className={`flex items-center gap-1.5 ${player.latest_round_complete === false ? 'opacity-40' : ''}`}
+                        title={player.latest_round_complete === false ? `Mid-round (thru ${player.thru_latest_round ?? '?'})` : undefined}
+                      >
                         <SignalBadge signal={player.signal} compact conflicted={player.purity === 'CONFLICTED'} />
                         <PurityIcon player={player} />
                       </div>
@@ -554,31 +567,35 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
                       })()}
                     </td>
                   )}
-                  {!isPreTournament && (
-                    <>
-                      <td className={`px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs ${
-                        player.sg_putt >= 0 ? 'text-[#22c55e]' : 'text-red-400'
-                      }`}>
-                        {formatSG(player.sg_putt)}
-                      </td>
-                      <td className={`px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs ${
-                        player.sg_app >= 0 ? 'text-[#22c55e]' : 'text-red-400'
-                      }`}>
-                        {formatSG(player.sg_app)}
-                      </td>
-                      <td className={`px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs ${
-                        player.sg_ott >= 0 ? 'text-[#22c55e]' : 'text-red-400'
-                      }`}>
-                        {formatSG(player.sg_ott)}
-                      </td>
-                      <td className={`px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs ${
-                        player.sg_arg >= 0 ? 'text-[#22c55e]' : 'text-red-400'
-                      }`}>
-                        {formatSG(player.sg_arg)}
-                      </td>
-                    </>
-                  )}
-                  <td className="px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs text-[#d4d4d4]">
+                  {!isPreTournament && (() => {
+                    const midRound = player.latest_round_complete === false;
+                    const sgClass = (v: number) => midRound
+                      ? 'text-[#525252]'
+                      : v >= 0 ? 'text-[#22c55e]' : 'text-red-400';
+                    const t = midRound
+                      ? `Mid-round (thru ${player.thru_latest_round ?? '?'}) — finalizes when R${currentEvent.picksRound} completes`
+                      : undefined;
+                    return (
+                      <>
+                        <td className={`px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs ${sgClass(player.sg_putt)}`} title={t}>
+                          {formatSG(player.sg_putt)}
+                        </td>
+                        <td className={`px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs ${sgClass(player.sg_app)}`} title={t}>
+                          {formatSG(player.sg_app)}
+                        </td>
+                        <td className={`px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs ${sgClass(player.sg_ott)}`} title={t}>
+                          {formatSG(player.sg_ott)}
+                        </td>
+                        <td className={`px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs ${sgClass(player.sg_arg)}`} title={t}>
+                          {formatSG(player.sg_arg)}
+                        </td>
+                      </>
+                    );
+                  })()}
+                  <td
+                    className={`px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs ${player.latest_round_complete === false ? 'text-[#525252]' : 'text-[#d4d4d4]'}`}
+                    title={player.latest_round_complete === false ? `Mid-round (thru ${player.thru_latest_round ?? '?'})` : undefined}
+                  >
                     {player.sg_score_l1.toFixed(2)}
                   </td>
                   <td className="px-3 py-2.5 font-['JetBrains_Mono','SF_Mono',monospace] text-xs text-[#d4d4d4]">

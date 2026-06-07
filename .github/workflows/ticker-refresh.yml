@@ -11,10 +11,11 @@ name: Ticker refresh (live scoreboard every 30 min)
 
 on:
   schedule:
-    # Every 30 minutes during a wide play window: 5am ET (9:00 UTC EDT)
-    # to 11pm ET (3:00 UTC next-day EDT). 18-hour daily window covers
-    # any PGA Tour start. Outside the window: silent (no firing).
-    - cron: '*/30 9-23,0-3 * * *'
+    # Every 30 minutes, all day. Outrights especially need 24/7 because
+    # books move them dynamically and our previous "9-23,0-3 UTC" deadzone
+    # left odds stale on the site for hours overnight. ~48 cron runs/day
+    # is well within GitHub Actions free tier.
+    - cron: '*/30 * * * *'
   workflow_dispatch: {}
 
 env:

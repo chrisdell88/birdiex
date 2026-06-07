@@ -183,45 +183,53 @@ That's 4 clicks from any device with a browser.
 
 ## Multi-device handoff (laptop ↔ main desktop)
 
-When you switch devices mid-trip — main desk → travel laptop and back —
-seamless continuity depends on a few things being in sync. Don't trust
-me on it; verify before relying on it:
+Chris is non-technical. He does NOT run terminal commands. The
+expected workflow is:
 
-**Before leaving the main device:**
-1. `cd ~/Projects/birdiex && git status` — should be clean.
-2. `git log --oneline -3` — note the latest commit hash.
-3. Confirm `.env` exists in the project root + has all the keys
-   listed in `.env.example`.
+> **Open Claude chat on the new device. Start talking.**
 
-**On the travel laptop (first time on a trip):**
-1. `cd ~/Projects/birdiex && git pull origin main` — pull latest. The
-   hash should match what you noted.
-2. `cat .env | grep -c '^DATAGOLF_API_KEY='` — should print 1. If
-   prints 0, the laptop is missing the env file. AirDrop the `.env`
-   from the main device (it's gitignored, doesn't sync via git).
-3. `npm install` — restore node_modules.
-4. `npm run build` — runs all 8 guards + tests + tsc + vite. Should
-   exit clean.
-5. `npm run dev` — local preview at http://localhost:5173. Confirms
-   you can run the site locally.
+That's it. No `git pull`, no `npm install`, no commands ever.
 
-**At end of every work session (any device):**
-1. `git status` — should be clean (auto-push hook handles this).
-2. If unclean → `git add -A && git commit -m "wip" && git push` to
-   stash before you switch devices.
+**How it works under the hood (Claude handles, not Chris):**
+
+- Auto git-pull hook (`~/.claude/hooks/`) fires at session start —
+  pulls latest from origin/main on every project. Chris doesn't see this.
+- Auto git-push hook fires at session end — pushes any pending
+  changes. Chris doesn't see this either.
+- The hooks are installed via the `claude-config` bootstrap repo,
+  already on both his Mac devices.
+
+**What Chris does on a new device:**
+
+1. Open Claude.
+2. Say what he wants ("Hey, what's the state of birdiex?" or "Look at
+   memorial — did R3 finish?").
+3. Claude reads MEMORY.md + CLAUDE.md first (per the session-start
+   protocol at the top of each MEMORY.md), then answers in context.
+
+**The one thing Claude CAN'T fix without help: `.env` file on a new
+laptop.** `.env` contains secrets (DataGolf API key, Supabase keys, etc.)
+and is gitignored. Both of Chris's existing laptops already have it.
+If a brand-new device is involved, Chris AirDrops the `.env` from his
+main desktop once. After that: never again.
 
 **Memory/context sync:**
-- `MEMORY.md` (project root) is the canonical state-of-the-project
-  doc. Read it FIRST whenever you start on a new device.
-- `CLAUDE.md` has the rules. Read it second.
-- `docs/DATA_FLOW_AUDIT.md` has the data-source architecture (why
-  Rankings + Matchups read different files for X-Scores).
+
+The auto git-pull on session start means every device sees the latest:
+- `MEMORY.md` (project state, recent session notes)
+- `CLAUDE.md` (rules + lessons)
+- `docs/` (X Score formula, runbooks, data-flow audit)
+
+Claude reads these FIRST on every new session — Chris doesn't need to
+remind it. The session-start protocol is documented in each MEMORY.md.
 
 **Other projects on the laptop:**
-Same pattern — each project under `~/Projects/` has its own
-MEMORY.md and CLAUDE.md. The global `~/.claude/CLAUDE.md` lists
-all projects + their GitHub repos. Bootstrap script (below) restores
-all of them on a fresh device.
+
+Same pattern — every project under `~/Projects/` has its own
+MEMORY.md + CLAUDE.md. The global `~/.claude/CLAUDE.md` lists all of
+them (BracketX, MockX, BirdieX, PGH Sports News, Chris Portfolio,
+LedgerX, Fantasy Edge) with their GitHub repos. Chris opens Claude
+and says "look at BracketX" — Claude switches context automatically.
 
 ---
 

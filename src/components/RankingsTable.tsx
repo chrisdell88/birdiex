@@ -332,7 +332,7 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
             : currentEvent.picksRound > 1
               ? dataSet === 'cumulative'
                 ? 'Cumulative Data Below'
-                : `Round ${currentEvent.picksRound - 1} Data Below`
+                : `Round ${currentEvent.picksRound} Data Below`
               : 'Pre-Tournament Rankings Below'}
         </span>
       </div>
@@ -404,7 +404,7 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
       {showMidRoundBanner && (
         <div className="mb-4 bg-[#ef4444]/10 border border-[#ef4444]/30 rounded-lg px-4 py-3 flex items-baseline justify-between flex-wrap gap-2">
           <span className="text-xs uppercase tracking-wider text-[#ef4444] font-bold font-['Inter',system-ui,sans-serif]">
-            R{currentEvent.picksRound - 1} In Progress · {midRoundCounts.complete} of {midRoundCounts.total} Players Complete
+            R{currentEvent.picksRound} In Progress · {midRoundCounts.complete} of {midRoundCounts.total} Players Complete
           </span>
           <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
             Greyed values are mid-round (DataGolf live data through holes played)
@@ -535,7 +535,7 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
                       <td className="px-3 py-2.5">
                         <span
                           className={`text-base font-bold font-['JetBrains_Mono','SF_Mono',monospace] ${xCls}`}
-                          title={midRound ? `Mid-round (thru ${player.thru_latest_round ?? '?'}) — will finalize when R${currentEvent.picksRound - 1} completes` : undefined}
+                          title={midRound ? `Mid-round (thru ${player.thru_latest_round ?? '?'}) — will finalize when R${currentEvent.picksRound} completes` : undefined}
                         >
                           {player.x_score > 0 ? '+' : ''}{player.x_score.toFixed(2)}
                         </span>
@@ -581,7 +581,7 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
                       ? 'text-[#525252]'
                       : v >= 0 ? 'text-[#22c55e]' : 'text-red-400';
                     const midTitle = midRound
-                      ? `Mid-round (thru ${player.thru_latest_round ?? '?'}) — finalizes when R${currentEvent.picksRound - 1} completes`
+                      ? `Mid-round (thru ${player.thru_latest_round ?? '?'}) — finalizes when R${currentEvent.picksRound} completes`
                       : undefined;
                     return (
                       <>

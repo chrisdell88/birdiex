@@ -18,7 +18,7 @@
  * are silently skipped because their matchups don't exist in the
  * sportsbook data anyway.
  */
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { PlayerData, MatchupOddsEntry, Matchup, BucketType } from '../types';
 import { tierForEdge } from '../lib/sizing';
 import { isBuy, isFade } from '../lib/signalDisplay';
@@ -124,7 +124,6 @@ function generateNextMatchups(rankings: PlayerData[], oddsData: MatchupOddsEntry
 }
 
 export default function NextRoundPreview({ roundNumber, rankings, matchups, floor, course }: Props) {
-  const [showAll, setShowAll] = useState(false);
   const allMatchups = useMemo(() => generateNextMatchups(rankings, matchups, floor), [rankings, matchups, floor]);
   const bestBets = useMemo(() => allMatchups.filter((m) => m.matchupScore >= floor), [allMatchups, floor]);
   const leans = useMemo(() => allMatchups.filter((m) => m.matchupScore < floor && m.matchupScore >= floor - 0.5), [allMatchups, floor]);
@@ -153,10 +152,10 @@ export default function NextRoundPreview({ roundNumber, rankings, matchups, floo
       <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-lg p-5 mb-6">
         <div className="flex items-center gap-3 flex-wrap">
           <span className="bg-[#22c55e]/15 text-[#22c55e] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
-            Round {roundNumber} · Picks
+            Round {roundNumber} · Best Bets
           </span>
           <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
-            {bestBets.length} Best Bet{bestBets.length === 1 ? '' : 's'} · {allMatchups.length} total matchups
+            {bestBets.length} Best Bet{bestBets.length === 1 ? '' : 's'}
           </span>
           <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
             Threshold ≥ {floor.toFixed(2)} at {course}
@@ -188,18 +187,6 @@ export default function NextRoundPreview({ roundNumber, rankings, matchups, floo
             No matchups cleared the {floor.toFixed(2)} floor. Showing edges between {(floor - 0.5).toFixed(2)} and {floor.toFixed(2)}.
           </p>
           {renderCards(leans)}
-        </div>
-      )}
-
-      {allMatchups.length > (bestBets.length + (bestBets.length === 0 ? leans.length : 0)) && (
-        <div className="text-center">
-          <button
-            onClick={() => setShowAll((v) => !v)}
-            className="text-[11px] text-[#22c55e] hover:text-[#4ade80] font-medium cursor-pointer underline underline-offset-2 font-['Inter',system-ui,sans-serif]"
-          >
-            {showAll ? 'Hide other matchups' : `Show all ${allMatchups.length} R${roundNumber} matchups`}
-          </button>
-          {showAll && <div className="mt-4">{renderCards(allMatchups)}</div>}
         </div>
       )}
     </div>

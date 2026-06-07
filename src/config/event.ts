@@ -9,11 +9,14 @@
  */
 import type { PlayerData, MatchupOddsEntry, OutrightEntry, PlayerSkillEstimate } from '../types';
 // The Memorial Tournament — R1 complete, R2 picks active.
-// Through-R3 data file — drives the Rankings page. Cumulative is R1+R2+R3
-// SG sum per player (cleanly aggregated for the 21 finished, partial for
-// the 32 mid-round). round-only is R3 SG only. Both carry thru_latest_round
-// + latest_round_complete per player so the table can gray mid-round cells.
-import { roundOnlyData, cumulativeData, generatedAt } from '../data/memorialR3Data';
+// Through-R2 data file — drives the Rankings page X-Scores. Cumulative is
+// R1+R2 SG sum (CLEAN for everyone — R2 is the last fully completed round
+// for the whole field). This is the same data basis the R3 picks were
+// announced on, so the Matchups page shows the same picks users were told.
+// Also carries live in-play position + thru per player (in-play data is
+// baked in by build-event.ts) so the leaderboard column reflects current
+// tournament standings even while R3 is suspended/in progress.
+import { roundOnlyData, cumulativeData, generatedAt } from '../data/memorialR2Data';
 // Ticker file is rebuilt every 30 min by the ticker-refresh workflow. We use
 // its timestamp to drive the header "Last Updated" label so it reflects
 // actual liveness, not the (hours-old) rankings build time.

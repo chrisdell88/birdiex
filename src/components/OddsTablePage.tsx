@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import type { PlayerData, MatchupOddsEntry, DataSet } from '../types';
 import { currentEvent } from '../config/event';
 import { starsForEdge, tierForEdge } from '../lib/sizing';
-import NextRoundPreview from './NextRoundPreview';
 import DataSetToggle from './DataSetToggle';
 import RecommendedFloorBadge from './RecommendedFloorBadge';
 import OutrightsTable from './OutrightsTable';
@@ -245,18 +244,6 @@ export default function OddsTablePage({ data, dataSet, onDataSetChange }: OddsTa
 
   return (
     <div className="max-w-full mx-auto">
-      {/* Next-round picks — full matchup cards using cumulative-through-{N-1}
-          X-Scores for the players who completed the prior round. */}
-      {currentEvent.nextRoundMatchups && currentEvent.nextRoundNumber && currentEvent.nextRoundRankings && (
-        <NextRoundPreview
-          roundNumber={currentEvent.nextRoundNumber}
-          rankings={currentEvent.nextRoundRankings}
-          matchups={currentEvent.nextRoundMatchups}
-          floor={currentEvent.recommendedFloor}
-          course={currentEvent.course}
-        />
-      )}
-
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-start justify-between gap-3 flex-wrap">

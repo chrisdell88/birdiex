@@ -87,17 +87,21 @@ export default function MatchupCard({
           >
             {'★'.repeat(stars)}
           </span>
+          {/* Best Bet pill always shows first when the matchup clears the
+              floor. Double Signal pill renders to its RIGHT when both views
+              flagged the pair (per Chris's spec — two green pills side by
+              side, Best Bet first). */}
+          {tier === 'BEST BET' && (
+            <span className="text-[9px] uppercase tracking-wider font-bold font-['Inter',system-ui,sans-serif] bg-[#22c55e]/15 text-[#22c55e] border border-[#22c55e]/40 rounded-full px-2 py-0.5">
+              Best Bet
+            </span>
+          )}
           {doubleSignal && (
             <span
               className="text-[9px] uppercase tracking-wider font-bold font-['Inter',system-ui,sans-serif] bg-[#22c55e]/15 text-[#22c55e] border border-[#22c55e]/40 rounded-full px-2 py-0.5"
               title="Both round-only AND cumulative datasets flagged this matchup."
             >
               Double Signal
-            </span>
-          )}
-          {tier === 'BEST BET' && !doubleSignal && (
-            <span className="text-[9px] uppercase tracking-wider font-bold font-['Inter',system-ui,sans-serif] bg-[#22c55e]/15 text-[#22c55e] border border-[#22c55e]/40 rounded-full px-2 py-0.5">
-              Best Bet
             </span>
           )}
         </div>

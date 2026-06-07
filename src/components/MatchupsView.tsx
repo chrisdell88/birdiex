@@ -438,7 +438,12 @@ export default function MatchupsView(props: MatchupsViewProps) {
       const cumBB = cum != null && cum.matchupScore >= floor;
       const rndBB = rnd != null && rnd.matchupScore >= floor;
       if (cumBB && rndBB) {
-        tagged.push({ ...(cum as Matchup), dataSet: 'cumulative', doubleSignal: true });
+        // Both views fire — show the HIGHER matchup score (per Chris's
+        // spec). Tag dataSet by which side produced the higher edge so
+        // the card chip + X-Score values match the displayed Matchup Score.
+        const higher = (cum as Matchup).matchupScore >= (rnd as Matchup).matchupScore ? cum : rnd;
+        const dataSet: 'round-only' | 'cumulative' = higher === cum ? 'cumulative' : 'round-only';
+        tagged.push({ ...(higher as Matchup), dataSet, doubleSignal: true });
       } else if (cumBB) {
         tagged.push({ ...(cum as Matchup), dataSet: 'cumulative', doubleSignal: false });
       } else if (rndBB) {

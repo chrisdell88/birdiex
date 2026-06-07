@@ -243,9 +243,33 @@ async function main() {
   const r3Scores = roundScoreMap(liveR3);
   const r4Scores = roundScoreMap(liveR4);
 
-  // Build rows for both datasets
-  const roundOnlyRows = buildRows(roundPlayers, decompByDgId, decompByName, courseProfile, {r1Scores, r2Scores, r3Scores, r4Scores});
-  const cumulativeRows = buildRows(cumPlayers, decompByDgId, decompByName, courseProfile, {r1Scores, r2Scores, r3Scores, r4Scores});
+  // Live in-play data — THE source of truth for leaderboard position, current
+  // score, and thru. DataGolf provides this; we use it directly (the position
+  // + score we derived from per-round sums earlier is a stand-in that loses
+  // when in-play is available). Drives the gray-cell treatment on the
+  // Rankings page for players whose latest round isn't complete (thru < 18).
+  interface InPlayPlayer {
+    player_name: string;
+    dg_id?: number;
+    current_pos?: string;
+    current_score?: number;
+    thru?: number | null;
+    round?: number;
+  }
+  interface InPlayFile { data?: InPlayPlayer[]; info?: { current_round?: number } }
+  const inPlay = await loadJson<InPlayFile>(slug, phase, 'in-play');
+  const inPlayByName = new Map<string, InPlayPlayer>();
+  const inPlayByDgId = new Map<number, InPlayPlayer>();
+  for (const p of inPlay?.data ?? []) {
+    if (p.player_name) inPlayByName.set(normalizeName(p.player_name), p);
+    if (p.dg_id != null) inPlayByDgId.set(p.dg_id, p);
+  }
+
+  // Build rows for both datasets, passing in-play maps so each row picks up
+  // the live position + thru regardless of which dataset (round-only vs
+  // cumulative) the player came from.
+  const roundOnlyRows = buildRows(roundPlayers, decompByDgId, decompByName, courseProfile, {r1Scores, r2Scores, r3Scores, r4Scores}, inPlayByName, inPlayByDgId);
+  const cumulativeRows = buildRows(cumPlayers, decompByDgId, decompByName, courseProfile, {r1Scores, r2Scores, r3Scores, r4Scores}, inPlayByName, inPlayByDgId);
 
   // For pre-tournament: no live data — emit a single set sorted by L2+L3+L4 baseline
   const isPre = phase === 'pre' || (roundPlayers.length === 0 && cumPlayers.length === 0);
@@ -380,9 +404,14 @@ function buildRows(
     r3Scores: { byId: new Map(), byName: new Map() },
     r4Scores: { byId: new Map(), byName: new Map() },
   },
+  inPlayByName: Map<string, { current_pos?: string; current_score?: number; thru?: number | null }> = new Map(),
+  inPlayByDgId: Map<number, { current_pos?: string; current_score?: number; thru?: number | null }> = new Map(),
 ) {
   const rows = livePlayers.map((p) => {
     const dec = decompByDgId.get(p.dg_id) ?? decompByName.get(normalizeName(p.player_name));
+    // DataGolf in-play snapshot — overrides the derived position/score when
+    // available. Source of truth for the leaderboard.
+    const live = inPlayByDgId.get(p.dg_id) ?? inPlayByName.get(normalizeName(p.player_name));
     const decomp: Decomposition = {
       total_course_history_adjustment: dec?.total_course_history_adjustment ?? 0,
       total_fit_adjustment: dec?.total_fit_adjustment ?? 0,
@@ -402,10 +431,14 @@ function buildRows(
     const r2stp = lookupRoundScore(roundScores.r2Scores, p.dg_id, p.player_name);
     const r3stp = lookupRoundScore(roundScores.r3Scores, p.dg_id, p.player_name);
     const r4stp = lookupRoundScore(roundScores.r4Scores, p.dg_id, p.player_name);
+    const thru = live?.thru ?? null;
     return {
       player_name: p.player_name,
-      position: p.position ?? '--',
-      score_to_par: p.total ?? 0,
+      // Use DataGolf in-play position + score when available — that's the
+      // live leaderboard. Falls back to derived position/score only when
+      // in-play is absent (e.g. pre-tournament builds).
+      position: live?.current_pos ?? p.position ?? '--',
+      score_to_par: live?.current_score ?? p.total ?? 0,
       sg_ott: round2(sg.sg_ott),
       sg_app: round2(sg.sg_app),
       sg_arg: round2(sg.sg_arg),
@@ -425,6 +458,11 @@ function buildRows(
       ...(r2stp != null ? { r2_score_to_par: r2stp } : {}),
       ...(r3stp != null ? { r3_score_to_par: r3stp } : {}),
       ...(r4stp != null ? { r4_score_to_par: r4stp } : {}),
+      // Mid-round detection: drives the gray treatment for in-progress
+      // players on the Rankings page. thru === 18 → completed; anything
+      // else → mid-round numbers (DataGolf has them through holes played).
+      ...(thru != null ? { thru_latest_round: thru } : {}),
+      latest_round_complete: thru === 18,
     };
   });
   rows.sort((a, b) => b.x_score - a.x_score);

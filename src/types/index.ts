@@ -31,6 +31,16 @@ export interface PlayerData {
   r2_score_to_par?: number;
   r3_score_to_par?: number;
   r4_score_to_par?: number;
+  /** Holes completed in the LATEST round we have data for (0–18). When the
+   *  tournament round is suspended mid-play, players who finished have
+   *  thru=18 and players still on course have thru<18. Drives the gray
+   *  treatment on the Rankings page for in-progress players (their SG
+   *  numbers + X-Score reflect partial-round data). */
+  thru_latest_round?: number;
+  /** True when thru_latest_round === 18 (player completed the most recent
+   *  round we have data for). Convenience field — same info as
+   *  thru_latest_round === 18 but cleaner for table styling. */
+  latest_round_complete?: boolean;
 }
 
 /**
@@ -89,6 +99,7 @@ export type SortField =
   | 'sg_putt'
   | 'sg_app'
   | 'sg_ott'
+  | 'sg_arg'
   | 'sg_score_l1'
   | 'course_history_l2'
   | 'fit_plus_category_l3'

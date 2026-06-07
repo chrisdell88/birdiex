@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run verify:auto-roll && npm run verify:floor-refs && npm run verify:workflow-env && npm run verify:all-time && npm run verify:card-singleton && npm test -- --run && tsc -b && vite build",
+    "build": "npm run verify:auto-roll && npm run verify:floor-refs && npm run verify:workflow-env && npm run verify:all-time && npm run verify:card-singleton && npm run verify:rankings-completeness && npm test -- --run && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
@@ -16,6 +16,7 @@
     "verify:workflow-env": "tsx scripts/verify-workflow-env.ts",
     "verify:all-time": "tsx scripts/verify-all-time-totals.ts",
     "verify:card-singleton": "tsx scripts/verify-matchup-card-singleton.ts",
+    "verify:rankings-completeness": "tsx scripts/verify-rankings-data-completeness.ts",
     "notify": "tsx scripts/notify.ts"
   },
   "dependencies": {

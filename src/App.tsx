@@ -112,7 +112,30 @@ function App() {
         {/* keyed wrapper -> remounts + fades in on every tab switch */}
         <div key={activeTab} className="fade-in">
           {activeTab === 'rankings' && <RankingsTable data={activeData} dataSet={dataSet} onDataSetChange={setDataSet} />}
-          {activeTab === 'matchups' && <MatchupsView data={activeData} dataSet={dataSet} onDataSetChange={setDataSet} />}
+          {activeTab === 'matchups' && (
+            <>
+              {/* When sportsbooks have posted next-round matchups (e.g. R4
+                  while R3 is in progress/suspended), render the SAME
+                  MatchupsView component for R4 ABOVE the current-round
+                  view. Each instance owns its own filter / sort / Best
+                  Bets toggle state. Cards render through MatchupCard so
+                  R4 + R3 look identical. */}
+              {currentEvent.nextRoundMatchups && currentEvent.nextRoundNumber && currentEvent.nextRoundRankings && (
+                <MatchupsView
+                  data={activeData}
+                  dataSet={dataSet}
+                  onDataSetChange={setDataSet}
+                  matchupsOverride={currentEvent.nextRoundMatchups}
+                  rankingsCumulativeOverride={currentEvent.nextRoundRankings}
+                  rankingsRoundOverride={currentEvent.nextRoundRankings}
+                  picksRoundOverride={currentEvent.nextRoundNumber}
+                  floorOverride={currentEvent.recommendedFloor}
+                  courseOverride={currentEvent.course}
+                />
+              )}
+              <MatchupsView data={activeData} dataSet={dataSet} onDataSetChange={setDataSet} />
+            </>
+          )}
           {activeTab === 'odds' && <OddsTablePage data={activeData} dataSet={dataSet} onDataSetChange={setDataSet} />}
           {activeTab === 'simulator' && <SimulatorPage />}
           {activeTab === 'methodology' && <MethodologyPage onNavigateToResults={() => setActiveTab('results')} />}

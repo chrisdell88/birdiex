@@ -6,7 +6,6 @@ import SignalBadge from './SignalBadge';
 import PlayerSearch from './PlayerSearch';
 import RecommendedFloorBadge from './RecommendedFloorBadge';
 import { tierForEdge } from '../lib/sizing';
-import NextRoundPreview from './NextRoundPreview';
 import MatchupCard from './MatchupCard';
 import { isBuy, isFade } from '../lib/signalDisplay';
 import MatchupsGlossary from './MatchupsGlossary';
@@ -17,6 +16,20 @@ interface MatchupsViewProps {
   data: PlayerData[];
   dataSet: DataSet;
   onDataSetChange: (ds: DataSet) => void;
+  /** Optional overrides — when provided, this MatchupsView instance renders
+   *  for a DIFFERENT round/dataset than currentEvent's primary picksRound.
+   *  Used to surface R4 picks above the R3 picks on the same page when
+   *  next-round matchups are available. Each instance owns its own filter
+   *  / sort / Best Bets toggle state so they don't conflict. */
+  matchupsOverride?: MatchupOddsEntry[];
+  rankingsCumulativeOverride?: PlayerData[];
+  rankingsRoundOverride?: PlayerData[];
+  picksRoundOverride?: number;
+  floorOverride?: number;
+  courseOverride?: string;
+  /** When true, hide the dataset toggle inside MatchupsView (the parent
+   *  owns it via App). */
+  hideDatasetToggle?: boolean;
 }
 
 type MatchupSort = 'edge-high' | 'edge-low';
@@ -46,7 +59,7 @@ function getBucket(pick: PlayerData, opponent: PlayerData): BucketType {
   return 'OTHER vs OTHER';
 }
 
-function generateMatchups(data: PlayerData[], oddsData: MatchupOddsEntry[]): Matchup[] {
+function generateMatchups(data: PlayerData[], oddsData: MatchupOddsEntry[], floor: number): Matchup[] {
   const playerMap = new Map<string, PlayerData>();
   data.forEach((p) => playerMap.set(p.player_name, p));
 
@@ -90,7 +103,7 @@ function generateMatchups(data: PlayerData[], oddsData: MatchupOddsEntry[]): Mat
 
     // Tier is venue-aware: BEST BET ≥ venue floor, STRONG PLAY ≥ floor−0.5.
     // Single source of truth lives in src/lib/sizing.ts::tierForEdge.
-    const tier: Matchup['tier'] = tierForEdge(matchupScore, currentEvent.recommendedFloor);
+    const tier: Matchup['tier'] = tierForEdge(matchupScore, floor);
 
     const bucket = getBucket(pick, opponent);
     const isDoubleSignal =
@@ -360,15 +373,21 @@ function MatchupDefinitionsModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-export default function MatchupsView(_: MatchupsViewProps) {
-  // Props are kept for API parity with the rest of the app but no longer
-  // used here — we read both datasets directly from currentEvent and
-  // combine them, with each card labelled by source.
-  void _;
+export default function MatchupsView(props: MatchupsViewProps) {
+  // Effective data sources — overrides win when the parent renders this
+  // component for a different round (e.g. R4 above R3 on the same page).
+  // Default to currentEvent so the existing single-section use stays
+  // identical in behavior.
+  const picksRound = props.picksRoundOverride ?? currentEvent.picksRound;
+  const matchupsData = props.matchupsOverride ?? currentEvent.matchups;
+  const rankingsCumulative = props.rankingsCumulativeOverride ?? currentEvent.rankingsCumulative;
+  const rankingsRound = props.rankingsRoundOverride ?? currentEvent.rankingsRound;
+  const floor = props.floorOverride ?? currentEvent.recommendedFloor;
+  const course = props.courseOverride ?? currentEvent.course;
   const [sortBy, setSortBy] = useState<MatchupSort>('edge-high');
   const [showDefinitions, setShowDefinitions] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
-  const isPreTournament = currentEvent.picksRound <= 1;
+  const isPreTournament = picksRound <= 1;
 
   // Build matchups for BOTH datasets and combine. Cards display a chip
   // for the dataset they came from; duplicates (same pick+opp in both)
@@ -378,18 +397,16 @@ export default function MatchupsView(_: MatchupsViewProps) {
   //
   // Pre-tournament + R2 picks: round-only == cumulative (only one round of
   // data exists), so we skip the duplicate combine and just show one set.
-  const datasetsIdentical = currentEvent.picksRound <= 2;
+  const datasetsIdentical = picksRound <= 2;
 
   const roundMatchups = useMemo(
-    () => generateMatchups(currentEvent.rankingsRound, currentEvent.matchups),
-    [],
+    () => generateMatchups(rankingsRound, matchupsData, floor),
+    [rankingsRound, matchupsData, floor],
   );
   const cumulativeMatchups = useMemo(
-    () => generateMatchups(currentEvent.rankingsCumulative, currentEvent.matchups),
-    [],
+    () => generateMatchups(rankingsCumulative, matchupsData, floor),
+    [rankingsCumulative, matchupsData, floor],
   );
-
-  const floor = currentEvent.recommendedFloor;
 
   const rawMatchups = useMemo(() => {
     if (datasetsIdentical) {
@@ -500,37 +517,22 @@ export default function MatchupsView(_: MatchupsViewProps) {
 
   return (
     <div>
-      {/* Next-round picks — when sportsbooks post the next round's H2H lines
-          ahead of the current round finishing (e.g. R4 while R3 is suspended),
-          render the same Best Bets cards using cumulative-through-{N-1}
-          X-Scores. Books only post matchups for players who completed the
-          prior round, so edges are clean for everyone in the section. */}
-      {currentEvent.nextRoundMatchups && currentEvent.nextRoundNumber && currentEvent.nextRoundRankings && (
-        <NextRoundPreview
-          roundNumber={currentEvent.nextRoundNumber}
-          rankings={currentEvent.nextRoundRankings}
-          matchups={currentEvent.nextRoundMatchups}
-          floor={currentEvent.recommendedFloor}
-          course={currentEvent.course}
-        />
-      )}
-
       {/* Round picks banner */}
       <div className="bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-lg p-5 mb-6">
         <div className="flex items-center gap-3 flex-wrap">
           <span className="bg-[#22c55e]/15 text-[#22c55e] text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full font-['Inter',system-ui,sans-serif]">
-            ROUND {currentEvent.picksRound}
+            ROUND {picksRound}
           </span>
           <span className="text-[10px] uppercase tracking-wider text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
             {currentEvent.name}
           </span>
-          {currentEvent.picksRound > 1 && (
+          {picksRound > 1 && (
             <RecommendedFloorBadge
-              threshold={currentEvent.recommendedFloor}
-              course={currentEvent.course}
+              threshold={floor}
+              course={course}
             />
           )}
-          {currentEvent.picksRound <= 1 && (
+          {picksRound <= 1 && (
             <span className="text-[11px] text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
               BirdieX model starts tracking at R2.
             </span>
@@ -571,18 +573,18 @@ export default function MatchupsView(_: MatchupsViewProps) {
         <div className="flex items-center gap-2">
           <div>
             <h2 className="text-xl font-bold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
-              R{currentEvent.picksRound} Matchups
+              R{picksRound} Matchups
             </h2>
             <p className="text-sm text-[#d4d4d4] mt-1 font-['Inter',system-ui,sans-serif]">
-              {currentEvent.picksRound <= 1 ? (
+              {picksRound <= 1 ? (
                 <>Browse for context &mdash; R1 picks are not tracked.</>
               ) : (
                 <>
                   Best Bet Matchup Score Threshold:{' '}
                   <span className="font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">
-                    ≥ {currentEvent.recommendedFloor.toFixed(2)}
+                    ≥ {floor.toFixed(2)}
                   </span>{' '}
-                  at {currentEvent.course}.
+                  at {course}.
                 </>
               )}
             </p>
@@ -644,7 +646,7 @@ export default function MatchupsView(_: MatchupsViewProps) {
       {(() => {
         const renderCard = (m: Matchup & { dataSet?: 'round-only' | 'cumulative'; doubleSignal?: boolean }, idx: number) => {
           const dsLabel = m.dataSet === 'round-only'
-            ? `Round ${currentEvent.picksRound - 1} data`
+            ? `Round ${picksRound - 1} data`
             : m.dataSet === 'cumulative'
               ? 'Cumulative data'
               : null;
@@ -730,7 +732,7 @@ export default function MatchupsView(_: MatchupsViewProps) {
                     <span className="font-['JetBrains_Mono','SF_Mono',monospace] text-[#22c55e]">
                       {floor.toFixed(2)}
                     </span>
-                    ) for Round {currentEvent.picksRound}. Showing{' '}
+                    ) for Round {picksRound}. Showing{' '}
                     <span className="text-[#22c55e] font-semibold">Leans</span>{' '}
                     instead — the tier just below the threshold.
                   </p>

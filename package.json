@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run verify:auto-roll && npm run verify:floor-refs && npm run verify:workflow-env && npm run verify:all-time && npm run verify:card-singleton && npm run verify:rankings-completeness && npm test -- --run && tsc -b && vite build",
+    "build": "npm run verify:auto-roll && npm run verify:floor-refs && npm run verify:workflow-env && npm run verify:all-time && npm run verify:card-singleton && npm run verify:rankings-completeness && npm test -- --run && tsc -b --force && tsc --noEmit && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",

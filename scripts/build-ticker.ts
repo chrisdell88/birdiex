@@ -180,26 +180,52 @@ async function main() {
     }
   }
 
+  // Pass --expectRound so build-matchups.ts aborts loudly if DataGolf
+  // silently shifts which round its `market=round_matchups` endpoint
+  // returns (the 2026-06-07 R3→R4 silent transition that wrote R4 odds
+  // into memorialR3Matchups.ts). The current-round fetch + the next-round
+  // fetch each guard themselves; whichever round DataGolf is actively
+  // returning succeeds, the other aborts safely with no file written.
   const matchupsOk = safeRun(
     `rebuilding ${matchupsOut} (line-shopping merge)`,
-    `npx tsx scripts/build-matchups.ts --slug ${slug} --phase ${phase} --market round_matchups --export ${matchupsExport} --out ${matchupsOut}`
+    `npx tsx scripts/build-matchups.ts --slug ${slug} --phase ${phase} --market round_matchups --expectRound ${roundNum} --export ${matchupsExport} --out ${matchupsOut}`
   );
   const outrightsOk = safeRun(
     `rebuilding ${outrightsOut} (line-shopping merge)`,
     `npx tsx scripts/build-outrights.ts --slug ${slug} --phase ${phase} --export ${outrightsExport} --out ${outrightsOut}`
   );
 
+  // Next-round pull: when sportsbooks post the next round early (e.g. R4
+  // matchups while R3 is still in play / suspended), DataGolf's
+  // `market=round_matchups` endpoint silently transitions to returning
+  // that next round. We try the next-round fetch on every tick; if
+  // DataGolf is still on the current round, the guard aborts cleanly and
+  // no nextRound file gets written. When books shift to next-round odds,
+  // the next-round fetch starts writing memorial R(N+1) Matchups.ts.
+  // Outrights are tournament-level (not round-specific), so we don't pull
+  // them per next-round — the current-round outrights file is the canonical
+  // tournament-winner snapshot.
+  const nextRoundNum = roundNum + 1;
+  const nextMatchupsOut = `${slugPrefix}R${nextRoundNum}Matchups`;
+  const nextMatchupsExport = `r${nextRoundNum}MatchupOddsData`;
+  const nextMatchupsOk = nextRoundNum <= 4 ? safeRun(
+    `rebuilding ${nextMatchupsOut} (next-round line-shopping merge)`,
+    `npx tsx scripts/build-matchups.ts --slug ${slug} --phase ${phase} --market round_matchups --expectRound ${nextRoundNum} --export ${nextMatchupsExport} --out ${nextMatchupsOut}`
+  ) : false;
+
   // CI-only: commit + push the matchups/outrights changes ourselves. Ticker
   // itself is handled by the workflow's existing commit step. Skipping the
   // commit/push locally so dev runs don't poke the remote.
-  if (process.env.GITHUB_ACTIONS === 'true' && (matchupsOk || outrightsOk)) {
+  if (process.env.GITHUB_ACTIONS === 'true' && (matchupsOk || outrightsOk || nextMatchupsOk)) {
     try {
       execSync('git config user.name "github-actions[bot]"', { cwd: PROJECT_ROOT, stdio: 'inherit' });
       execSync('git config user.email "41898282+github-actions[bot]@users.noreply.github.com"', { cwd: PROJECT_ROOT, stdio: 'inherit' });
-      const matchupsPath = `src/data/${matchupsOut}.ts`;
-      const outrightsPath = `src/data/${outrightsOut}.ts`;
-      // Stage and detect actual content changes before bothering to commit.
-      execSync(`git add ${matchupsPath} ${outrightsPath}`, { cwd: PROJECT_ROOT, stdio: 'inherit' });
+      const stageTargets = [
+        `src/data/${matchupsOut}.ts`,
+        `src/data/${outrightsOut}.ts`,
+        nextMatchupsOk ? `src/data/${nextMatchupsOut}.ts` : null,
+      ].filter(Boolean);
+      execSync(`git add ${stageTargets.join(' ')}`, { cwd: PROJECT_ROOT, stdio: 'inherit' });
       const diffCheck = spawnSync('git', ['diff', '--cached', '--quiet'], { cwd: PROJECT_ROOT });
       if (diffCheck.status === 0) {
         console.log('No matchups/outrights changes — skipping live-refresh commit.');

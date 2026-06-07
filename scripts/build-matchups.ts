@@ -51,6 +51,13 @@ interface Args {
   market: string;
   export: string;
   out: string;
+  /** OPTIONAL guard: the round we EXPECT the DataGolf response to be for.
+   *  If set + DataGolf returns a different `round_num`, we abort instead
+   *  of silently writing wrong-round data into the named file. This is
+   *  the test that would have caught the 2026-06-07 silent R3→R4
+   *  transition (DataGolf swapped which round its matchups endpoint
+   *  returned, and we wrote R4 odds into memorialR3Matchups.ts). */
+  expectRound?: string;
 }
 
 function parseArgs(): Args {
@@ -78,10 +85,31 @@ interface RawMatchup {
 const PROJECT_ROOT = new URL('..', import.meta.url).pathname;
 
 async function main() {
-  const { slug, phase, market, export: exportName, out } = parseArgs();
+  const { slug, phase, market, export: exportName, out, expectRound } = parseArgs();
   const rawPath = join(PROJECT_ROOT, 'data', 'raw', slug, phase, `matchups-${market}.json`);
   const raw = JSON.parse(await readFile(rawPath, 'utf8'));
   const list: RawMatchup[] = raw.match_list ?? [];
+
+  // ─── Round-validation guard ────────────────────────────────────────────────
+  // DataGolf's `market=round_matchups` endpoint silently transitions which
+  // round it returns when sportsbooks shift their lines (e.g. R3→R4 once
+  // R4 odds post). If the caller specified --expectRound, abort on mismatch
+  // — much louder than writing wrong-round data into a named file.
+  if (expectRound != null) {
+    const dgRound = raw.round_num;
+    if (String(dgRound) !== String(expectRound)) {
+      console.error(
+        `❌ Round mismatch: --expectRound ${expectRound} but DataGolf response has round_num=${dgRound}.`,
+      );
+      console.error(
+        `   Refusing to write ${out}.ts. The caller (build-ticker.ts / auto-roll.ts) should`,
+      );
+      console.error(
+        `   pull this round explicitly, or rotate to writing the file that matches DataGolf's round.`,
+      );
+      process.exit(2);
+    }
+  }
 
   // Keep only p1/p2 per book — some books quote a 3-way line with a `tie`
   // price; the model bets 2-way H2H (ties void), so drop the tie field.

@@ -421,10 +421,6 @@ export default function MatchupsView(props: MatchupsViewProps) {
     // BOTH datasets. Not "appears in both above 0.95" — that gave false
     // positives where a Best Bet in cumulative was flagged just because
     // a low-edge version of the pair also existed in round-only.
-    const roundBBKeys = new Set(roundMatchups.filter((m) => m.matchupScore >= floor).map(keyOf));
-    const cumBBKeys = new Set(cumulativeMatchups.filter((m) => m.matchupScore >= floor).map(keyOf));
-    const bothBB = (m: Matchup) => roundBBKeys.has(keyOf(m)) && cumBBKeys.has(keyOf(m));
-
     // DEDUP: each unique pair gets exactly ONE card. Decision logic per pair:
     //   - Both views clear the floor → cumulative card + doubleSignal tag
     //   - Only cumulative clears  → cumulative card, no tag

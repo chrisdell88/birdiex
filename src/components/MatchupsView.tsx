@@ -425,12 +425,33 @@ export default function MatchupsView(props: MatchupsViewProps) {
     const cumBBKeys = new Set(cumulativeMatchups.filter((m) => m.matchupScore >= floor).map(keyOf));
     const bothBB = (m: Matchup) => roundBBKeys.has(keyOf(m)) && cumBBKeys.has(keyOf(m));
 
+    // DEDUP: each unique pair gets exactly ONE card. Decision logic per pair:
+    //   - Both views clear the floor → cumulative card + doubleSignal tag
+    //   - Only cumulative clears  → cumulative card, no tag
+    //   - Only round-only clears   → round-only card, no tag
+    //   - Neither clears           → cumulative card (gets filtered out
+    //     downstream by the floor check anyway; preserves the pair for
+    //     All Matchups view)
+    const cumByKey = new Map(cumulativeMatchups.map((m) => [keyOf(m), m] as const));
+    const roundByKey = new Map(roundMatchups.map((m) => [keyOf(m), m] as const));
+    const allKeys = new Set<string>([...cumByKey.keys(), ...roundByKey.keys()]);
     const tagged: Array<Matchup & { dataSet: 'round-only' | 'cumulative'; doubleSignal: boolean }> = [];
-    for (const m of roundMatchups) {
-      tagged.push({ ...m, dataSet: 'round-only', doubleSignal: bothBB(m) });
-    }
-    for (const m of cumulativeMatchups) {
-      tagged.push({ ...m, dataSet: 'cumulative', doubleSignal: bothBB(m) });
+    for (const k of allKeys) {
+      const cum = cumByKey.get(k);
+      const rnd = roundByKey.get(k);
+      const cumBB = cum != null && cum.matchupScore >= floor;
+      const rndBB = rnd != null && rnd.matchupScore >= floor;
+      if (cumBB && rndBB) {
+        tagged.push({ ...(cum as Matchup), dataSet: 'cumulative', doubleSignal: true });
+      } else if (cumBB) {
+        tagged.push({ ...(cum as Matchup), dataSet: 'cumulative', doubleSignal: false });
+      } else if (rndBB) {
+        tagged.push({ ...(rnd as Matchup), dataSet: 'round-only', doubleSignal: false });
+      } else if (cum) {
+        tagged.push({ ...cum, dataSet: 'cumulative', doubleSignal: false });
+      } else if (rnd) {
+        tagged.push({ ...rnd, dataSet: 'round-only', doubleSignal: false });
+      }
     }
     return tagged;
   }, [roundMatchups, cumulativeMatchups, datasetsIdentical, floor]);

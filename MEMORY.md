@@ -1,6 +1,6 @@
 # BirdieX — Project Memory
 
-**Last updated:** 2026-06-06
+**Last updated:** 2026-06-07
 **Repo:** https://github.com/chrisdell88/birdiex
 **Live:** https://birdiex.co
 **Project path:** ~/Projects/birdiex
@@ -87,6 +87,65 @@ bug can't recur. In order shipped:
 The pattern across all five: **stop accepting silent fallbacks.** Every
 `?? 'default'` or "I'll update both files" pattern eventually drifts.
 Each fix replaced silent-drift with loud-fail.
+
+## Recent session highlights — 2026-06-07 (Memorial R3 day)
+
+Long session. Many corrections. The architecture that ended up shipped:
+
+1. **R3 suspension handling.** R3 got suspended for weather mid-round.
+   21 of 53 players completed R3; 32 mid-round. Manual `tickerTitleOverride`
+   field on `event.ts` (chris flips it when he tells claude). Updated
+   when round resumes / completes.
+
+2. **R4 picks on the matchups page.** New `nextRoundMatchups`,
+   `nextRoundRankings`, `nextRoundRankingsRound`, `nextRoundNumber`
+   fields on `currentEvent`. App.tsx renders `MatchupsView` TWICE on the
+   matchups tab — first instance is R4 (override props), second is R3
+   (default). Each owns its own filter/sort/toggle state. Cards go
+   through the canonical `MatchupCard` component (single source of
+   truth for card layout, guarded by `verify-matchup-card-singleton.ts`).
+
+3. **Split data sources for Rankings DISPLAY vs R3 BB COMPUTATION.**
+   The session hit a major architectural insight after ~6 hours of
+   flipping: these are two semantically different consumers of "cumulative
+   X-Scores" and they need different data:
+   - `rankingsCumulative` = memorialR3Data → for Rankings page DISPLAY.
+     Partial-R3 for mid-round players. Rankings page grays those cells.
+   - `r3PicksRankingsCumulative` = memorialR2Data → for R3 BB EDGE math
+     only. FROZEN R2-final X-Scores (what the R3 picks were announced
+     with). BB count + edges don't drift as R3 plays out.
+   - App.tsx passes `r3PicksRankingsCumulative` as a `rankingsCumulativeOverride`
+     to the R3 MatchupsView instance.
+
+4. **Cut player filter on matchups merge.** DataGolf NEVER posts
+   matchups with cut/WD players. Our line-shopping merge in
+   `build-matchups.ts` was accumulating pre-cut pairings forever. Fixed:
+   only keep pairings where BOTH players appear in the current DataGolf
+   response. Dropped 35 stale pairings from memorialR3Matchups.ts
+   (Fowler, McCarty, Griffin, Vegas, Bhatia, Smalley — all cut).
+
+5. **Outright odds: no line-shopping merge.** Outrights are dynamic
+   (books move them as the leaderboard changes). Each pull overwrites
+   the file with current prices. Matchups KEEP the merge because their
+   odds don't move as dynamically.
+
+6. **Ticker-refresh cron extended to 24/7** (`*/30 * * * *`). Previous
+   `9-23,0-3 UTC` had a deadzone overnight that left odds stale.
+
+7. **Odds page stripped to outright-only.** H2H matchup odds duplication
+   removed — matchups live on the Matchups page only.
+
+8. **Double Signal display dedup.** Was rendering 2 cards per double-
+   signal pair (one cum + one round-only). Now: one card, higher of the
+   two matchup scores, two pills side by side: `BEST BET` first then
+   `DOUBLE SIGNAL`. Grading already deduped — display caught up.
+
+9. **Local build matches Vercel checks.** Added `tsc -b --force && tsc
+   --noEmit` to npm run build so unused-var errors fail locally before
+   Vercel.
+
+**Lessons learned from this session — 8 of them — live at the top of CLAUDE.md.**
+Read those BEFORE doing any work in a new session.
 
 ---
 

@@ -11,11 +11,18 @@ Pairs with [UPDATE_FROM_PHONE.md](./UPDATE_FROM_PHONE.md) (which covers normal d
 From any device:
 
 1. Open https://birdiex.co — does the live site load?
-2. Look at the header banner — does it show the right event ("CHARLES SCHWAB CHALLENGE · COLONIAL COUNTRY CLUB" right now)?
-3. Look at the "Updated" timestamp on the header — was the last data pull within the last 2 hours during tournament play?
-4. Open Discord — does the most recent BirdieX channel post line up with what the site shows?
+2. Look at the header banner — does it show the right event (currently
+   "THE MEMORIAL TOURNAMENT · MUIRFIELD VILLAGE"; auto-switches to "RBC
+   CANADIAN OPEN · HAMILTON G&CC" Monday after Memorial completes).
+3. Look at the "Updated" timestamp on the header — was the last data
+   pull within the last 30 min during play hours? The cron now runs
+   `*/30 * * * *` (every 30 min, all day, 24/7).
+4. Open Discord — does the most recent BirdieX channel post line up
+   with what the site shows?
+5. Quick git check from phone: `gh run list --limit=5 -R chrisdell88/birdiex`
+   — recent runs all green?
 
-If all 4 answer yes: nothing to do.
+If all 5 answer yes: nothing to do.
 
 ---
 
@@ -134,10 +141,18 @@ The auto-roll script handles round transitions automatically. If it gets stuck (
 **Manual fix (from laptop only):**
 ```bash
 cd ~/Projects/birdiex
-npm run pull:event -- --slug charles-schwab-challenge-2026 --phase r1
-npm run build:event -- --slug charles-schwab-challenge-2026 --phase r1 --course colonial-country-club --out cscR1Data
+# Replace slug/course/out with whatever's currently active per
+# src/data/eventSchedule.ts (first entry). For Memorial:
+npm run pull:event -- --slug the-memorial-tournament-2026 --phase r3
+npm run build:event -- --slug the-memorial-tournament-2026 --phase r3 --course muirfield-village --out memorialR3Data --lock-at-round 3
 # ... etc per docs/NEW_TOURNAMENT_RUNBOOK.md
 ```
+
+**For round suspensions specifically** (like 2026-06-07 R3 weather):
+- `tickerTitleOverride` in `src/config/event.ts` flips manually via
+  Claude (e.g., 'R3 — SUSPENDED'). Tell Claude on phone: "R3 just
+  resumed, clear the suspension override." Claude commits + pushes,
+  Vercel redeploys in 60 sec.
 
 ---
 
@@ -163,6 +178,50 @@ The password lives in Supabase (`public.lab_secrets` table, bcrypted via the `ve
 3. Replace `YOUR_NEW_PASSWORD`. Click Run.
 
 That's 4 clicks from any device with a browser.
+
+---
+
+## Multi-device handoff (laptop ↔ main desktop)
+
+When you switch devices mid-trip — main desk → travel laptop and back —
+seamless continuity depends on a few things being in sync. Don't trust
+me on it; verify before relying on it:
+
+**Before leaving the main device:**
+1. `cd ~/Projects/birdiex && git status` — should be clean.
+2. `git log --oneline -3` — note the latest commit hash.
+3. Confirm `.env` exists in the project root + has all the keys
+   listed in `.env.example`.
+
+**On the travel laptop (first time on a trip):**
+1. `cd ~/Projects/birdiex && git pull origin main` — pull latest. The
+   hash should match what you noted.
+2. `cat .env | grep -c '^DATAGOLF_API_KEY='` — should print 1. If
+   prints 0, the laptop is missing the env file. AirDrop the `.env`
+   from the main device (it's gitignored, doesn't sync via git).
+3. `npm install` — restore node_modules.
+4. `npm run build` — runs all 8 guards + tests + tsc + vite. Should
+   exit clean.
+5. `npm run dev` — local preview at http://localhost:5173. Confirms
+   you can run the site locally.
+
+**At end of every work session (any device):**
+1. `git status` — should be clean (auto-push hook handles this).
+2. If unclean → `git add -A && git commit -m "wip" && git push` to
+   stash before you switch devices.
+
+**Memory/context sync:**
+- `MEMORY.md` (project root) is the canonical state-of-the-project
+  doc. Read it FIRST whenever you start on a new device.
+- `CLAUDE.md` has the rules. Read it second.
+- `docs/DATA_FLOW_AUDIT.md` has the data-source architecture (why
+  Rankings + Matchups read different files for X-Scores).
+
+**Other projects on the laptop:**
+Same pattern — each project under `~/Projects/` has its own
+MEMORY.md and CLAUDE.md. The global `~/.claude/CLAUDE.md` lists
+all projects + their GitHub repos. Bootstrap script (below) restores
+all of them on a fresh device.
 
 ---
 

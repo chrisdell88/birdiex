@@ -31,6 +31,69 @@ round-trip. Skip this step → I'm just shifting work onto him.
 
 ---
 
+## 📚 Lessons from 2026-06-07 — read before doing ANYTHING
+
+A single session went off the rails for ~6 hours because I made the
+same class of mistake over and over. Specifics so the next session
+doesn't repeat them:
+
+1. **Different consumers of the same data need different sources.**
+   Rankings page DISPLAYS X-Scores → can be live/partial. R3 Best Bet
+   edges COMPUTE off X-Scores → must be frozen at announcement-time.
+   I conflated these into one `rankingsCumulative` field and kept
+   flipping it back and forth. Architectural fix: `event.ts` now has
+   `rankingsCumulative` (live, for display) AND `r3PicksRankingsCumulative`
+   (frozen R2-final, for R3 BB edges). Same pattern applies to any
+   future round transition. Never overload one data source for two
+   semantically different consumers.
+
+2. **The line-shopping merge for matchups MUST drop cut players.**
+   `build-matchups.ts` now filters out pairings where either player
+   isn't in the current DataGolf response. Without that filter, the
+   merge accumulates pre-cut pairings forever. Cut players appeared
+   on the matchups page hours after they missed the cut. Don't ever
+   re-enable an unfiltered merge.
+
+3. **Outright odds: NO line-shopping merge.** Outrights are dynamic;
+   books move them throughout the tournament. Each pull OVERWRITES
+   the file with current prices. Merging keeps stale pre-round
+   prices that users can't actually bet. Matchups KEEP the merge —
+   those odds don't move dynamically. Different bet types, different
+   rules.
+
+4. **Don't make unilateral product decisions when the answer isn't
+   obvious.** Whenever I made a "small" call without asking (e.g.,
+   removing gray treatment because "X-Scores are clean now,"
+   skipping the dataset chip on R4 cards, dropping R4 from the Odds
+   page after it was already there), Chris had to find and revert
+   the change. Ask FIRST. Always.
+
+5. **Render every UI change in Chrome MCP before saying "shipped."**
+   Verify the actual rendered DOM, screenshot it, read the
+   screenshot. Don't tell Chris "live in ~60 sec" and move on —
+   that pushes QA onto him.
+
+6. **`npm run build` runs the same checks Vercel does.** `tsc -b
+   --force && tsc --noEmit` was added on 2026-06-07 after a missing
+   unused-var check caused a Vercel deploy failure email.
+
+7. **Banner / pill / column labels must match the round whose
+   data is in the file.** When swapping event.ts imports between
+   memorialR2Data and memorialR3Data, also check that the dataset
+   toggle label (`DataSetToggle.tsx`), the in-progress banner, and
+   any tooltips reflect the new round. Don't just swap the import
+   and assume the rest is right.
+
+8. **When in doubt about "is this data complete," ask the question
+   that actually matters: which round's data are we using, and is
+   that round fully done for every player whose X-Score we'd
+   compute.** R3 picks use R2-final (R2 is done for everyone =
+   complete). R4 picks use R3-finished (only 21 of 53 done =
+   incomplete for the 32 unfinished, so books only post R4 for the
+   21). Be explicit about WHICH round and WHICH players.
+
+---
+
 ## 🛑 NEVER ship without explicit "do it" — questions ≠ authorization
 
 Pattern that has burned Chris multiple times: he asks a clarifying or

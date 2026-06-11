@@ -155,9 +155,14 @@ export const COURSES: Record<string, CourseProfile> = {
   // (event_id 32, course_name "TPC Toronto at Osprey Valley (North Course)").
   'tpc-toronto-osprey-north': {
     name: 'TPC Toronto at Osprey Valley (North Course)',
-    // DataGolf bar pct: 6.06 → 0.0096. Floor: 2.95 (★★★+) — bottom of the
-    // predictability table (first-time/rare host, no course history).
-    predictability: 0.0096,
+    // CANONICAL field-method predictability (docs/X_SCORE_FORMULA.md §1b:
+    // mean |total_course_history_adjustment| over the event field), computed
+    // 2026-06-11 from the live decompositions pull (147 players): 0.0324.
+    // The bar-chart proxy said 0.0096, but the floor formula's anchors
+    // (Augusta 0.1439 → 0.95, Aronimink 0.0413 → 2.45) were fit on
+    // FIELD-METHOD values — feeding it bar-chart values mixes scales.
+    // Field method wins whenever decompositions are available.
+    predictability: 0.0324,
     // coefficients: PLACEHOLDER 0.50 across. At predictability 0.0096 the
     // blend normalizer is 0.0096/0.15 = 0.064, so Layer-1 weights are
     // w = 0.064·coeff + 0.936 — between coeff 0.3 and 0.8 the weight moves

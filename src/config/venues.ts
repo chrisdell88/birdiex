@@ -94,10 +94,13 @@ export const VENUES: Record<EventId, VenueInfo> = {
     // Corrected 2026-06-11: actual venue is TPC Toronto at Osprey Valley
     // (North Course) per DataGolf field-updates — NOT Hamilton G&CC.
     course: 'TPC Toronto at Osprey Valley (North Course)',
-    // DataGolf bar pct: 6.06 → 0.0096 → formula floor 2.95 (★★★+). Bottom
-    // of the predictability table (rare host, no course history). No
-    // publishedFloor override — formula default until results say otherwise.
-    predictability: 0.0096,
+    // CANONICAL field-method predictability (mean |course_history_adj| over
+    // the 147-player field, live decompositions 2026-06-11): 0.0324 →
+    // raw floor 3.05 − 14.62×0.0324 = 2.577 → snaps to 2.45 (★★+). The
+    // bar-chart proxy (0.0096 → 2.95) mixes scales with the field-method-
+    // anchored formula; field method wins when decompositions exist. No
+    // publishedFloor override — formula default.
+    predictability: 0.0324,
   },
 };
 

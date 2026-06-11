@@ -118,39 +118,51 @@ async function main() {
     p2_player_name: string;
     odds: Record<string, { p1?: string; p2?: string }>;
   }
-  // ODDS SANITY CAP: pre-round H2H matchup lines never exceed roughly ±300
-  // at real books. Lines beyond ±350 are in-play contamination (DataGolf's
-  // matchup feed serves LIVE odds mid-round — during the Memorial's weather
-  // suspension, PointsBet -525/-625 in-play R3 lines got merged into the R4
-  // file and were graded as published picks). Drop any non-datagolf book
-  // line where either side exceeds the cap; the datagolf entry is the model
-  // fair line (excluded from grading) and never trips this anyway.
-  const MAX_ABS_H2H_ODDS = 350;
-  let cappedLines = 0;
-  const lineImplausible = (l: Record<string, string>): boolean =>
-    ['p1', 'p2'].some((s) => {
-      const n = parseInt(l[s] ?? '', 10);
-      return Number.isFinite(n) && Math.abs(n) > MAX_ABS_H2H_ODDS;
-    });
+  // SUSPICIOUS-LINE FLAGGING (policy set by Chris 2026-06-11: FLAG ONLY,
+  // NEVER auto-drop). A book line that diverges wildly from DataGolf's fair
+  // line on the same matchup is probably in-play contamination (the Memorial
+  // R4 phantoms: PointsBet -525/-625 vs DG fair ~+100, merged during the
+  // weather suspension). But a legitimately lopsided -375 next to a -350
+  // fair line is FINE — so the pipeline never removes lines on its own; it
+  // logs them loudly and Chris adjudicates per case.
+  const impliedProb = (odds: string | undefined): number | null => {
+    const n = parseInt(odds ?? '', 10);
+    if (!Number.isFinite(n) || n === 0) return null;
+    return n < 0 ? Math.abs(n) / (Math.abs(n) + 100) : 100 / (n + 100);
+  };
   const fresh: Entry[] = list.map((m) => ({
     p1_player_name: m.p1_player_name,
     p2_player_name: m.p2_player_name,
     odds: Object.fromEntries(
-      Object.entries(m.odds ?? {})
-        .filter(([book, line]) => {
-          if (book === 'datagolf') return true;
-          const bad = lineImplausible(line as Record<string, string>);
-          if (bad) cappedLines++;
-          return !bad;
-        })
-        .map(([book, line]) => {
-          const l = line as Record<string, string>;
-          return [book, { p1: l.p1, p2: l.p2 }];
-        })
+      Object.entries(m.odds ?? {}).map(([book, line]) => {
+        const l = line as Record<string, string>;
+        return [book, { p1: l.p1, p2: l.p2 }];
+      })
     ),
   }));
-  if (cappedLines > 0) {
-    console.warn(`⚠️  dropped ${cappedLines} implausible book lines (|odds| > ${MAX_ABS_H2H_ODDS}) — in-play contamination.`);
+  // Flag pass — compare every real book line to DataGolf's fair line.
+  let flagged = 0;
+  for (const e of fresh) {
+    const fair = (e.odds as Record<string, { p1?: string; p2?: string }>)['datagolf'];
+    const fairP1 = impliedProb(fair?.p1);
+    if (fairP1 == null) continue;
+    for (const [book, line] of Object.entries(e.odds)) {
+      if (book === 'datagolf') continue;
+      const bookP1 = impliedProb((line as { p1?: string }).p1);
+      if (bookP1 == null) continue;
+      if (Math.abs(bookP1 - fairP1) > 0.25) {
+        flagged++;
+        console.warn(
+          `🚩 SUSPICIOUS LINE (kept — flag-only policy): ${e.p1_player_name} vs ${e.p2_player_name} ` +
+          `@ ${book} ${(line as { p1?: string }).p1}/${(line as { p2?: string }).p2} ` +
+          `vs DataGolf fair ${fair?.p1}/${fair?.p2} — implied prob differs by ` +
+          `${Math.round(Math.abs(bookP1 - fairP1) * 100)} points. Likely in-play contamination; Chris adjudicates.`
+        );
+      }
+    }
+  }
+  if (flagged > 0) {
+    console.warn(`🚩 ${flagged} suspicious book line(s) flagged above — NONE removed (flag-only policy).`);
   }
 
   // Active player set: who shows up in TODAY's DataGolf response. Pairings

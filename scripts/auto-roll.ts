@@ -249,15 +249,25 @@ async function refreshCurrentRound(picksRound: number): Promise<void> {
   const outrightsOut = `${SLUG_PREFIX}R${picksRound}Outrights`;
   const outrightsExport = `r${picksRound}OutrightsData`;
 
-  exec(`npm run build:event -- --slug ${SLUG} --phase ${phase} --course ${COURSE} --out ${roundDataOut}`);
-  exec(`npx tsx scripts/build-matchups.ts --slug ${SLUG} --phase ${phase} --market round_matchups --export ${matchupsExport} --out ${matchupsOut}`);
-  exec(`npx tsx scripts/build-outrights.ts --slug ${SLUG} --phase ${phase} --export ${outrightsExport} --out ${outrightsOut}`);
-  exec(`npx tsx scripts/build-skill-estimates.ts --slug ${SLUG} --phase ${phase} --export skillEstimatesData --out ${SLUG_PREFIX}SkillEstimates`);
+  // Each step is independently best-effort: one missing raw file (e.g.
+  // matchups aren't pulled in the 'pre' phase) must not abort the whole
+  // refresh — that hard-crash is what killed the 2026-06-11 run mid-flight.
+  const safeExec = (label: string, cmd: string) => {
+    try {
+      exec(cmd);
+    } catch (e) {
+      console.error(`✖ ${label} failed (non-fatal — refresh continues): ${(e as Error).message}`);
+    }
+  };
+  safeExec('build:event', `npm run build:event -- --slug ${SLUG} --phase ${phase} --course ${COURSE} --out ${roundDataOut}`);
+  safeExec('build-matchups', `npx tsx scripts/build-matchups.ts --slug ${SLUG} --phase ${phase} --market round_matchups --export ${matchupsExport} --out ${matchupsOut}`);
+  safeExec('build-outrights', `npx tsx scripts/build-outrights.ts --slug ${SLUG} --phase ${phase} --export ${outrightsExport} --out ${outrightsOut}`);
+  safeExec('build-skill-estimates', `npx tsx scripts/build-skill-estimates.ts --slug ${SLUG} --phase ${phase} --export skillEstimatesData --out ${SLUG_PREFIX}SkillEstimates`);
   // Headshots: pull from ESPN's current leaderboard, name-match to our field,
   // merge into the cumulative map. Best-effort — ESPN may not have switched
   // to this tournament yet (typically updates ~24 hrs before tee-off). Players
   // not yet covered fall back to initials avatars.
-  exec(`npx tsx scripts/build-headshots.ts --players ${roundDataOut} --out headshots`);
+  safeExec('build-headshots', `npx tsx scripts/build-headshots.ts --players ${roundDataOut} --out headshots`);
 }
 
 /**
@@ -453,12 +463,16 @@ async function main(): Promise<void> {
   //     while our config says we're early in an event. Without this guard
   //     the detector reads "R4 complete" on day one of a new tournament and
   //     instantly kills it (final-refresh + complete). Treat as no-op.
-  const feedFinished = players.length > 0 && players.every(
-    (p) => (p.round ?? 0) >= 4 && (p.thru ?? 0) >= 18
-  );
-  if (feedFinished && currentCompleted < 3) {
+  // Stale if ANY row reports a round more than one ahead of what our config
+  // says is complete — a feed can never legitimately jump ahead like that
+  // (rounds complete one at a time). every()-based detection misses CUT/WD
+  // rows whose round is null, which is exactly how the first version of this
+  // guard failed live on 2026-06-11 (Memorial R4 leftovers nearly marked the
+  // day-one RBC Canadian complete).
+  const feedAhead = players.some((p) => (p.round ?? 0) > currentCompleted + 1);
+  if (feedAhead) {
     console.warn(
-      `⚠️  in-play feed shows a FINISHED tournament (all rows R4/F) but config says only R${currentCompleted} ` +
+      `⚠️  in-play feed reports rounds ahead of R${currentCompleted + 1} but config says only R${currentCompleted} ` +
       `is complete — this is the PREVIOUS event's leftover feed. No-op until the new event's live data appears.`
     );
     return;

@@ -105,9 +105,12 @@ export const getOutrights = (market: OutrightMarket, tour: Tour = 'pga') =>
 /** DataGolf player rankings (overall skill). */
 export const getDgRankings = () => rateLimitedFetch(buildUrl('/preds/get-dg-rankings'));
 
-/** Player skill decomposition (long-run baseline). */
-export const getSkillDecompositions = () =>
-  rateLimitedFetch(buildUrl('/preds/skill-decompositions'));
+/** Player skill ratings (long-run SG baseline by category). DataGolf renamed
+ *  this endpoint from /preds/skill-decompositions → /preds/skill-ratings; the
+ *  old path 404s on every pull. JS function name + raw filename kept for
+ *  backward compatibility. */
+export const getSkillDecompositions = (tour: Tour = 'pga') =>
+  rateLimitedFetch(buildUrl('/preds/skill-ratings', { tour }));
 
 /** Historical raw data event list (paywalled — for backtests). */
 export const getHistoricalEventList = () =>

@@ -64,7 +64,15 @@ async function safe<T>(name: string, fn: () => Promise<T>): Promise<T | null> {
 }
 
 async function main() {
-  const { slug, phase } = parseArgs();
+  const args = parseArgs();
+  // Prefer the committed event config over the (possibly stale) workflow
+  // YAML argv — see scripts/lib/currentEvent.ts for the failure this kills.
+  const { resolveWithOverride } = await import(
+    new URL('./lib/currentEvent.ts', import.meta.url).href
+  );
+  const identity = await resolveWithOverride({ slug: args.slug });
+  const slug = identity.slug || args.slug;
+  const { phase } = args;
   console.log(`\n📡 Pulling DataGolf data for ${slug} / phase=${phase}\n`);
 
   // Always pull: field, event list, dg rankings (cheap context)

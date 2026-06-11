@@ -38,6 +38,22 @@ const cscRoundsList = Object.entries(cscResultModules)
   .filter((x): x is { round: number; bets: BetRecord[] } => x !== null)
   .sort((a, b) => a.round - b.round);
 
+// RBC Canadian Open — same dynamic-glob pattern.
+const rbcResultModules = import.meta.glob<Record<string, unknown>>(
+  '../data/rbcCanadianR*Results.ts',
+  { eager: true }
+);
+const rbcRoundsList = Object.entries(rbcResultModules)
+  .map(([path, mod]) => {
+    const m = path.match(/rbcCanadianR(\d+)Results\.ts$/);
+    if (!m) return null;
+    const round = Number(m[1]);
+    const bets = (mod as Record<string, unknown>)[`r${round}Results`] as BetRecord[] | undefined;
+    return Array.isArray(bets) ? { round, bets } : null;
+  })
+  .filter((x): x is { round: number; bets: BetRecord[] } => x !== null)
+  .sort((a, b) => a.round - b.round);
+
 // Memorial Tournament — same dynamic-glob pattern as Charles Schwab.
 const memorialResultModules = import.meta.glob<Record<string, unknown>>(
   '../data/memorialR*Results.ts',
@@ -75,6 +91,10 @@ interface EventBucket {
 // Vite globs above, so the auto-roll just needs to drop a new
 // <prefix>R<N>Results.ts file and it shows up here on the next deploy.
 const EVENTS: EventBucket[] = [
+  {
+    label: 'RBC Canadian Open 2026',
+    rounds: rbcRoundsList.map((r) => ({ label: `R${r.round}`, bets: r.bets })),
+  },
   {
     label: 'The Memorial Tournament 2026',
     rounds: memorialRoundsList.map((r) => ({ label: `R${r.round}`, bets: r.bets })),
@@ -139,6 +159,7 @@ function computeStats(bets: BetRecord[], lower: number, upper: number | undefine
 // Map each Lab EVENT label → the venues.ts EventId so we can pass the
 // matching venue floor into the StatsTable for visual highlighting.
 const LABEL_TO_EVENT_ID: Record<string, EventId> = {
+  'RBC Canadian Open 2026': 'rbc-canadian-open-2026',
   'The Memorial Tournament 2026': 'the-memorial-tournament-2026',
   'Charles Schwab Challenge 2026': 'charles-schwab-challenge-2026',
   'CJ Cup Byron Nelson 2026': 'cj-cup-byron-nelson-2026',

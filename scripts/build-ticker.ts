@@ -34,7 +34,15 @@ function formatTime(dt: string): string {
 }
 
 async function main() {
-  const { slug, phase, round } = parseArgs();
+  const args = parseArgs();
+  // Prefer the committed event config over the (possibly stale) workflow
+  // YAML argv — see scripts/lib/currentEvent.ts for the failure this kills.
+  const { resolveWithOverride } = await import(
+    new URL('./lib/currentEvent.ts', import.meta.url).href
+  );
+  const identity = await resolveWithOverride({ slug: args.slug });
+  const slug = identity.slug || args.slug;
+  const { phase, round } = args;
   const roundNum = Number(round);
 
   const field = JSON.parse(
@@ -44,13 +52,37 @@ async function main() {
     await readFile(join(PROJECT_ROOT, 'data', 'raw', slug, phase, 'in-play.json'), 'utf8')
   );
 
+  // STALE-FEED GUARD: between events, DataGolf's in-play endpoint keeps
+  // serving the PREVIOUS tournament's final leaderboard until the new one
+  // tees off. If we blindly join those rows onto the new event's field,
+  // overlapping players show LAST WEEK's scores on the new ticker (this bit
+  // us at the Memorial → RBC Canadian handoff: in-play was all Memorial R4
+  // finals while RBC R1 hadn't started). Detection: every in-play row at
+  // round >= 4 and thru >= 18 = a FINISHED tournament. If we're building a
+  // ticker for an earlier round than that, the feed is stale → use tee
+  // times only, no scores.
+  const inplayRows: Array<{ player_name: string; current_score?: number; current_pos?: string; thru?: number; round?: number }>
+    = inplay.data ?? [];
+  // Stale if ANY row reports a round AHEAD of the round we're building the
+  // ticker for — a feed can never legitimately contain round-4 rows while
+  // we're building a round-1 ticker. (every()-based detection misses CUT/WD
+  // rows whose round is null.)
+  const feedIsStale = inplayRows.some((p) => (p.round ?? 0) > roundNum);
+  if (feedIsStale) {
+    console.warn(
+      `⚠️  in-play feed shows a FINISHED tournament (all rows R4/F) but we're building a round-${roundNum} ticker — treating feed as stale (previous event). Tee times only, no scores.`
+    );
+  }
+
   const scoreByName = new Map<string, { score: number | null; pos: string; thru: number | null }>();
-  for (const p of inplay.data ?? []) {
-    scoreByName.set(p.player_name, {
-      score: typeof p.current_score === 'number' ? p.current_score : null,
-      pos: p.current_pos ?? '--',
-      thru: typeof p.thru === 'number' ? p.thru : null,
-    });
+  if (!feedIsStale) {
+    for (const p of inplayRows) {
+      scoreByName.set(p.player_name, {
+        score: typeof p.current_score === 'number' ? p.current_score : null,
+        pos: p.current_pos ?? '--',
+        thru: typeof p.thru === 'number' ? p.thru : null,
+      });
+    }
   }
 
   interface TickerEntry {
@@ -158,11 +190,18 @@ async function main() {
   // never refreshed live. ticker-refresh.yml MUST have SLUG_PREFIX in its
   // env block; auto-roll.ts MUST patch it on event switch. Both are guarded
   // by scripts/verify-workflow-env.ts on every build.
-  const slugPrefix = process.env.SLUG_PREFIX;
+  // Prefix resolution: the committed event config wins; env SLUG_PREFIX is
+  // the fallback. Resolution from eventSchedule.ts means a stale workflow
+  // YAML can no longer write the wrong event's files (the csc→Memorial
+  // overwrite bug AND the Memorial→RBC freeze both trace to stale env).
+  const slugPrefix = identity.dataPrefix || process.env.SLUG_PREFIX;
   if (!slugPrefix) {
-    console.error('❌ SLUG_PREFIX env var is required. Set it in ticker-refresh.yml env block.');
+    console.error('❌ Could not resolve the event data prefix (eventSchedule lookup failed AND no SLUG_PREFIX env).');
     console.error('   Without it this script would silently write the wrong event\'s matchups/outrights files.');
     process.exit(1);
+  }
+  if (process.env.SLUG_PREFIX && identity.dataPrefix && process.env.SLUG_PREFIX !== identity.dataPrefix) {
+    console.warn(`⚠️  env SLUG_PREFIX="${process.env.SLUG_PREFIX}" is stale; using "${identity.dataPrefix}" from the committed event config.`);
   }
   const matchupsOut = `${slugPrefix}R${roundNum}Matchups`;
   const matchupsExport = `r${roundNum}MatchupOddsData`;

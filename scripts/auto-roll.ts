@@ -31,9 +31,13 @@ import { existsSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
 const ROOT = new URL('..', import.meta.url).pathname;
-const SLUG = process.env.SLUG ?? 'cj-cup-byron-nelson-2026';
-const COURSE = process.env.COURSE ?? 'tpc-craig-ranch';
-const SLUG_PREFIX = process.env.SLUG_PREFIX ?? 'cjCup';
+// Mutable — initialized from env for backward compatibility, then OVERRIDDEN
+// at startup by resolveCurrentEvent() (scripts/lib/currentEvent.ts) so a
+// stale workflow-YAML env can never point us at last week's event. See the
+// Memorial → RBC Canadian handoff failure (June 2026).
+let SLUG = process.env.SLUG ?? 'cj-cup-byron-nelson-2026';
+let COURSE = process.env.COURSE ?? 'tpc-craig-ranch';
+let SLUG_PREFIX = process.env.SLUG_PREFIX ?? 'cjCup';
 
 // How long after a round transition we keep refreshing odds. ~6 hours
 // covers "30 min after round-done through midnight ET" for typical 5-7pm
@@ -410,6 +414,19 @@ export const tickerData: TickerEntry[] = [];
 }
 
 async function main(): Promise<void> {
+  // -1. Resolve the CURRENT event from the committed config (event.ts →
+  //     eventSchedule.ts) and override any stale workflow-YAML env. This is
+  //     what prevents the "workflow still points at last week's slug" class
+  //     of failure from ever freezing the site again.
+  const { resolveWithOverride } = await import(
+    pathToFileURL(join(ROOT, 'scripts/lib/currentEvent.ts')).href
+  );
+  const identity = await resolveWithOverride({ slug: SLUG, courseKey: COURSE, dataPrefix: SLUG_PREFIX });
+  if (identity.slug) SLUG = identity.slug;
+  if (identity.courseKey) COURSE = identity.courseKey;
+  if (identity.dataPrefix) SLUG_PREFIX = identity.dataPrefix;
+  console.log(`Operating on event: slug=${SLUG} course=${COURSE} prefix=${SLUG_PREFIX}`);
+
   // 0. Event switch check (before anything else). If currentEvent.isComplete
   //    and a next scheduled event exists with pre-staged data, swap event.ts
   //    + workflows + state, then exit.
@@ -430,6 +447,23 @@ async function main(): Promise<void> {
   const detected = detectMaxCompletedRound(players);
   console.log(`DataGolf: max completed round = R${detected}`);
 
+  // 3b. STALE-FEED GUARD: between events DataGolf's in-play endpoint keeps
+  //     serving the PREVIOUS tournament's final leaderboard until the new
+  //     one tees off. Signature: every row finished (round>=4, thru>=18)
+  //     while our config says we're early in an event. Without this guard
+  //     the detector reads "R4 complete" on day one of a new tournament and
+  //     instantly kills it (final-refresh + complete). Treat as no-op.
+  const feedFinished = players.length > 0 && players.every(
+    (p) => (p.round ?? 0) >= 4 && (p.thru ?? 0) >= 18
+  );
+  if (feedFinished && currentCompleted < 3) {
+    console.warn(
+      `⚠️  in-play feed shows a FINISHED tournament (all rows R4/F) but config says only R${currentCompleted} ` +
+      `is complete — this is the PREVIOUS event's leftover feed. No-op until the new event's live data appears.`
+    );
+    return;
+  }
+
   // 4. Decide what to do.
   //
   // Three gates control whether the site actually updates:
@@ -447,7 +481,44 @@ async function main(): Promise<void> {
 
   if (isAutoAdvance) {
     if (detected >= 4) {
-      console.log('Tournament finished (R4 complete). Final refresh, then stop auto-roll.');
+      console.log('Tournament finished (R4 complete). Grading R4, flipping isComplete, final refresh.');
+
+      // GRADE R4 FIRST — before refreshCurrentRound mutates the data files.
+      // This was the gap that left Charles Schwab AND Memorial R4 ungraded:
+      // this branch refreshed data but never called grade-round and never
+      // flipped isComplete, so the Results page froze and the eventSchedule
+      // auto-switch (which keys on isComplete) never fired.
+      //
+      // Grade against the COMMITTED <prefix>R4Matchups + <prefix>R3Data as
+      // they exist right now (≈ what's deployed). NOTE: these drift from the
+      // announcement snapshot via live refreshes — the full fix is writing
+      // frozen *Snapshot.ts files at each transition. Until then this is the
+      // best automated grade; re-grade against the transition commit in git
+      // history if the published count disagrees.
+      try {
+        exec(
+          `npx tsx scripts/grade-round.ts --slug ${SLUG} --round 4 --picks-phase r3 ` +
+          `--picks-matchups ${SLUG_PREFIX}R4Matchups --results-phase r4 ` +
+          `--xscores ${SLUG_PREFIX}R3Data --out ${SLUG_PREFIX}R4Results`
+        );
+      } catch (e) {
+        console.error(`✖ R4 grade-round failed (continuing — grade manually): ${(e as Error).message}`);
+      }
+
+      // Flip isComplete in event.ts so the UI shows the COMPLETE state and
+      // the next cron firing triggers attemptEventSwitch() to the next
+      // scheduled event.
+      try {
+        const evPath = join(ROOT, 'src/config/event.ts');
+        let ev = await readFile(evPath, 'utf8');
+        ev = ev.replace(/isComplete:\s*false,/, 'isComplete: true,');
+        ev = ev.replace(/headerBanner:\s*'[^']*',/, "headerBanner: 'TOURNAMENT COMPLETE',");
+        await writeFile(evPath, ev);
+        console.log('✓ event.ts flipped to isComplete: true.');
+      } catch (e) {
+        console.error(`✖ failed to flip isComplete: ${(e as Error).message}`);
+      }
+
       await refreshCurrentRound(picksRound);
       state.lastTransitionAt = new Date().toISOString();
       state.lastCompletedRoundAtTransition = 4;

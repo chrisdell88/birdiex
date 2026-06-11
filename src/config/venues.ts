@@ -11,7 +11,7 @@
  */
 import { recommendedFloorForPredictability, floorTierLabel } from '../lib/sizing';
 
-export type EventId = 'masters-2026' | 'pga-2026' | 'cj-cup-byron-nelson-2026' | 'charles-schwab-challenge-2026' | 'the-memorial-tournament-2026';
+export type EventId = 'masters-2026' | 'pga-2026' | 'cj-cup-byron-nelson-2026' | 'charles-schwab-challenge-2026' | 'the-memorial-tournament-2026' | 'rbc-canadian-open-2026';
 
 interface VenueInfo {
   /** Tournament label as shown to users. */
@@ -88,6 +88,14 @@ export const VENUES: Record<EventId, VenueInfo> = {
     // The 1.95–2.44 band went 0-5-0 in R2; that band drags 1.95 negative.
     // Tiny sample (4 at 2.45); revisit after R3 + R4 grade.
     publishedFloor: 2.45,
+  },
+  'rbc-canadian-open-2026': {
+    eventName: 'RBC Canadian Open 2026',
+    course: 'Hamilton Golf & Country Club',
+    // DataGolf bar pct: 8.97 → 0.0142 → formula floor 2.95 (★★★+). One of
+    // the lowest-predictability venues on tour (rarely hosts). No
+    // publishedFloor override — formula default until results say otherwise.
+    predictability: 0.0142,
   },
 };
 

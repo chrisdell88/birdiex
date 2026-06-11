@@ -8,17 +8,11 @@
  * edits needed.
  */
 import type { PlayerData, MatchupOddsEntry, OutrightEntry, PlayerSkillEstimate } from '../types';
-// The Memorial Tournament — R1 complete, R2 picks active.
-// Through-R3 data file — drives the Rankings page DISPLAY. Cumulative is
-// R1+R2+R3 SG sum per player; partial for the 32 mid-R3 players. Those
-// rows render in gray on the Rankings page (their X-Score + SG values
-// haven't finalized yet). 21 finished players render in normal color.
-// Live in-play position + thru baked in.
-import { roundOnlyData, cumulativeData, generatedAt } from '../data/memorialR3Data';
-// FROZEN R2-final cumulative — drives R3 matchup BB edge computation only.
-// R3 picks were announced when R2 ended (no partial data); the same
-// X-Scores must be used to compute the displayed R3 BBs so the count + edges
-// don't drift as R3 plays out. This file's values never change during R3.
+// RBC Canadian Open — pre-tournament / Round 1. Rankings show the
+// pre-tournament snapshot (DataGolf skill estimates, no live SG yet).
+// Once R1 finishes the auto-roll rebuilds rbcCanadianR1Data and swaps
+// this import.
+import { roundOnlyData, cumulativeData, generatedAt } from '../data/rbcCanadianPreData';
 // Ticker file is rebuilt every 30 min by the ticker-refresh workflow. We use
 // its timestamp to drive the header "Last Updated" label so it reflects
 // actual liveness, not the (hours-old) rankings build time.
@@ -27,12 +21,10 @@ import { tickerGeneratedAt } from '../data/ticker';
 // Scatter chart. The chart is meant to be a pre-tournament reference, not
 // updated round-by-round. Stays pointed at the pre-tournament file even
 // once the main rankings advance.
-import { roundOnlyData as preTournamentRoundOnly } from '../data/memorialPreData';
-import { r4MatchupOddsData } from '../data/memorialR4Matchups';
-import { r4OutrightsData } from '../data/memorialR4Outrights';
-// Through-R3 cumulative X-Scores for R4 matchup edge math — same file as
-// the main rankings, aliased for clarity at the call site below.
-import { skillEstimatesData } from '../data/memorialSkillEstimates';
+import { roundOnlyData as preTournamentRoundOnly } from '../data/rbcCanadianPreData';
+import { r1MatchupOddsData } from '../data/rbcCanadianR1Matchups';
+import { r1OutrightsData } from '../data/rbcCanadianR1Outrights';
+import { skillEstimatesData } from '../data/rbcCanadianSkillEstimates';
 import { floorForEvent, type EventId } from './venues';
 
 export interface CurrentEvent {
@@ -44,7 +36,7 @@ export interface CurrentEvent {
   name: string;
   /** Venue, e.g. "Aronimink". */
   course: string;
-  /** Whether this event is a major championship. Drives UI elements like
+  /** Whether this is a major championship. Drives UI elements like
    *  the "Major" column on the Rankings table and the Layer-4 weighting. */
   isMajor: boolean;
   /** Venue predictability (0–~0.15). Drives the recommended-floor formula. */
@@ -113,29 +105,25 @@ export interface CurrentEvent {
 
 // EventId for venues.ts lookup — drives recommendedFloor + label.
 // Changing publishedFloor in venues.ts AUTOMATICALLY updates everywhere.
-const EVENT_ID: EventId = 'the-memorial-tournament-2026';
+const EVENT_ID: EventId = 'rbc-canadian-open-2026';
 const VENUE_INFO = floorForEvent(EVENT_ID);
 
 export const currentEvent: CurrentEvent = {
   eventId: EVENT_ID,
-  name: 'The Memorial Tournament',
+  name: 'RBC Canadian Open',
   course: VENUE_INFO.course,
   isMajor: false,
   predictability: VENUE_INFO.predictability,
   recommendedFloor: VENUE_INFO.floor,
   recommendedFloorLabel: VENUE_INFO.label,
-  picksRound: 4,
+  picksRound: 1,
   isComplete: false,
-  headerBanner: 'R3 FINAL · ROUND 4 PICKS',
-  // Set by Chris 2026-06-06 — R3 suspended for weather. Clear when Chris confirms resumption.
-  // header "Last Updated" always tracks the freshest data source.
+  headerBanner: 'PRE-TOURNAMENT · ROUND 1 PICKS',
   dataUpdatedAt: new Date(generatedAt).getTime() > new Date(tickerGeneratedAt).getTime() ? generatedAt : tickerGeneratedAt,
   rankingsRound: roundOnlyData,
   rankingsCumulative: cumulativeData,
   preTournamentRankings: preTournamentRoundOnly,
-  matchups: r4MatchupOddsData,
-  outrights: r4OutrightsData,
+  matchups: r1MatchupOddsData,
+  outrights: r1OutrightsData,
   skillEstimates: skillEstimatesData,
-  // R3 announcement was sent against. App.tsx passes these as overrides
-  // to the R3 MatchupsView instance so its BB edges don't drift.
 };

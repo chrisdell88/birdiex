@@ -38,6 +38,7 @@ const PREFIX_TO_EVENT_ID: Record<string, EventId> = {
   cjCup: 'cj-cup-byron-nelson-2026',
   csc: 'charles-schwab-challenge-2026',
   memorial: 'the-memorial-tournament-2026',
+  rbcCanadian: 'rbc-canadian-open-2026',
   // Masters uses the legacy `resultsData.ts` file — handled below, not here.
 };
 

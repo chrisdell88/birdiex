@@ -83,6 +83,35 @@ async function main() {
   const field = await safe('field-updates', () => getFieldUpdates('pga'));
   if (field) await dump(slug, phase, 'field-updates', field);
 
+  // VENUE VERIFICATION: DataGolf's field-updates carries the authoritative
+  // course_name for the live event. Cross-check it against our staged
+  // eventSchedule entry and scream on mismatch — the RBC Canadian Open 2026
+  // was staged as Hamilton G&CC when the real venue was TPC Toronto at
+  // Osprey Valley, and nothing caught it until Chris did. Never again.
+  try {
+    const f = field as { event_name?: string; course_name?: string } | null;
+    if (f?.course_name) {
+      const { resolveCurrentEvent } = await import(
+        new URL('./lib/currentEvent.ts', import.meta.url).href
+      );
+      const sched = await import(
+        new URL('../src/data/eventSchedule.ts', import.meta.url).href
+      );
+      const cur = await resolveCurrentEvent();
+      const entry = (sched.EVENT_SCHEDULE as Array<{ slug: string; courseName: string }>)
+        .find((e) => e.slug === (cur?.slug ?? slug));
+      if (entry && entry.courseName.toLowerCase() !== f.course_name.toLowerCase()) {
+        console.error('');
+        console.error('🚨 VENUE MISMATCH 🚨');
+        console.error(`   DataGolf says this event is at: "${f.course_name}"`);
+        console.error(`   eventSchedule.ts has it staged at: "${entry.courseName}"`);
+        console.error('   Fix eventSchedule.ts + courses.ts + venues.ts BEFORE building any round data —');
+        console.error('   the wrong venue means wrong predictability, wrong floor, wrong coefficients.');
+        console.error('');
+      }
+    }
+  } catch { /* verification is best-effort — never blocks the pull */ }
+
   const dgRankings = await safe('dg-rankings', () => getDgRankings());
   if (dgRankings) await dump(slug, phase, 'dg-rankings', dgRankings);
 

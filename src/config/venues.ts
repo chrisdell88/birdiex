@@ -91,11 +91,13 @@ export const VENUES: Record<EventId, VenueInfo> = {
   },
   'rbc-canadian-open-2026': {
     eventName: 'RBC Canadian Open 2026',
-    course: 'Hamilton Golf & Country Club',
-    // DataGolf bar pct: 8.97 → 0.0142 → formula floor 2.95 (★★★+). One of
-    // the lowest-predictability venues on tour (rarely hosts). No
+    // Corrected 2026-06-11: actual venue is TPC Toronto at Osprey Valley
+    // (North Course) per DataGolf field-updates — NOT Hamilton G&CC.
+    course: 'TPC Toronto at Osprey Valley (North Course)',
+    // DataGolf bar pct: 6.06 → 0.0096 → formula floor 2.95 (★★★+). Bottom
+    // of the predictability table (rare host, no course history). No
     // publishedFloor override — formula default until results say otherwise.
-    predictability: 0.0142,
+    predictability: 0.0096,
   },
 };
 

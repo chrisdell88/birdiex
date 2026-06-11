@@ -49,8 +49,11 @@ export const EVENT_SCHEDULE: ScheduledEvent[] = [
   {
     slug: 'rbc-canadian-open-2026',
     name: 'RBC Canadian Open',
-    courseKey: 'hamilton-gcc',
-    courseName: 'Hamilton Golf & Country Club',
+    // Corrected 2026-06-11: staged as Hamilton G&CC but DataGolf
+    // field-updates (event_id 32) says the actual 2026 venue is TPC Toronto
+    // at Osprey Valley (North Course).
+    courseKey: 'tpc-toronto-osprey-north',
+    courseName: 'TPC Toronto at Osprey Valley (North Course)',
     eventId: 'rbc-canadian-open-2026',
     dataPrefix: 'rbcCanadian',
     startsAt: '2026-06-11T00:00Z',

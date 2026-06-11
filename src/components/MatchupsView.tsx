@@ -537,6 +537,28 @@ export default function MatchupsView(props: MatchupsViewProps) {
     );
   }
 
+  // POLICY: BirdieX does NOT publish Round 1 picks. The model needs a
+  // completed round of live SG data — pre-tournament skill estimates are not
+  // the locked X-Score formula's input. Until R1 finishes, the matchups page
+  // shows this placeholder instead of computed picks (rendered after all
+  // hooks per Rules of Hooks).
+  if (currentEvent.picksRound <= 1) {
+    return (
+      <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-8 text-center">
+        <h2 className="text-lg font-bold text-[#f5f5f5] font-['JetBrains_Mono','SF_Mono',monospace] uppercase tracking-wider mb-2">
+          {currentEvent.name} — Picks Begin With Round 2
+        </h2>
+        <p className="text-sm text-[#a1a1aa] font-['Inter',system-ui,sans-serif] mb-4">
+          The putting-regression model needs a completed round of live strokes-gained
+          data. Round 2 picks post automatically as soon as Round 1 finishes.
+        </p>
+        <p className="text-xs text-[#737373] font-['Inter',system-ui,sans-serif]">
+          Outright winner odds are live now on the <span className="text-[#22c55e]">Odds</span> tab.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div>
       {/* Round picks banner */}

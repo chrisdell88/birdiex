@@ -118,16 +118,40 @@ async function main() {
     p2_player_name: string;
     odds: Record<string, { p1?: string; p2?: string }>;
   }
+  // ODDS SANITY CAP: pre-round H2H matchup lines never exceed roughly ±300
+  // at real books. Lines beyond ±350 are in-play contamination (DataGolf's
+  // matchup feed serves LIVE odds mid-round — during the Memorial's weather
+  // suspension, PointsBet -525/-625 in-play R3 lines got merged into the R4
+  // file and were graded as published picks). Drop any non-datagolf book
+  // line where either side exceeds the cap; the datagolf entry is the model
+  // fair line (excluded from grading) and never trips this anyway.
+  const MAX_ABS_H2H_ODDS = 350;
+  let cappedLines = 0;
+  const lineImplausible = (l: Record<string, string>): boolean =>
+    ['p1', 'p2'].some((s) => {
+      const n = parseInt(l[s] ?? '', 10);
+      return Number.isFinite(n) && Math.abs(n) > MAX_ABS_H2H_ODDS;
+    });
   const fresh: Entry[] = list.map((m) => ({
     p1_player_name: m.p1_player_name,
     p2_player_name: m.p2_player_name,
     odds: Object.fromEntries(
-      Object.entries(m.odds ?? {}).map(([book, line]) => {
-        const l = line as Record<string, string>;
-        return [book, { p1: l.p1, p2: l.p2 }];
-      })
+      Object.entries(m.odds ?? {})
+        .filter(([book, line]) => {
+          if (book === 'datagolf') return true;
+          const bad = lineImplausible(line as Record<string, string>);
+          if (bad) cappedLines++;
+          return !bad;
+        })
+        .map(([book, line]) => {
+          const l = line as Record<string, string>;
+          return [book, { p1: l.p1, p2: l.p2 }];
+        })
     ),
   }));
+  if (cappedLines > 0) {
+    console.warn(`⚠️  dropped ${cappedLines} implausible book lines (|odds| > ${MAX_ABS_H2H_ODDS}) — in-play contamination.`);
+  }
 
   // Active player set: who shows up in TODAY's DataGolf response. Pairings
   // involving anyone NOT in this set are dropped from the merge, because

@@ -132,7 +132,11 @@ export default function RankingsTable({ data, dataSet, onDataSetChange }: Rankin
   const outrightsByName = useMemo(() => {
     const m = new Map<string, { odds: string; source: string }>();
     for (const o of currentEvent.outrights) {
+      // Prefer DataGolf's model line (apples-to-apples across players); fall
+      // back to the best sportsbook line so long shots DataGolf doesn't
+      // price still show a To Win number instead of a blank cell.
       if (o.dgOdds) m.set(o.player_name, { odds: o.dgOdds, source: 'datagolf' });
+      else if (o.bestOdds) m.set(o.player_name, { odds: o.bestOdds, source: o.bestBook || 'book' });
     }
     return m;
   }, []);

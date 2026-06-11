@@ -140,6 +140,8 @@ export const COURSES: Record<string, CourseProfile> = {
     name: 'Hamilton Golf & Country Club',
     // DataGolf bar pct: 8.97 → 0.0142. Floor: 2.95 (★★★+) — one of the
     // lowest-predictability PGA Tour venues (rarely hosts, sparse history).
+    // NOTE: staged for RBC Canadian Open 2026 but WRONG — the 2026 venue is
+    // TPC Toronto at Osprey Valley (below). Kept for future Hamilton years.
     predictability: 0.0142,
     // coefficients: DataGolf Course Fit Tool radar, 2026-06-05 (extracted via
     // Chrome MCP). Relative Importance OFF.
@@ -147,6 +149,23 @@ export const COURSES: Record<string, CourseProfile> = {
     // ott = max(DD, DA) = 0.69.
     coefficients: { ott: 0.69, app: 0.71, arg: 0.43, putt: 0.47 },
     source_date: '2026-06-05',
+    is_major: false,
+  },
+  // RBC Canadian Open 2026 — ACTUAL venue per DataGolf field-updates
+  // (event_id 32, course_name "TPC Toronto at Osprey Valley (North Course)").
+  'tpc-toronto-osprey-north': {
+    name: 'TPC Toronto at Osprey Valley (North Course)',
+    // DataGolf bar pct: 6.06 → 0.0096. Floor: 2.95 (★★★+) — bottom of the
+    // predictability table (first-time/rare host, no course history).
+    predictability: 0.0096,
+    // coefficients: PLACEHOLDER 0.50 across. At predictability 0.0096 the
+    // blend normalizer is 0.0096/0.15 = 0.064, so Layer-1 weights are
+    // w = 0.064·coeff + 0.936 — between coeff 0.3 and 0.8 the weight moves
+    // less than ±3.5%, i.e. the radar values are numerically irrelevant at
+    // this venue. Replace with real Course Fit radar reads when available
+    // (needs the DataGolf web tool), but X-Scores are insensitive to it here.
+    coefficients: { ott: 0.5, app: 0.5, arg: 0.5, putt: 0.5 },
+    source_date: '2026-06-11',
     is_major: false,
   },
 };

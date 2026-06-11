@@ -118,7 +118,7 @@ export const currentEvent: CurrentEvent = {
   recommendedFloorLabel: VENUE_INFO.label,
   picksRound: 1,
   isComplete: false,
-  headerBanner: 'PRE-TOURNAMENT · ROUND 1 PICKS',
+  headerBanner: 'PRE-TOURNAMENT · PICKS BEGIN ROUND 2',
   dataUpdatedAt: new Date(generatedAt).getTime() > new Date(tickerGeneratedAt).getTime() ? generatedAt : tickerGeneratedAt,
   rankingsRound: roundOnlyData,
   rankingsCumulative: cumulativeData,

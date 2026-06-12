@@ -12,7 +12,7 @@ import type { PlayerData, MatchupOddsEntry, OutrightEntry, PlayerSkillEstimate }
 // pre-tournament snapshot (DataGolf skill estimates, no live SG yet).
 // Once R1 finishes the auto-roll rebuilds rbcCanadianR1Data and swaps
 // this import.
-import { roundOnlyData, cumulativeData, generatedAt } from '../data/rbcCanadianPreData';
+import { roundOnlyData, cumulativeData, generatedAt } from '../data/rbcCanadianR1Data';
 // Ticker file is rebuilt every 30 min by the ticker-refresh workflow. We use
 // its timestamp to drive the header "Last Updated" label so it reflects
 // actual liveness, not the (hours-old) rankings build time.
@@ -22,8 +22,8 @@ import { tickerGeneratedAt } from '../data/ticker';
 // updated round-by-round. Stays pointed at the pre-tournament file even
 // once the main rankings advance.
 import { roundOnlyData as preTournamentRoundOnly } from '../data/rbcCanadianPreData';
-import { r1MatchupOddsData } from '../data/rbcCanadianR1Matchups';
-import { r1OutrightsData } from '../data/rbcCanadianR1Outrights';
+import { r2MatchupOddsData } from '../data/rbcCanadianR2Matchups';
+import { r2OutrightsData } from '../data/rbcCanadianR2Outrights';
 import { skillEstimatesData } from '../data/rbcCanadianSkillEstimates';
 import { floorForEvent, type EventId } from './venues';
 
@@ -116,14 +116,14 @@ export const currentEvent: CurrentEvent = {
   predictability: VENUE_INFO.predictability,
   recommendedFloor: VENUE_INFO.floor,
   recommendedFloorLabel: VENUE_INFO.label,
-  picksRound: 1,
+  picksRound: 2,
   isComplete: false,
-  headerBanner: 'PRE-TOURNAMENT · PICKS BEGIN ROUND 2',
+  headerBanner: 'R1 FINAL · ROUND 2 PICKS',
   dataUpdatedAt: new Date(generatedAt).getTime() > new Date(tickerGeneratedAt).getTime() ? generatedAt : tickerGeneratedAt,
   rankingsRound: roundOnlyData,
   rankingsCumulative: cumulativeData,
   preTournamentRankings: preTournamentRoundOnly,
-  matchups: r1MatchupOddsData,
-  outrights: r1OutrightsData,
+  matchups: r2MatchupOddsData,
+  outrights: r2OutrightsData,
   skillEstimates: skillEstimatesData,
 };

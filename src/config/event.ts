@@ -12,7 +12,7 @@ import type { PlayerData, MatchupOddsEntry, OutrightEntry, PlayerSkillEstimate }
 // pre-tournament snapshot (DataGolf skill estimates, no live SG yet).
 // Once R1 finishes the auto-roll rebuilds rbcCanadianR1Data and swaps
 // this import.
-import { roundOnlyData, cumulativeData, generatedAt } from '../data/rbcCanadianR2Data';
+import { roundOnlyData, cumulativeData, generatedAt } from '../data/rbcCanadianR3Data';
 // Ticker file is rebuilt every 30 min by the ticker-refresh workflow. We use
 // its timestamp to drive the header "Last Updated" label so it reflects
 // actual liveness, not the (hours-old) rankings build time.
@@ -22,8 +22,8 @@ import { tickerGeneratedAt } from '../data/ticker';
 // updated round-by-round. Stays pointed at the pre-tournament file even
 // once the main rankings advance.
 import { roundOnlyData as preTournamentRoundOnly } from '../data/rbcCanadianPreData';
-import { r3MatchupOddsData } from '../data/rbcCanadianR3Matchups';
-import { r3OutrightsData } from '../data/rbcCanadianR3Outrights';
+import { r4MatchupOddsData } from '../data/rbcCanadianR4Matchups';
+import { r4OutrightsData } from '../data/rbcCanadianR4Outrights';
 import { skillEstimatesData } from '../data/rbcCanadianSkillEstimates';
 import { floorForEvent, type EventId } from './venues';
 
@@ -116,14 +116,14 @@ export const currentEvent: CurrentEvent = {
   predictability: VENUE_INFO.predictability,
   recommendedFloor: VENUE_INFO.floor,
   recommendedFloorLabel: VENUE_INFO.label,
-  picksRound: 3,
+  picksRound: 4,
   isComplete: false,
-  headerBanner: 'R2 FINAL · ROUND 3 PICKS',
+  headerBanner: 'R3 FINAL · ROUND 4 PICKS',
   dataUpdatedAt: new Date(generatedAt).getTime() > new Date(tickerGeneratedAt).getTime() ? generatedAt : tickerGeneratedAt,
   rankingsRound: roundOnlyData,
   rankingsCumulative: cumulativeData,
   preTournamentRankings: preTournamentRoundOnly,
-  matchups: r3MatchupOddsData,
-  outrights: r3OutrightsData,
+  matchups: r4MatchupOddsData,
+  outrights: r4OutrightsData,
   skillEstimates: skillEstimatesData,
 };

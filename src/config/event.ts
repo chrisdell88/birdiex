@@ -9,9 +9,10 @@
  */
 import type { PlayerData, MatchupOddsEntry, OutrightEntry, PlayerSkillEstimate } from '../types';
 // U.S. Open 2026 — Shinnecock Hills. Rolled onto this event 2026-06-19 (mid-R2).
-// Rankings show through R1 (the last COMPLETE round); R2 is in progress and
-// fills in via auto-roll once it finishes. See usOpenR2Matchups.ts for why R2
-// picks are intentionally empty (entered mid-R2; first clean picks are R3).
+// Rankings + edge math use R1 cumulative (the last COMPLETE round). R2 picks
+// ARE published (per Chris): the R2 matchup feed carried clean two-way lines
+// (R2-morning prices, last_updated 12:32 UTC), so usOpenR2Matchups holds the
+// real R2 board. R2 grades automatically when the round finishes tonight.
 import { roundOnlyData, cumulativeData, generatedAt } from '../data/usOpenR1Data';
 // Ticker file is rebuilt every 30 min by the ticker-refresh workflow; its
 // timestamp drives the header "Last Updated" label so it reflects liveness.
@@ -62,12 +63,12 @@ export const currentEvent: CurrentEvent = {
   predictability: VENUE_INFO.predictability,
   recommendedFloor: VENUE_INFO.floor,
   recommendedFloorLabel: VENUE_INFO.label,
-  // R1 complete, R2 in progress. picksRound=2 so auto-roll advances to R3
-  // when R2 finishes. R2 matchups are intentionally empty (no stale/in-play
-  // picks); the first publishable picks are R3.
+  // R1 complete, R2 in progress. picksRound=2 = R2 best bets shown (edge from
+  // R1 cumulative X-scores × the clean R2 matchup board). Auto-roll advances
+  // to R3 and grades R2 against usOpenR2Matchups when R2 finishes tonight.
   picksRound: 2,
   isComplete: false,
-  headerBanner: 'R2 IN PROGRESS · PICKS RESUME R3',
+  headerBanner: 'R1 FINAL · ROUND 2 PICKS',
   dataUpdatedAt: new Date(generatedAt).getTime() > new Date(tickerGeneratedAt).getTime() ? generatedAt : tickerGeneratedAt,
   rankingsRound: roundOnlyData,
   rankingsCumulative: cumulativeData,

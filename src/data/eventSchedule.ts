@@ -59,6 +59,20 @@ export const EVENT_SCHEDULE: ScheduledEvent[] = [
     startsAt: '2026-06-11T00:00Z',
     isMajor: false,
   },
+  {
+    // U.S. Open 2026 — Shinnecock Hills. Venue verified against DataGolf
+    // field-updates (event_name "U.S. Open", course_name "Shinnecock Hills
+    // Golf Club") 2026-06-19. MAJOR. Course-Fit coefficients read from the
+    // DataGolf radar same day (see courses.ts shinnecock-hills).
+    slug: 'us-open-2026',
+    name: 'U.S. Open',
+    courseKey: 'shinnecock-hills',
+    courseName: 'Shinnecock Hills Golf Club',
+    eventId: 'us-open-2026',
+    dataPrefix: 'usOpen',
+    startsAt: '2026-06-18T00:00Z',
+    isMajor: true,
+  },
 ];
 
 /** Find the next event AFTER the current slug, or null if at the end. */

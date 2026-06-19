@@ -443,7 +443,19 @@ async function main(): Promise<void> {
   if (await attemptEventSwitch()) return;
 
   // 1. Read current state
-  const { picksRound } = await readEventConfig();
+  const { picksRound, isComplete } = await readEventConfig();
+  // Already-complete guard. If the event is finished and attemptEventSwitch()
+  // above found no staged next event, there is nothing to refresh. Without
+  // this, every subsequent cron tick falls through to detection — where
+  // `detected R4 > currentCompleted R3` re-enters the finished-branch, re-runs
+  // grade + refreshCurrentRound, and REWRITES the committed announcement
+  // snapshots (R3Data / R4Matchups) that grading depends on. (Observed on RBC
+  // Canadian: R3Data churned for 2 days post-event.) No-op instead; the only
+  // thing that should wake a complete event is attemptEventSwitch firing.
+  if (isComplete) {
+    console.log('Event already complete and no next event staged — no-op (nothing to refresh on a finished event).');
+    return;
+  }
   const currentCompleted = picksRound - 1;
   const state = await readState();
   console.log(`Config: picksRound=${picksRound} (R${currentCompleted} complete) | state: lastTx=${state.lastTransitionAt ?? '—'}`);

@@ -173,6 +173,27 @@ export const COURSES: Record<string, CourseProfile> = {
     source_date: '2026-06-11',
     is_major: false,
   },
+  // U.S. Open 2026 — Shinnecock Hills GC. MAJOR (Layer-4 applies).
+  'shinnecock-hills': {
+    name: 'Shinnecock Hills Golf Club',
+    // CANONICAL field-method predictability: mean |total_course_history_adjustment|
+    // over the live 156-player field (decompositions pull 2026-06-19, mid-R2):
+    // 0.0396 → raw floor 3.05 − 14.62×0.0396 = 2.471 → snaps to 2.45 (★★+).
+    predictability: 0.0396,
+    // coefficients: DataGolf Course Fit Tool radar for Shinnecock Hills GC,
+    // read 2026-06-19, Relative Importance OFF. Extracted EXACTLY from the
+    // radar SVG geometry (each gridline circle r = 166.32px = value 1.0;
+    // vertex radius ÷ 166.32 = coefficient), not eyeballed:
+    //   Driving Distance 0.70, Driving Accuracy 0.58, Approach 0.73,
+    //   Around Green 0.44, Putting 0.48.
+    // ott = max(DD, DA) = 0.70 (distance-favouring, per locked OTT rule).
+    // At predictability 0.0396 the blend normalizer is 0.264, so weights =
+    // 0.264·coeff + 0.736 (~±7% per-category swing) — these MATTER here, so
+    // they are real reads, NOT placeholders.
+    coefficients: { ott: 0.70, app: 0.73, arg: 0.44, putt: 0.48 },
+    source_date: '2026-06-19',
+    is_major: true,
+  },
 };
 
 /**

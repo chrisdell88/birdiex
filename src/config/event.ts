@@ -13,14 +13,14 @@ import type { PlayerData, MatchupOddsEntry, OutrightEntry, PlayerSkillEstimate }
 // ARE published (per Chris): the R2 matchup feed carried clean two-way lines
 // (R2-morning prices, last_updated 12:32 UTC), so usOpenR2Matchups holds the
 // real R2 board. R2 grades automatically when the round finishes tonight.
-import { roundOnlyData, cumulativeData, generatedAt } from '../data/usOpenR2Data';
+import { roundOnlyData, cumulativeData, generatedAt } from '../data/usOpenR3Data';
 // Ticker file is rebuilt every 30 min by the ticker-refresh workflow; its
 // timestamp drives the header "Last Updated" label so it reflects liveness.
 import { tickerGeneratedAt } from '../data/ticker';
 // Frozen pre-tournament rankings for the Course Fit scatter chart.
 import { roundOnlyData as preTournamentRoundOnly } from '../data/usOpenPreData';
-import { r3MatchupOddsData } from '../data/usOpenR3Matchups';
-import { r3OutrightsData } from '../data/usOpenR3Outrights';
+import { r4MatchupOddsData } from '../data/usOpenR4Matchups';
+import { r4OutrightsData } from '../data/usOpenR4Outrights';
 import { skillEstimatesData } from '../data/usOpenSkillEstimates';
 import { floorForEvent, type EventId } from './venues';
 
@@ -66,14 +66,14 @@ export const currentEvent: CurrentEvent = {
   // R1 complete, R2 in progress. picksRound=2 = R2 best bets shown (edge from
   // R1 cumulative X-scores × the clean R2 matchup board). Auto-roll advances
   // to R3 and grades R2 against usOpenR2Matchups when R2 finishes tonight.
-  picksRound: 3,
+  picksRound: 4,
   isComplete: false,
-  headerBanner: 'R2 FINAL · ROUND 3 PICKS',
+  headerBanner: 'R3 FINAL · ROUND 4 PICKS',
   dataUpdatedAt: new Date(generatedAt).getTime() > new Date(tickerGeneratedAt).getTime() ? generatedAt : tickerGeneratedAt,
   rankingsRound: roundOnlyData,
   rankingsCumulative: cumulativeData,
   preTournamentRankings: preTournamentRoundOnly,
-  matchups: r3MatchupOddsData,
-  outrights: r3OutrightsData,
+  matchups: r4MatchupOddsData,
+  outrights: r4OutrightsData,
   skillEstimates: skillEstimatesData,
 };

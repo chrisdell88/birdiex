@@ -67,8 +67,8 @@ export const currentEvent: CurrentEvent = {
   // R1 cumulative X-scores × the clean R2 matchup board). Auto-roll advances
   // to R3 and grades R2 against usOpenR2Matchups when R2 finishes tonight.
   picksRound: 4,
-  isComplete: false,
-  headerBanner: 'R3 FINAL · ROUND 4 PICKS',
+  isComplete: true,
+  headerBanner: 'TOURNAMENT COMPLETE',
   dataUpdatedAt: new Date(generatedAt).getTime() > new Date(tickerGeneratedAt).getTime() ? generatedAt : tickerGeneratedAt,
   rankingsRound: roundOnlyData,
   rankingsCumulative: cumulativeData,

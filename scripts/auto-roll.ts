@@ -521,6 +521,18 @@ async function main(): Promise<void> {
       // frozen *Snapshot.ts files at each transition. Until then this is the
       // best automated grade; re-grade against the transition commit in git
       // history if the published count disagrees.
+      // Pull R4 live stats FIRST. grade-round reads
+      // data/raw/<slug>/r4/live-stats-r4.json — which only doAutoAdvance
+      // pulls (its normal-advance path). The finished branch skipped this,
+      // so the R4 grade threw ENOENT and silently never produced
+      // <prefix>R4Results — the event went "complete" with an ungraded final
+      // round. Hit live for BOTH the RBC Canadian Open AND the U.S. Open
+      // (2026-06). Mirrors the pull at the top of doAutoAdvance().
+      try {
+        exec(`npm run pull:event -- --slug ${SLUG} --phase r4`);
+      } catch (e) {
+        console.error(`✖ R4 pull failed (grade will likely fail): ${(e as Error).message}`);
+      }
       try {
         exec(
           `npx tsx scripts/grade-round.ts --slug ${SLUG} --round 4 --picks-phase r3 ` +

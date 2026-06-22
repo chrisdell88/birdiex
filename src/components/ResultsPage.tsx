@@ -29,6 +29,11 @@ const rbcResultModules = import.meta.glob<Record<string, unknown>>(
   '../data/rbcCanadianR*Results.ts',
   { eager: true }
 );
+// U.S. Open — same auto-roll-drop-and-glob pattern.
+const usOpenResultModules = import.meta.glob<Record<string, unknown>>(
+  '../data/usOpenR*Results.ts',
+  { eager: true }
+);
 import { starsForEdge, unitsForEdge, stakeToWin1 } from '../lib/sizing';
 import { floorForEvent } from '../config/venues';
 import {
@@ -64,6 +69,7 @@ const cjCupFloor = floorForEvent('cj-cup-byron-nelson-2026');
 const cscFloor = floorForEvent('charles-schwab-challenge-2026');
 const memorialFloor = floorForEvent('the-memorial-tournament-2026');
 const rbcFloor = floorForEvent('rbc-canadian-open-2026');
+const usOpenFloor = floorForEvent('us-open-2026');
 
 // Single source of truth for the trackedAt + summarise pair, shared with
 // BacktestLab. Guarantees both pages cannot disagree about the same
@@ -144,8 +150,24 @@ const rbcRounds = Object.entries(rbcResultModules)
 const rbcTracked = rbcRounds.flatMap((r) => r.bets);
 const rbcSummary = summarise(rbcTracked);
 
+// U.S. Open — same pattern.
+const usOpenRounds = Object.entries(usOpenResultModules)
+  .map(([path, mod]) => {
+    const m = path.match(/usOpenR(\d+)Results\.ts$/);
+    if (!m) return null;
+    const round = Number(m[1]);
+    const bets = (mod as Record<string, unknown>)[`r${round}Results`] as BetRecord[] | undefined;
+    if (!Array.isArray(bets)) return null;
+    const tracked = trackedAt(bets, usOpenFloor.floor);
+    return { round, bets: tracked, summary: summarise(tracked) };
+  })
+  .filter((x): x is { round: number; bets: BetRecord[]; summary: ReturnType<typeof summarise> } => x !== null)
+  .sort((a, b) => a.round - b.round);
+const usOpenTracked = usOpenRounds.flatMap((r) => r.bets);
+const usOpenSummary = summarise(usOpenTracked);
+
 // All-time = every event's tracked Best Bets.
-const ALL_TIME_BETS = [...mastersTracked, ...pgaTracked, ...cjTracked, ...cscTracked, ...memorialTracked, ...rbcTracked];
+const ALL_TIME_BETS = [...mastersTracked, ...pgaTracked, ...cjTracked, ...cscTracked, ...memorialTracked, ...rbcTracked, ...usOpenTracked];
 
 // Silence unused-import warnings — these raw summaries are kept for
 // reference / backtesting comparisons; the venue-aware values above
@@ -162,7 +184,7 @@ void pgaR2SummaryRaw; void pgaR3SummaryRaw; void pgaR4SummaryRaw;
 // ─────────────────────────────────────────────────────────────────
 type EventStatus = 'IN PROGRESS' | 'COMPLETE';
 interface EventEntry {
-  id: 'masters-2026' | 'pga-2026' | 'cj-cup-byron-nelson-2026' | 'charles-schwab-challenge-2026' | 'the-memorial-tournament-2026' | 'rbc-canadian-open-2026';
+  id: 'masters-2026' | 'pga-2026' | 'cj-cup-byron-nelson-2026' | 'charles-schwab-challenge-2026' | 'the-memorial-tournament-2026' | 'rbc-canadian-open-2026' | 'us-open-2026';
   name: string;
   status: EventStatus;
   wins: number;
@@ -247,7 +269,7 @@ const EVENT_REGISTRY: EventEntry[] = [
   {
     id: 'rbc-canadian-open-2026',
     name: 'RBC Canadian Open 2026',
-    status: 'IN PROGRESS',
+    status: 'COMPLETE',
     wins: rbcSummary.wins,
     losses: rbcSummary.losses,
     pushes: rbcSummary.pushes,
@@ -256,6 +278,19 @@ const EVENT_REGISTRY: EventEntry[] = [
     threshold: rbcFloor.floor,
     course: rbcFloor.course,
     predictability: rbcFloor.predictability,
+  },
+  {
+    id: 'us-open-2026',
+    name: 'U.S. Open 2026',
+    status: 'COMPLETE',
+    wins: usOpenSummary.wins,
+    losses: usOpenSummary.losses,
+    pushes: usOpenSummary.pushes,
+    units: usOpenSummary.units,
+    roi: usOpenSummary.roi,
+    threshold: usOpenFloor.floor,
+    course: usOpenFloor.course,
+    predictability: usOpenFloor.predictability,
   },
 ];
 
@@ -375,7 +410,7 @@ const sportsbooks: Sportsbook[] = [
 
 const mastersRounds = ['All Rounds', 'Round 2', 'Round 3', 'Round 4'];
 
-type TournamentView = 'all-time' | 'masters-2026' | 'pga-2026' | 'cj-cup-byron-nelson-2026' | 'charles-schwab-challenge-2026' | 'the-memorial-tournament-2026' | 'rbc-canadian-open-2026';
+type TournamentView = 'all-time' | 'masters-2026' | 'pga-2026' | 'cj-cup-byron-nelson-2026' | 'charles-schwab-challenge-2026' | 'the-memorial-tournament-2026' | 'rbc-canadian-open-2026' | 'us-open-2026';
 
 // --- Shared style tokens ---
 const mono = "font-['JetBrains_Mono','SF_Mono',monospace]";
@@ -1379,7 +1414,7 @@ function RBCView() {
   return (
     <div>
       <TournamentSummaryBanner
-        status="IN PROGRESS"
+        status="COMPLETE"
         eventName="RBC Canadian Open 2026"
         course={rbcFloor.course}
         threshold={rbcFloor.floor}
@@ -1387,7 +1422,7 @@ function RBCView() {
         units={rbcSummary.units}
         roi={rbcSummary.roi}
         bets={rbcSummary.bets}
-        recordLabel="Best Bets so far"
+        recordLabel="Best Bets — Final"
       />
 
       {gradedRounds.length === 0 && (
@@ -1429,12 +1464,67 @@ function RBCView() {
           <SortableBetTable bets={bets} round={round} floor={rbcFloor.floor} />
         </div>
       ))}
+    </div>
+  );
+}
 
-      <div className="bg-[#0a0a0a] border border-dashed border-[#262626] rounded-lg p-5 text-center">
-        <p className="text-xs text-[#a1a1aa] font-['Inter',system-ui,sans-serif]">
-          Tournament in progress — rounds populate here as they grade.
-        </p>
-      </div>
+// --- U.S. Open View — glob-driven, zero manual edits per round ---
+function USOpenView() {
+  const gradedRounds = [...usOpenRounds].reverse();
+
+  return (
+    <div>
+      <TournamentSummaryBanner
+        status="COMPLETE"
+        eventName="U.S. Open 2026"
+        course={usOpenFloor.course}
+        threshold={usOpenFloor.floor}
+        record={{ wins: usOpenSummary.wins, losses: usOpenSummary.losses, pushes: usOpenSummary.pushes }}
+        units={usOpenSummary.units}
+        roi={usOpenSummary.roi}
+        bets={usOpenSummary.bets}
+        recordLabel="Best Bets — Final"
+      />
+
+      {gradedRounds.length === 0 && (
+        <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-6 text-center">
+          <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">
+            Tournament in progress. Graded results post after each round finishes.
+          </p>
+        </div>
+      )}
+
+      {gradedRounds.map(({ round, summary, bets }) => (
+        <div key={round} className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className={`w-0.5 h-5 rounded-full ${summary.units >= 0 ? 'bg-[#22c55e]' : 'bg-[#ef4444]'}`} />
+            <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
+              Round {round} — Best Bets
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+            <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-4">
+              <div className={label}>Record</div>
+              <div className={`text-lg font-bold ${mono} text-[#f5f5f5] mt-1`}>{summary.record}</div>
+            </div>
+            <div className={`bg-[#0a0a0a] border ${borderColor(summary.units)} rounded-lg p-4`}>
+              <div className={label}>Units</div>
+              <div className={`text-lg font-bold ${mono} ${unitColor(summary.units)} mt-1`}>{formatUnits(summary.units)}u</div>
+            </div>
+            <div className={`bg-[#0a0a0a] border ${borderColor(summary.roi)} rounded-lg p-4`}>
+              <div className={label}>ROI</div>
+              <div className={`text-lg font-bold ${mono} ${unitColor(summary.roi)} mt-1`}>{formatROI(summary.roi)}</div>
+            </div>
+            <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-4">
+              <div className={label}>Best Bets</div>
+              <div className={`text-lg font-bold ${mono} text-[#f5f5f5] mt-1`}>{summary.bets}</div>
+            </div>
+          </div>
+
+          <SortableBetTable bets={bets} round={round} floor={usOpenFloor.floor} />
+        </div>
+      ))}
     </div>
   );
 }
@@ -1530,6 +1620,7 @@ export default function ResultsPage() {
         {activeView === 'charles-schwab-challenge-2026' && <CharlesSchwabView />}
         {activeView === 'the-memorial-tournament-2026' && <MemorialView />}
         {activeView === 'rbc-canadian-open-2026' && <RBCView />}
+        {activeView === 'us-open-2026' && <USOpenView />}
       </div>
     </div>
   );

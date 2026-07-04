@@ -114,3 +114,134 @@ catch. **No P0.**
 - [ ] (optional) `npm audit fix` for the 2 moderate dev-dep advisories.
 - [ ] (optional) refresh MEMORY.md: add the SIMULATOR tab to App Structure,
       update the all-time snapshot.
+
+---
+
+## 2026-07-04 audit
+
+Context: **Between events.** US Open 2026 is the live event in `event.ts` and
+reads `TOURNAMENT COMPLETE` (last data commit 2026-06-22). No tournament is
+active on the calendar, so the "Header Last Updated < 2hrs" freshness rule does
+not apply this week — the ~13-day-old ticker timestamp is expected, not a bug.
+All deploy-gate guards are green (auto-roll 7/7, tsc clean, floor-refs, all-time,
+vitest 12/12). The findings below are drift the deploy gate does **not** catch —
+mostly rooted in the Memorial → RBC → US Open event progression not fully
+propagating to the automation layer.
+
+Startup note: the session-start git hook failed to fast-forward (local-change /
+untracked-file conflict), then self-reconciled — working tree ended clean and in
+sync with `origin/main` at `451e564`. No data lost. Flagging only so a recurring
+hook-conflict pattern is on the record.
+
+### Findings
+
+- **[P1] Both live-data workflows are still pinned to a finished event
+  (Memorial).** `.github/workflows/datagolf-pull.yml:32-34` and
+  `ticker-refresh.yml:22,28` still set `SLUG: the-memorial-tournament-2026` /
+  `SLUG_PREFIX: memorial`, but the live event is `us-open-2026` (complete).
+  Ticker fires every 30 min, the pull every 2h — against a tournament that ended
+  ~2026-06-07. Currently a no-op (no data change → no commit since 2026-06-22),
+  so nothing user-facing is broken, but: (a) it burns DataGolf API quota
+  continuously; (b) it's a landmine — any data DataGolf returns for that slug
+  would be written into `memorial*` files; (c) CLAUDE.md says cron is "disabled
+  by default between events" and it's plainly enabled + firing. Root cause: the
+  RBC→US Open event switches did not repoint the workflow YAML (either the
+  switches were done by hand, or `auto-roll.ts::attemptEventSwitch`'s
+  workflow-patch step did not run). Fix needs Chris's call: pause the two crons
+  now, and ensure the next event's staging repoints them.
+
+- **[P1] `verify:workflow-env` is green but validating the wrong target.** The
+  guard checks the workflow env blocks against `eventSchedule.ts`'s **first
+  entry** (still Memorial), not against the actual live event in `event.ts`
+  (`us-open-2026`). So it happily reports "in sync" while the workflows point at
+  a dead event — exactly the silent-drift class the guard exists to prevent. The
+  schedule is append-only (`Memorial[0] → RBC[1] → US Open[2]`) and auto-roll
+  walks it via `nextEvent(currentSlug)`, so "first entry = active event" (per
+  CLAUDE.md + the guard) has diverged from reality. Fix: make the guard read the
+  live slug from `event.ts` (or from `eventSchedule.nextEvent` anchored on the
+  current event) instead of `EVENT_SCHEDULE[0]`. This is the finding that let
+  the P1 above hide. `scripts/verify-workflow-env.ts`.
+
+- **[P1] RBC Canadian Open R4 is ungraded, blocked on a grading-alignment bug.**
+  `rbcCanadianR4Matchups.ts` + `rbcCanadianR4Outrights.ts` exist but there is no
+  `rbcCanadianR4Results.ts`; the all-time record is missing that round.
+  `docs/OPS_LOG.md` documents it: the first grade attempt came out near-inverse
+  (5-20-3 / −58u), Chris confirmed it's wrong, and it was correctly NOT committed
+  — but the underlying alignment bug (suspected X-score↔matchup mapping or the
+  synthesized R4-score field) is still unisolated. This is a known, documented
+  gap rather than a silent regression, but it stays P1: a latent grading bug can
+  corrupt future events, and the record is incomplete until it's resolved.
+
+- **[P2] MEMORY.md is ~2 events stale.** Header still reads `Last updated
+  2026-06-07`, `Current event: The Memorial Tournament … R3 picks live`,
+  `All-Time … 161-88-29 · +91.28u across 5 events`, and `Next event: RBC Canadian
+  Open at Hamilton G&CC`. Reality: US Open complete; 6 registered result prefixes
+  (`verify:all-time`); RBC venue was corrected to TPC Toronto at Osprey Valley
+  (and already played). Since the session protocol says "read MEMORY.md first,"
+  a new session starts with a wrong mental model. Was already flagged 2026-06-07
+  and is still open. `MEMORY.md:3-9`.
+
+- **[P2] `npm run lint` fails — 12 errors, exit 1.** CLAUDE.md "Before Shipping"
+  says lint must pass; it doesn't. Notable real issues:
+  `src/components/BacktestLab.tsx:399 } catch {}` (genuinely silent swallow +
+  `no-empty`), `BacktestLab.tsx:407` setState-synchronously-in-effect, and 5×
+  `no-regex-spaces` in BacktestLab; plus unused-var errors in
+  `verify-rankings-data-completeness.ts:23`, and unused `runCount` / `outPath` /
+  `existsSync` / `pathToFileURL` in build/verify scripts. Not blocking Vercel
+  (the build script runs `tsc`, not `eslint`), which is why it's persisted since
+  at least 2026-06-07. Either wire lint into the gate or relax the rule — same
+  ask as last month, still unresolved.
+
+- **[P2] Weekly audit did not run/commit for ~4 weeks.** Previous AUDIT_LOG
+  section is 2026-06-07; nothing for 06-14 / 06-21 / 06-28. The encoded audit
+  discipline (Sunday 9:10pm ET scheduled task) either didn't fire or didn't
+  commit during that window. Worth confirming the scheduled task is still
+  registered and the machine is up on Sundays.
+
+- **[P3] `npm audit`: 7 vulns (2 high, 3 moderate, 2 low).** Highs are transitive
+  `undici` and `vite`/`launch-editor` (build/dev-time deps). `npm audit fix`
+  available and non-breaking. Low real exposure for a static site; still worth a
+  clean-up pass.
+
+- **[P3] `data/raw/*` all older than 14 days.** Five dirs (charles-schwab,
+  cj-cup, pga-championship, rbc-canadian, memorial), May 13 – Jun 6, all finished
+  events. Gitignored local scratch — safe to delete. (No `us-open-2026` raw dir
+  present, which is fine; raw is local-only.)
+
+### Verified clean
+
+- `verify:auto-roll` 7/7 regexes match `event.ts` (US Open R3 data / R4 matchups
+  + outrights / picksRound 4 / banner TOURNAMENT COMPLETE).
+- `tsc --noEmit` clean. No real `any` types (grep hits are comments/strings).
+- `verify:floor-refs` — 41 component files, 0 hardcoded tier comparisons.
+- `verify:all-time` — 17 Results files, 6 registered prefixes, no inline math.
+- `vitest --run` — 12/12 (banner-sync + policy-guards).
+- US Open data timestamps all consistent at `2026-06-21T23:14` (build-event /
+  build-matchups / build-outrights) — clean transition, no partial-write smell.
+- Recent workflow runs (last 20) all `success` — no CI failures.
+- `courses.ts` + `venues.ts` carry both scheduled venues (muirfield-village,
+  tpc-toronto-osprey-north). No course/venue/schedule drift.
+- Live site `https://birdiex.co` returns HTTP 200; correctly shows a completed
+  event between tournaments.
+- Only 2 silent catches in scripts, both with best-effort justification comments
+  (`pull-event.ts:113`, `auto-roll.ts:125`) — acceptable.
+
+### Action items for Chris
+
+- [ ] **Pause automation between events.** Disable the `ticker-refresh` +
+      `datagolf-pull` crons now (or repoint them to the next live event's
+      SLUG/SLUG_PREFIX). They're firing every 30 min / 2h against finished
+      Memorial data. Want me to do it?
+- [ ] **Fix the `verify:workflow-env` blind spot** so it validates against the
+      live event in `event.ts`, not `EVENT_SCHEDULE[0]`. This is what let the
+      workflow-pinning drift stay green. OK to implement?
+- [ ] **RBC Canadian R4** — decide whether to isolate the grading-alignment bug
+      and grade it into the record, or formally leave it uncounted. It's the only
+      hole in the all-time totals.
+- [ ] **Refresh MEMORY.md** to US-Open-complete + current all-time snapshot +
+      RBC-corrected venue (still open from 2026-06-07).
+- [ ] **Lint** — same standing ask: clean the 12 errors and wire `npm run lint`
+      into the build gate, or relax the CLAUDE.md rule. Want me to?
+- [ ] (optional) `npm audit fix`; delete stale `data/raw/*` dirs.
+- [ ] Confirm the `birdiex-weekly-audit` scheduled task is still registered — it
+      skipped ~4 weeks.

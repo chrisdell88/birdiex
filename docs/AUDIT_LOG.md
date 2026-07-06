@@ -245,3 +245,116 @@ hook-conflict pattern is on the record.
 - [ ] (optional) `npm audit fix`; delete stale `data/raw/*` dirs.
 - [ ] Confirm the `birdiex-weekly-audit` scheduled task is still registered — it
       skipped ~4 weeks.
+
+## 2026-07-05 audit
+
+Context: **Between events**, unchanged from yesterday. This is the regular
+Sunday scheduled run, firing one day after the 2026-07-04 catch-up run. Only
+**one commit** has landed in the interval — `fd9958d` (the 2026-07-04 audit-log
+commit itself) — so the codebase is byte-for-byte identical to last audit apart
+from the log. Every deploy-gate guard re-ran green and the live site is healthy.
+The signal from this run is therefore not "what's new" but **"the 2026-07-04
+findings are all still open and now a day older / unactioned."** They carry
+forward verbatim below with today's re-confirmation. The scheduled task itself
+is now clearly firing again (07-04 + today), so last week's "audit skipped ~4
+weeks" concern is resolved.
+
+### Findings
+
+- **[P1] Both live-data workflows are still pinned to the finished Memorial
+  event — and are actively firing.** `.github/workflows/datagolf-pull.yml:32-34`
+  still sets `SLUG: the-memorial-tournament-2026 / COURSE: muirfield-village /
+  SLUG_PREFIX: memorial`; `ticker-refresh.yml:22` same slug. Re-confirmed today
+  via `gh run list`: the auto-roll workflow ran hourly and ticker-refresh every
+  ~30 min through 2026-07-06T00:09Z, all `success`. They are no-ops right now
+  (US Open is complete and DataGolf returns nothing new for the Memorial slug, so
+  no commits since 2026-06-22), but this burns DataGolf quota continuously and is
+  a landmine: any data the Memorial slug returns would be written into `memorial*`
+  files. CLAUDE.md says cron is "disabled by default between events"; it is not.
+  Unchanged since 2026-07-04 — needs Chris's call to pause or repoint. Root
+  cause: the RBC→US Open switches did not repoint the workflow YAML.
+
+- **[P1] `verify:workflow-env` is green but validating the wrong target.**
+  Re-confirmed today: `npm run verify:workflow-env` prints "✅ Workflow env blocks
+  all in sync with active event" while both workflows point at dead-Memorial. The
+  guard compares against `EVENT_SCHEDULE[0]` (still Memorial) rather than the live
+  event in `event.ts` (`us-open-2026`). The schedule is append-only and auto-roll
+  walks it via `nextEvent()`, so "first entry = active event" has diverged from
+  reality — the guard's premise is broken, which is exactly what lets the P1
+  above stay hidden. `scripts/verify-workflow-env.ts`. Unchanged since 2026-07-04.
+
+- **[P1] RBC Canadian Open R4 is still ungraded.** Re-confirmed: `src/data/`
+  has `rbcCanadianR2Results.ts` + `rbcCanadianR3Results.ts` but **no
+  `rbcCanadianR4Results.ts`**; the matchups + outrights files for R4 exist. The
+  all-time record is missing that round. Documented in `docs/OPS_LOG.md`: first
+  grade came out near-inverse (5-20-3 / −58u), Chris confirmed wrong, correctly
+  NOT committed; the underlying alignment bug is still unisolated. Known,
+  documented gap — stays P1 because a latent grading bug can corrupt future
+  events and the record is incomplete until resolved. Unchanged since 2026-07-04.
+
+- **[P2] MEMORY.md is ~2 events stale.** Header still reads `Last updated
+  2026-06-07`, `Current event: The Memorial Tournament … R3 picks live`,
+  `All-Time … 161-88-29 · +91.28u across 5 events`, `Next event: RBC Canadian
+  Open at Hamilton G&CC`. Reality: US Open complete; 6 registered result prefixes;
+  RBC already played (at TPC Toronto at Osprey Valley, not Hamilton). Session
+  protocol says "read MEMORY.md first," so a new session boots with a wrong mental
+  model. Open since 2026-06-07. `MEMORY.md:3-9`.
+
+- **[P2] `npm run lint` fails — 12 errors, exit 1.** Re-confirmed today, same 12
+  errors: `scripts/auto-roll.ts:401-410` 5× `no-regex-spaces`;
+  `scripts/build-event.ts:190` unused `runCount`; `scripts/build-outrights.ts`
+  unused `existsSync` / `pathToFileURL` / `outPath`;
+  `scripts/verify-rankings-data-completeness.ts:23` unused `readFileSync`;
+  `src/components/BacktestLab.tsx:399` empty `catch {}` (`no-empty` — genuine
+  silent swallow) + `:407` setState-synchronously-in-effect. CLAUDE.md "Before
+  Shipping" says lint must pass; it doesn't. Not blocking Vercel because the build
+  script runs `tsc`, not `eslint`. Standing ask: wire lint into the gate or relax
+  the rule. Open since ≥2026-06-07.
+
+- **[P3] `npm audit`: 7 vulns (2 high, 3 moderate, 2 low).** Highs are transitive
+  `undici` and `vite`/`launch-editor` (build/dev-time deps). `npm audit fix`
+  available and non-breaking per npm. Low real exposure for a static site.
+  Unchanged.
+
+- **[P3] `data/raw/*` — 5 dirs, all older than 14 days.** charles-schwab (May 25),
+  cj-cup (May 25), pga-championship (May 20), rbc-canadian (Jun 5), memorial
+  (Jun 6) — all finished events. Gitignored local scratch, safe to delete. No
+  `us-open-2026` raw dir (fine, raw is local-only). Unchanged.
+
+### Verified clean
+
+- `verify:auto-roll` 7/7 regexes match `event.ts` (US Open R3 data / R4 matchups
+  + outrights / picksRound 4 / banner TOURNAMENT COMPLETE).
+- `tsc --noEmit` clean (exit 0).
+- `verify:floor-refs` — 41 component files, 0 hardcoded tier comparisons.
+- `verify:all-time` — 17 Results files, 6 registered prefixes, no inline math.
+- `verify:card-singleton` — 41 files scanned, only MatchupCard.tsx defines markup.
+- `verify:rankings-completeness` — 21 `*RNData.ts` files, every player complete.
+- `npm test -- --run` — 12/12 pass (banner-sync + policy-guards), 1.33s.
+- Recent workflow runs (last 15) all `success` — no CI failures; Supabase
+  keepalive + healthcheck ran 2026-07-05T12:12Z.
+- Live site `https://birdiex.co` returns HTTP 200, title
+  `BirdieX — PGA Tour Betting Analytics`. (Freshness rule N/A — between events,
+  no active tournament; ~13-day-old ticker timestamp is expected.)
+- Weekly audit scheduled task is firing again (ran 07-04 and today 07-05),
+  resolving last week's "skipped ~4 weeks" concern.
+
+### Action items for Chris
+
+These are all carried from 2026-07-04, still open — nothing was actioned in the
+interval:
+
+- [ ] **Pause automation between events.** Disable `ticker-refresh` +
+      `datagolf-pull` crons now, or repoint them to the next live event's
+      SLUG/SLUG_PREFIX. Firing every 30 min / hourly against finished Memorial
+      data. Want me to do it?
+- [ ] **Fix the `verify:workflow-env` blind spot** so it validates against the
+      live event in `event.ts`, not `EVENT_SCHEDULE[0]`. This is what let the
+      workflow-pinning drift stay green. OK to implement?
+- [ ] **RBC Canadian R4** — decide: isolate the grading-alignment bug and grade
+      it into the record, or formally leave it uncounted. Only hole in all-time.
+- [ ] **Refresh MEMORY.md** to US-Open-complete + current all-time snapshot +
+      RBC-corrected venue (open since 2026-06-07).
+- [ ] **Lint** — clean the 12 errors and wire `npm run lint` into the build gate,
+      or relax the CLAUDE.md rule. Want me to?
+- [ ] (optional) `npm audit fix`; delete stale `data/raw/*` dirs.

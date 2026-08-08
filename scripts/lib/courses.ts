@@ -194,6 +194,36 @@ export const COURSES: Record<string, CourseProfile> = {
     source_date: '2026-06-19',
     is_major: true,
   },
+  // Wyndham Championship 2026 — Sedgefield Country Club. NON-MAJOR. Staged
+  // 2026-08-08 mid-R3 by the daily health-check run after discovering
+  // eventSchedule.ts had gone unstaged for 7 weeks (Travelers, John Deere,
+  // Genesis Scottish Open, The Open Championship, 3M Open, Rocket Classic
+  // all ran and were never shown on the site — flagged separately, not
+  // retroactively staged).
+  'sedgefield-country-club': {
+    name: 'Sedgefield Country Club',
+    // CANONICAL field-method predictability: mean |total_course_history_adjustment|
+    // over the live 147-player field (decompositions pull 2026-08-08,
+    // last_updated 2026-08-05 19:46 UTC, event_name/course_name verified
+    // "Wyndham Championship" / "Sedgefield Country Club"): 0.0617
+    // → raw floor 3.05 − 14.62×0.0617 = 2.148 → snaps to 1.95 (★★).
+    predictability: 0.0617,
+    // coefficients: DataGolf Course Fit Tool radar for Sedgefield Country
+    // Club, read 2026-08-08, Relative Importance OFF. Extracted EXACTLY
+    // from the radar SVG geometry (gridline circle r = 166.32px = value
+    // 1.0; green "Sedgefield Country Club" series vertex radius ÷ 166.32 =
+    // coefficient, confirmed by fill color rgb(61,153,112) vs the gray
+    // rgba(40,40,40,0.8) "Avg PGA TOUR Course" series):
+    //   Driving Distance 0.58, Driving Accuracy 0.72, Approach 0.73,
+    //   Around Green 0.39, Putting 0.45.
+    // ott = max(DD, DA) = 0.72 (accuracy-favouring, per locked OTT rule —
+    // consistent with a tight, tree-lined Donald Ross design).
+    // At predictability 0.0617 the blend normalizer is 0.411, so weights =
+    // 0.411·coeff + 0.589 — these matter meaningfully, real reads not placeholders.
+    coefficients: { ott: 0.72, app: 0.73, arg: 0.39, putt: 0.45 },
+    source_date: '2026-08-08',
+    is_major: false,
+  },
 };
 
 /**

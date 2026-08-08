@@ -73,6 +73,25 @@ export const EVENT_SCHEDULE: ScheduledEvent[] = [
     startsAt: '2026-06-18T00:00Z',
     isMajor: true,
   },
+  // NOTE: Travelers Championship (6/25), John Deere Classic (7/2), Genesis
+  // Scottish Open (7/9), The Open Championship (7/16, MAJOR), 3M Open
+  // (7/23), and Rocket Classic (7/30) all ran between U.S. Open and here
+  // and were NEVER staged — eventSchedule.ts stopped at U.S. Open and
+  // nobody extended it, so auto-roll had no next event for 7 weeks and the
+  // site sat on "TOURNAMENT COMPLETE" (U.S. Open) the whole time. Caught by
+  // the 2026-08-08 health check via DataGolf field-updates showing Wyndham
+  // Championship already in Round 3. Not retroactively staged/graded —
+  // flagged for Chris. See docs/AUDIT_LOG.md or the health-check report.
+  {
+    slug: 'wyndham-championship-2026',
+    name: 'Wyndham Championship',
+    courseKey: 'sedgefield-country-club',
+    courseName: 'Sedgefield Country Club',
+    eventId: 'wyndham-championship-2026',
+    dataPrefix: 'wyndham',
+    startsAt: '2026-08-06T00:00Z',
+    isMajor: false,
+  },
 ];
 
 /** Find the next event AFTER the current slug, or null if at the end. */

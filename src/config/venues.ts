@@ -11,7 +11,7 @@
  */
 import { recommendedFloorForPredictability, floorTierLabel } from '../lib/sizing';
 
-export type EventId = 'masters-2026' | 'pga-2026' | 'cj-cup-byron-nelson-2026' | 'charles-schwab-challenge-2026' | 'the-memorial-tournament-2026' | 'rbc-canadian-open-2026' | 'us-open-2026';
+export type EventId = 'masters-2026' | 'pga-2026' | 'cj-cup-byron-nelson-2026' | 'charles-schwab-challenge-2026' | 'the-memorial-tournament-2026' | 'rbc-canadian-open-2026' | 'us-open-2026' | 'wyndham-championship-2026';
 
 interface VenueInfo {
   /** Tournament label as shown to users. */
@@ -110,6 +110,15 @@ export const VENUES: Record<EventId, VenueInfo> = {
     // raw floor 3.05 − 14.62×0.0396 = 2.471 → snaps to 2.45 (★★+). MAJOR
     // (Layer-4 applies). No publishedFloor override — formula default.
     predictability: 0.0396,
+  },
+  'wyndham-championship-2026': {
+    eventName: 'Wyndham Championship 2026',
+    course: 'Sedgefield Country Club',
+    // CANONICAL field-method predictability (mean |course_history_adj| over
+    // the live 147-player field, decompositions pulled 2026-08-08,
+    // last_updated 2026-08-05): 0.0617 → raw floor 3.05 − 14.62×0.0617 =
+    // 2.148 → snaps to 1.95 (★★). Non-major. No publishedFloor override.
+    predictability: 0.0617,
   },
 };
 

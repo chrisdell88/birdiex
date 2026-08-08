@@ -8,20 +8,27 @@
  * edits needed.
  */
 import type { PlayerData, MatchupOddsEntry, OutrightEntry, PlayerSkillEstimate } from '../types';
-// U.S. Open 2026 — Shinnecock Hills. Rolled onto this event 2026-06-19 (mid-R2).
-// Rankings + edge math use R1 cumulative (the last COMPLETE round). R2 picks
-// ARE published (per Chris): the R2 matchup feed carried clean two-way lines
-// (R2-morning prices, last_updated 12:32 UTC), so usOpenR2Matchups holds the
-// real R2 board. R2 grades automatically when the round finishes tonight.
-import { roundOnlyData, cumulativeData, generatedAt } from '../data/usOpenR3Data';
+// Wyndham Championship 2026 — Sedgefield Country Club. Staged + rolled onto
+// this event 2026-08-08 mid-R3 by the daily health-check run, which found
+// eventSchedule.ts had gone unstaged for 7 weeks: the site had been showing
+// "TOURNAMENT COMPLETE" (U.S. Open) since 2026-06-22 while Travelers, John
+// Deere, Genesis Scottish Open, The Open Championship (MAJOR), 3M Open, and
+// Rocket Classic all ran and were never staged/shown. Not retroactively
+// staged — see docs/AUDIT_LOG.md / the 2026-08-08 health-check report.
+// Rankings + edge math use R2 cumulative (the last COMPLETE round). R3 picks
+// use the live round_matchups board (last_updated ~16:28 UTC 2026-08-08,
+// clean two-way multi-book lines, no corruption signs) — same as every other
+// mid-round auto-roll/ticker-refresh cycle. R3 grades automatically + R4
+// picks build when R3 finishes.
+import { roundOnlyData, cumulativeData, generatedAt } from '../data/wyndhamR2Data';
 // Ticker file is rebuilt every 30 min by the ticker-refresh workflow; its
 // timestamp drives the header "Last Updated" label so it reflects liveness.
 import { tickerGeneratedAt } from '../data/ticker';
 // Frozen pre-tournament rankings for the Course Fit scatter chart.
-import { roundOnlyData as preTournamentRoundOnly } from '../data/usOpenPreData';
-import { r4MatchupOddsData } from '../data/usOpenR4Matchups';
-import { r4OutrightsData } from '../data/usOpenR4Outrights';
-import { skillEstimatesData } from '../data/usOpenSkillEstimates';
+import { roundOnlyData as preTournamentRoundOnly } from '../data/wyndhamPreData';
+import { r3MatchupOddsData } from '../data/wyndhamR3Matchups';
+import { r3OutrightsData } from '../data/wyndhamR3Outrights';
+import { skillEstimatesData } from '../data/wyndhamSkillEstimates';
 import { floorForEvent, type EventId } from './venues';
 
 export interface CurrentEvent {
@@ -52,28 +59,28 @@ export interface CurrentEvent {
 }
 
 // EventId for venues.ts lookup — drives recommendedFloor + label.
-const EVENT_ID: EventId = 'us-open-2026';
+const EVENT_ID: EventId = 'wyndham-championship-2026';
 const VENUE_INFO = floorForEvent(EVENT_ID);
 
 export const currentEvent: CurrentEvent = {
   eventId: EVENT_ID,
-  name: 'U.S. Open',
+  name: 'Wyndham Championship',
   course: VENUE_INFO.course,
-  isMajor: true,
+  isMajor: false,
   predictability: VENUE_INFO.predictability,
   recommendedFloor: VENUE_INFO.floor,
   recommendedFloorLabel: VENUE_INFO.label,
-  // R1 complete, R2 in progress. picksRound=2 = R2 best bets shown (edge from
-  // R1 cumulative X-scores × the clean R2 matchup board). Auto-roll advances
-  // to R3 and grades R2 against usOpenR2Matchups when R2 finishes tonight.
-  picksRound: 4,
-  isComplete: true,
-  headerBanner: 'TOURNAMENT COMPLETE',
+  // R2 complete, R3 in progress. picksRound=3 = R3 best bets shown (edge
+  // from R2 cumulative X-scores × the live R3 matchup board). Auto-roll
+  // advances to R4 and grades R3 against wyndhamR3Matchups when R3 finishes.
+  picksRound: 3,
+  isComplete: false,
+  headerBanner: 'R2 FINAL · ROUND 3 PICKS',
   dataUpdatedAt: new Date(generatedAt).getTime() > new Date(tickerGeneratedAt).getTime() ? generatedAt : tickerGeneratedAt,
   rankingsRound: roundOnlyData,
   rankingsCumulative: cumulativeData,
   preTournamentRankings: preTournamentRoundOnly,
-  matchups: r4MatchupOddsData,
-  outrights: r4OutrightsData,
+  matchups: r3MatchupOddsData,
+  outrights: r3OutrightsData,
   skillEstimates: skillEstimatesData,
 };

@@ -92,6 +92,29 @@ export const EVENT_SCHEDULE: ScheduledEvent[] = [
     startsAt: '2026-08-06T00:00Z',
     isMajor: false,
   },
+  {
+    // FedEx Cup Playoffs opener. Confirmed via DataGolf field-updates
+    // (event_name "FedEx St. Jude Championship", course_name "TPC
+    // Southwind", date_start "2026-08-13") 2026-08-10. NOT one of the 4
+    // majors (isMajor stays false). Coefficients + predictability staged in
+    // scripts/lib/courses.ts / src/config/venues.ts — predictability is a
+    // bar-chart PROXY pending field-method recompute once DataGolf's
+    // decompositions roll over to this event's field (they were still
+    // serving Wyndham's stale field 3 days out from R1 at staging time).
+    // PreData/R1Matchups/R1Outrights/SkillEstimates are NOT YET BUILT — the
+    // underlying pre-tournament model data isn't ready yet either. A later
+    // health-check run must build those (and recompute predictability)
+    // before attemptEventSwitch's required-file check will let auto-roll
+    // switch onto this event.
+    slug: 'fedex-st-jude-championship-2026',
+    name: 'FedEx St. Jude Championship',
+    courseKey: 'tpc-southwind',
+    courseName: 'TPC Southwind',
+    eventId: 'fedex-st-jude-championship-2026',
+    dataPrefix: 'fedexStJude',
+    startsAt: '2026-08-13T00:00Z',
+    isMajor: false,
+  },
 ];
 
 /** Find the next event AFTER the current slug, or null if at the end. */

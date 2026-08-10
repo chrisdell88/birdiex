@@ -40,6 +40,7 @@ const PREFIX_TO_EVENT_ID: Record<string, EventId> = {
   memorial: 'the-memorial-tournament-2026',
   rbcCanadian: 'rbc-canadian-open-2026',
   usOpen: 'us-open-2026',
+  wyndham: 'wyndham-championship-2026',
   // Masters uses the legacy `resultsData.ts` file — handled below, not here.
 };
 

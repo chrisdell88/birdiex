@@ -8,26 +8,33 @@
  * edits needed.
  */
 import type { PlayerData, MatchupOddsEntry, OutrightEntry, PlayerSkillEstimate } from '../types';
-// Wyndham Championship 2026 — Sedgefield Country Club. Staged + rolled onto
-// this event 2026-08-08 mid-R3 by the daily health-check run, which found
-// eventSchedule.ts had gone unstaged for 7 weeks: the site had been showing
-// "TOURNAMENT COMPLETE" (U.S. Open) since 2026-06-22 while Travelers, John
-// Deere, Genesis Scottish Open, The Open Championship (MAJOR), 3M Open, and
-// Rocket Classic all ran and were never staged/shown. Not retroactively
-// staged — see docs/AUDIT_LOG.md / the 2026-08-08 health-check report.
-// Rankings + edge math use R2 cumulative (the last COMPLETE round). R3 picks
-// use the live round_matchups board (last_updated ~16:28 UTC 2026-08-08,
-// clean two-way multi-book lines, no corruption signs) — same as every other
-// mid-round auto-roll/ticker-refresh cycle. R3 grades automatically + R4
-// picks build when R3 finishes.
-import { roundOnlyData, cumulativeData, generatedAt } from '../data/wyndhamR2Data';
+// Wyndham Championship 2026 — Sedgefield Country Club. COMPLETE as of
+// 2026-08-10 (Michael Brennan won at -22, verified via DataGolf in-play:
+// current_pos "1", round 4, thru 18, win 1.0). Flipped to complete by the
+// daily health-check run after finding auto-roll's stale-feed guard had
+// false-positived on the R3->R4 transition for ~34 hours (any in-play row
+// with round > currentCompleted+1 was treated as a leftover previous-event
+// feed, even when it was genuinely OUR OWN event running ahead of a config
+// that hadn't caught up) — fixed in scripts/auto-roll.ts to check the feed's
+// own `info.event_name` instead of relying on round-jump size alone.
+// R3 was graded against the actual announcement snapshot (git commit
+// 448ebea, the 2026-08-08 mid-round roll) — 19 Best Bets, 10-8-1, +5.43u.
+// R4 was NEVER shown to users (event.ts stayed on picksRound=3, banner
+// "R2 FINAL - ROUND 3 PICKS", for the entire R4 window) — so there is no
+// legitimate "announced" R4 pick set to grade. No wyndhamR4Results.ts was
+// created; flagged for Chris, same policy as the still-open RBC Canadian R4
+// gap. Rankings below use wyndhamR4Data (the real final standings, built
+// straight from DataGolf's final live-stats — factual, not a picks/grading
+// artifact) rather than settling for R3, since clean full R4 data was
+// available.
+import { roundOnlyData, cumulativeData, generatedAt } from '../data/wyndhamR4Data';
 // Ticker file is rebuilt every 30 min by the ticker-refresh workflow; its
 // timestamp drives the header "Last Updated" label so it reflects liveness.
 import { tickerGeneratedAt } from '../data/ticker';
 // Frozen pre-tournament rankings for the Course Fit scatter chart.
 import { roundOnlyData as preTournamentRoundOnly } from '../data/wyndhamPreData';
-import { r3MatchupOddsData } from '../data/wyndhamR3Matchups';
-import { r3OutrightsData } from '../data/wyndhamR3Outrights';
+import { r4MatchupOddsData } from '../data/wyndhamR4Matchups';
+import { r4OutrightsData } from '../data/wyndhamR4Outrights';
 import { skillEstimatesData } from '../data/wyndhamSkillEstimates';
 import { floorForEvent, type EventId } from './venues';
 
@@ -70,17 +77,18 @@ export const currentEvent: CurrentEvent = {
   predictability: VENUE_INFO.predictability,
   recommendedFloor: VENUE_INFO.floor,
   recommendedFloorLabel: VENUE_INFO.label,
-  // R2 complete, R3 in progress. picksRound=3 = R3 best bets shown (edge
-  // from R2 cumulative X-scores × the live R3 matchup board). Auto-roll
-  // advances to R4 and grades R3 against wyndhamR3Matchups when R3 finishes.
-  picksRound: 3,
-  isComplete: false,
-  headerBanner: 'R2 FINAL · ROUND 3 PICKS',
+  // Tournament complete. picksRound=4 reflects the final round played;
+  // matchups/outrights below are R4 reference data only (no R4 picks were
+  // ever published — see the import comment above). isComplete=true hides
+  // the picks UI and shows the "TOURNAMENT COMPLETE" state.
+  picksRound: 4,
+  isComplete: true,
+  headerBanner: 'TOURNAMENT COMPLETE',
   dataUpdatedAt: new Date(generatedAt).getTime() > new Date(tickerGeneratedAt).getTime() ? generatedAt : tickerGeneratedAt,
   rankingsRound: roundOnlyData,
   rankingsCumulative: cumulativeData,
   preTournamentRankings: preTournamentRoundOnly,
-  matchups: r3MatchupOddsData,
-  outrights: r3OutrightsData,
+  matchups: r4MatchupOddsData,
+  outrights: r4OutrightsData,
   skillEstimates: skillEstimatesData,
 };

@@ -11,7 +11,7 @@
  */
 import { recommendedFloorForPredictability, floorTierLabel } from '../lib/sizing';
 
-export type EventId = 'masters-2026' | 'pga-2026' | 'cj-cup-byron-nelson-2026' | 'charles-schwab-challenge-2026' | 'the-memorial-tournament-2026' | 'rbc-canadian-open-2026' | 'us-open-2026' | 'wyndham-championship-2026';
+export type EventId = 'masters-2026' | 'pga-2026' | 'cj-cup-byron-nelson-2026' | 'charles-schwab-challenge-2026' | 'the-memorial-tournament-2026' | 'rbc-canadian-open-2026' | 'us-open-2026' | 'wyndham-championship-2026' | 'fedex-st-jude-championship-2026';
 
 interface VenueInfo {
   /** Tournament label as shown to users. */
@@ -119,6 +119,15 @@ export const VENUES: Record<EventId, VenueInfo> = {
     // last_updated 2026-08-05): 0.0617 → raw floor 3.05 − 14.62×0.0617 =
     // 2.148 → snaps to 1.95 (★★). Non-major. No publishedFloor override.
     predictability: 0.0617,
+  },
+  'fedex-st-jude-championship-2026': {
+    eventName: 'FedEx St. Jude Championship 2026',
+    course: 'TPC Southwind',
+    // PROXY predictability (bar-chart, not field-method) — decompositions
+    // for this event weren't populated yet at staging time (3 days before
+    // R1). See scripts/lib/courses.ts['tpc-southwind'] for the full
+    // reasoning + recompute instructions. dgBarPct 29.57 × 0.001580.
+    predictability: 0.0467,
   },
 };
 

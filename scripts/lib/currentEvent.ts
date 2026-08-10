@@ -64,13 +64,14 @@ export async function resolveWithOverride(fallback: {
   slug: string;
   courseKey?: string;
   dataPrefix?: string;
-}): Promise<{ slug: string; courseKey: string; dataPrefix: string }> {
+}): Promise<{ slug: string; courseKey: string; dataPrefix: string; name: string }> {
   const resolved = await resolveCurrentEvent();
   if (!resolved) {
     return {
       slug: fallback.slug,
       courseKey: fallback.courseKey ?? '',
       dataPrefix: fallback.dataPrefix ?? '',
+      name: '',
     };
   }
   if (fallback.slug && fallback.slug !== resolved.slug) {
@@ -80,5 +81,5 @@ export async function resolveWithOverride(fallback: {
       `(Workflow YAML env is stale — rotate it when possible, but scripts no longer depend on it.)`
     );
   }
-  return { slug: resolved.slug, courseKey: resolved.courseKey, dataPrefix: resolved.dataPrefix };
+  return { slug: resolved.slug, courseKey: resolved.courseKey, dataPrefix: resolved.dataPrefix, name: resolved.name };
 }

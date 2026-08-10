@@ -38,6 +38,10 @@ const ROOT = new URL('..', import.meta.url).pathname;
 let SLUG = process.env.SLUG ?? 'cj-cup-byron-nelson-2026';
 let COURSE = process.env.COURSE ?? 'tpc-craig-ranch';
 let SLUG_PREFIX = process.env.SLUG_PREFIX ?? 'cjCup';
+// Display name of the current event (from eventSchedule.ts), used by the
+// stale-feed guard below to tell "this event just moved further than we
+// thought" apart from "this is actually a different, leftover event".
+let EVENT_NAME = '';
 
 // How long after a round transition we keep refreshing odds. ~6 hours
 // covers "30 min after round-done through midnight ET" for typical 5-7pm
@@ -135,6 +139,19 @@ async function readInPlay(phase: string): Promise<InPlayPlayer[]> {
   if (!existsSync(path)) return [];
   const raw = JSON.parse(await readFile(path, 'utf8'));
   return raw.data ?? [];
+}
+
+/**
+ * DataGolf's in-play response carries an `info.event_name` (+ current_round)
+ * alongside the per-player `data` rows. Used by the stale-feed guard to
+ * confirm whether an unexpectedly-advanced feed is genuinely OUR event
+ * running ahead of our config, vs. a truly different (leftover) event.
+ */
+async function readInPlayInfo(phase: string): Promise<{ event_name?: string; current_round?: number } | null> {
+  const path = join(ROOT, 'data/raw', SLUG, phase, 'in-play.json');
+  if (!existsSync(path)) return null;
+  const raw = JSON.parse(await readFile(path, 'utf8'));
+  return raw.info ?? null;
 }
 
 /**
@@ -435,7 +452,8 @@ async function main(): Promise<void> {
   if (identity.slug) SLUG = identity.slug;
   if (identity.courseKey) COURSE = identity.courseKey;
   if (identity.dataPrefix) SLUG_PREFIX = identity.dataPrefix;
-  console.log(`Operating on event: slug=${SLUG} course=${COURSE} prefix=${SLUG_PREFIX}`);
+  if (identity.name) EVENT_NAME = identity.name;
+  console.log(`Operating on event: slug=${SLUG} course=${COURSE} prefix=${SLUG_PREFIX} name="${EVENT_NAME}"`);
 
   // 0. Event switch check (before anything else). If currentEvent.isComplete
   //    and a next scheduled event exists with pre-staged data, swap event.ts
@@ -481,13 +499,38 @@ async function main(): Promise<void> {
   // rows whose round is null, which is exactly how the first version of this
   // guard failed live on 2026-06-11 (Memorial R4 leftovers nearly marked the
   // day-one RBC Canadian complete).
+  //
+  // BUG FOUND 2026-08-10: a round-jump alone isn't proof of a leftover feed —
+  // if auto-roll misses a cycle (or a guard elsewhere blocks it) while OUR
+  // OWN event keeps playing, the feed can legitimately show round=currentCompleted+2
+  // (e.g. config stuck on "R2 complete" while our event's R3 AND R4 both
+  // finished for real). That happened to Wyndham Championship: this guard
+  // no-op'd every cron tick for ~34 hours after R3 genuinely finished,
+  // freezing the site while the real tournament played out and completed.
+  // Use the feed's own `info.event_name` (present on every DataGolf in-play
+  // response) to tell the two cases apart: only treat a round-jump as stale
+  // when the feed's event name does NOT match our own, or is unavailable
+  // (older/legacy pulls without an `info` block — preserve the original,
+  // more conservative behavior there).
   const feedAhead = players.some((p) => (p.round ?? 0) > currentCompleted + 1);
   if (feedAhead) {
+    const feedInfo = await readInPlayInfo(currentPhase);
+    const feedEventName = feedInfo?.event_name;
+    const sameEvent = !!feedEventName && !!EVENT_NAME && feedEventName === EVENT_NAME;
+    if (!sameEvent) {
+      console.warn(
+        `⚠️  in-play feed reports rounds ahead of R${currentCompleted + 1} but config says only R${currentCompleted} ` +
+        `is complete, and the feed's event_name ("${feedEventName ?? 'unknown'}") does not confirm it's our own ` +
+        `event ("${EVENT_NAME || 'unknown'}") — treating as the PREVIOUS event's leftover feed. No-op until the ` +
+        `new event's live data appears.`
+      );
+      return;
+    }
     console.warn(
-      `⚠️  in-play feed reports rounds ahead of R${currentCompleted + 1} but config says only R${currentCompleted} ` +
-      `is complete — this is the PREVIOUS event's leftover feed. No-op until the new event's live data appears.`
+      `⚠️  in-play feed reports rounds ahead of R${currentCompleted + 1} but event_name "${feedEventName}" ` +
+      `confirms this is OUR OWN event running further ahead than config knows (auto-roll likely missed a cycle) ` +
+      `— NOT a stale leftover feed. Proceeding with detection/advance.`
     );
-    return;
   }
 
   // 4. Decide what to do.
@@ -502,11 +545,30 @@ async function main(): Promise<void> {
   // Anything else: exit no-op. NO files modified, NO commit, site stays
   // frozen on what the user last saw.
 
-  const isAutoAdvance = detected > currentCompleted;
+  // Advance AT MOST one round per cron cycle. `detected` can now legitimately
+  // be more than one round ahead of `currentCompleted` (see the stale-feed
+  // guard fix above — same-event feeds are no longer no-op'd just because
+  // they're 2+ rounds ahead). Grading each round depends on the PREVIOUS
+  // round's data file existing (e.g. grading R4 needs R3Data) and on the
+  // round-N announcement matchups snapshot, so jumping straight from
+  // "R2 complete" to "R4 complete" would skip grading R3 entirely and grade
+  // R4 with no R3Data to compute edges from. Clamping here means each
+  // intermediate round still gets its own doAutoAdvance pass — subsequent
+  // cron cycles (running minutes apart) will walk the rest of the way up to
+  // `detected`.
+  const effectiveDetected = Math.min(detected, currentCompleted + 1);
+  if (effectiveDetected < detected) {
+    console.log(
+      `Feed shows R${detected} complete but config is only at R${currentCompleted} — advancing one round ` +
+      `(to R${effectiveDetected}) this cycle; the next cron run will continue catching up.`
+    );
+  }
+
+  const isAutoAdvance = effectiveDetected > currentCompleted;
   const isManualSync = !isAutoAdvance && state.lastCompletedRoundAtTransition < currentCompleted;
 
   if (isAutoAdvance) {
-    if (detected >= 4) {
+    if (effectiveDetected >= 4) {
       console.log('Tournament finished (R4 complete). Grading R4, flipping isComplete, final refresh.');
 
       // GRADE R4 FIRST — before refreshCurrentRound mutates the data files.
@@ -564,14 +626,14 @@ async function main(): Promise<void> {
       await writeState(state);
       return;
     }
-    await doAutoAdvance(picksRound, detected);
+    await doAutoAdvance(picksRound, effectiveDetected);
     const prevBb = state.lastBestBetCount;
     state.lastTransitionAt = new Date().toISOString();
-    state.lastCompletedRoundAtTransition = detected;
+    state.lastCompletedRoundAtTransition = effectiveDetected;
     state.lastBestBetCount = countBestBets();
     await writeState(state);
     // notify.ts will gate on Best Bet count internally — safe to call.
-    callNotify(detected + 1, 'round-picks', prevBb);
+    callNotify(effectiveDetected + 1, 'round-picks', prevBb);
     return;
   }
 

@@ -34,6 +34,11 @@ const usOpenResultModules = import.meta.glob<Record<string, unknown>>(
   '../data/usOpenR*Results.ts',
   { eager: true }
 );
+// Wyndham Championship — same auto-roll-drop-and-glob pattern.
+const wyndhamResultModules = import.meta.glob<Record<string, unknown>>(
+  '../data/wyndhamR*Results.ts',
+  { eager: true }
+);
 import { starsForEdge, unitsForEdge, stakeToWin1 } from '../lib/sizing';
 import { floorForEvent } from '../config/venues';
 import {
@@ -70,6 +75,7 @@ const cscFloor = floorForEvent('charles-schwab-challenge-2026');
 const memorialFloor = floorForEvent('the-memorial-tournament-2026');
 const rbcFloor = floorForEvent('rbc-canadian-open-2026');
 const usOpenFloor = floorForEvent('us-open-2026');
+const wyndhamFloor = floorForEvent('wyndham-championship-2026');
 
 // Single source of truth for the trackedAt + summarise pair, shared with
 // BacktestLab. Guarantees both pages cannot disagree about the same
@@ -166,8 +172,24 @@ const usOpenRounds = Object.entries(usOpenResultModules)
 const usOpenTracked = usOpenRounds.flatMap((r) => r.bets);
 const usOpenSummary = summarise(usOpenTracked);
 
+// Wyndham Championship — same pattern.
+const wyndhamRounds = Object.entries(wyndhamResultModules)
+  .map(([path, mod]) => {
+    const m = path.match(/wyndhamR(\d+)Results\.ts$/);
+    if (!m) return null;
+    const round = Number(m[1]);
+    const bets = (mod as Record<string, unknown>)[`r${round}Results`] as BetRecord[] | undefined;
+    if (!Array.isArray(bets)) return null;
+    const tracked = trackedAt(bets, wyndhamFloor.floor);
+    return { round, bets: tracked, summary: summarise(tracked) };
+  })
+  .filter((x): x is { round: number; bets: BetRecord[]; summary: ReturnType<typeof summarise> } => x !== null)
+  .sort((a, b) => a.round - b.round);
+const wyndhamTracked = wyndhamRounds.flatMap((r) => r.bets);
+const wyndhamSummary = summarise(wyndhamTracked);
+
 // All-time = every event's tracked Best Bets.
-const ALL_TIME_BETS = [...mastersTracked, ...pgaTracked, ...cjTracked, ...cscTracked, ...memorialTracked, ...rbcTracked, ...usOpenTracked];
+const ALL_TIME_BETS = [...mastersTracked, ...pgaTracked, ...cjTracked, ...cscTracked, ...memorialTracked, ...rbcTracked, ...usOpenTracked, ...wyndhamTracked];
 
 // Silence unused-import warnings — these raw summaries are kept for
 // reference / backtesting comparisons; the venue-aware values above
@@ -184,7 +206,7 @@ void pgaR2SummaryRaw; void pgaR3SummaryRaw; void pgaR4SummaryRaw;
 // ─────────────────────────────────────────────────────────────────
 type EventStatus = 'IN PROGRESS' | 'COMPLETE';
 interface EventEntry {
-  id: 'masters-2026' | 'pga-2026' | 'cj-cup-byron-nelson-2026' | 'charles-schwab-challenge-2026' | 'the-memorial-tournament-2026' | 'rbc-canadian-open-2026' | 'us-open-2026';
+  id: 'masters-2026' | 'pga-2026' | 'cj-cup-byron-nelson-2026' | 'charles-schwab-challenge-2026' | 'the-memorial-tournament-2026' | 'rbc-canadian-open-2026' | 'us-open-2026' | 'wyndham-championship-2026';
   name: string;
   status: EventStatus;
   wins: number;
@@ -291,6 +313,19 @@ const EVENT_REGISTRY: EventEntry[] = [
     threshold: usOpenFloor.floor,
     course: usOpenFloor.course,
     predictability: usOpenFloor.predictability,
+  },
+  {
+    id: 'wyndham-championship-2026',
+    name: 'Wyndham Championship 2026',
+    status: 'COMPLETE',
+    wins: wyndhamSummary.wins,
+    losses: wyndhamSummary.losses,
+    pushes: wyndhamSummary.pushes,
+    units: wyndhamSummary.units,
+    roi: wyndhamSummary.roi,
+    threshold: wyndhamFloor.floor,
+    course: wyndhamFloor.course,
+    predictability: wyndhamFloor.predictability,
   },
 ];
 
@@ -410,7 +445,7 @@ const sportsbooks: Sportsbook[] = [
 
 const mastersRounds = ['All Rounds', 'Round 2', 'Round 3', 'Round 4'];
 
-type TournamentView = 'all-time' | 'masters-2026' | 'pga-2026' | 'cj-cup-byron-nelson-2026' | 'charles-schwab-challenge-2026' | 'the-memorial-tournament-2026' | 'rbc-canadian-open-2026' | 'us-open-2026';
+type TournamentView = 'all-time' | 'masters-2026' | 'pga-2026' | 'cj-cup-byron-nelson-2026' | 'charles-schwab-challenge-2026' | 'the-memorial-tournament-2026' | 'rbc-canadian-open-2026' | 'us-open-2026' | 'wyndham-championship-2026';
 
 // --- Shared style tokens ---
 const mono = "font-['JetBrains_Mono','SF_Mono',monospace]";
@@ -1529,6 +1564,67 @@ function USOpenView() {
   );
 }
 
+// --- Wyndham Championship View — glob-driven, zero manual edits per round ---
+function WyndhamView() {
+  const gradedRounds = [...wyndhamRounds].reverse();
+
+  return (
+    <div>
+      <TournamentSummaryBanner
+        status="COMPLETE"
+        eventName="Wyndham Championship 2026"
+        course={wyndhamFloor.course}
+        threshold={wyndhamFloor.floor}
+        record={{ wins: wyndhamSummary.wins, losses: wyndhamSummary.losses, pushes: wyndhamSummary.pushes }}
+        units={wyndhamSummary.units}
+        roi={wyndhamSummary.roi}
+        bets={wyndhamSummary.bets}
+        recordLabel="Best Bets — Final"
+      />
+
+      {gradedRounds.length === 0 && (
+        <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-6 text-center">
+          <p className="text-sm text-[#d4d4d4] font-['Inter',system-ui,sans-serif]">
+            Tournament in progress. Graded results post after each round finishes.
+          </p>
+        </div>
+      )}
+
+      {gradedRounds.map(({ round, summary, bets }) => (
+        <div key={round} className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className={`w-0.5 h-5 rounded-full ${summary.units >= 0 ? 'bg-[#22c55e]' : 'bg-[#ef4444]'}`} />
+            <span className="text-sm font-semibold text-[#f5f5f5] font-['Inter',system-ui,sans-serif]">
+              Round {round} — Best Bets
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+            <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-4">
+              <div className={label}>Record</div>
+              <div className={`text-lg font-bold ${mono} text-[#f5f5f5] mt-1`}>{summary.record}</div>
+            </div>
+            <div className={`bg-[#0a0a0a] border ${borderColor(summary.units)} rounded-lg p-4`}>
+              <div className={label}>Units</div>
+              <div className={`text-lg font-bold ${mono} ${unitColor(summary.units)} mt-1`}>{formatUnits(summary.units)}u</div>
+            </div>
+            <div className={`bg-[#0a0a0a] border ${borderColor(summary.roi)} rounded-lg p-4`}>
+              <div className={label}>ROI</div>
+              <div className={`text-lg font-bold ${mono} ${unitColor(summary.roi)} mt-1`}>{formatROI(summary.roi)}</div>
+            </div>
+            <div className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-4">
+              <div className={label}>Best Bets</div>
+              <div className={`text-lg font-bold ${mono} text-[#f5f5f5] mt-1`}>{summary.bets}</div>
+            </div>
+          </div>
+
+          <SortableBetTable bets={bets} round={round} floor={wyndhamFloor.floor} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────
@@ -1621,6 +1717,7 @@ export default function ResultsPage() {
         {activeView === 'the-memorial-tournament-2026' && <MemorialView />}
         {activeView === 'rbc-canadian-open-2026' && <RBCView />}
         {activeView === 'us-open-2026' && <USOpenView />}
+        {activeView === 'wyndham-championship-2026' && <WyndhamView />}
       </div>
     </div>
   );

@@ -70,6 +70,38 @@ const memorialRoundsList = Object.entries(memorialResultModules)
   .filter((x): x is { round: number; bets: BetRecord[] } => x !== null)
   .sort((a, b) => a.round - b.round);
 
+// U.S. Open — same dynamic-glob pattern.
+const usOpenResultModules = import.meta.glob<Record<string, unknown>>(
+  '../data/usOpenR*Results.ts',
+  { eager: true }
+);
+const usOpenRoundsList = Object.entries(usOpenResultModules)
+  .map(([path, mod]) => {
+    const m = path.match(/usOpenR(\d+)Results\.ts$/);
+    if (!m) return null;
+    const round = Number(m[1]);
+    const bets = (mod as Record<string, unknown>)[`r${round}Results`] as BetRecord[] | undefined;
+    return Array.isArray(bets) ? { round, bets } : null;
+  })
+  .filter((x): x is { round: number; bets: BetRecord[] } => x !== null)
+  .sort((a, b) => a.round - b.round);
+
+// Wyndham Championship — same dynamic-glob pattern.
+const wyndhamResultModules = import.meta.glob<Record<string, unknown>>(
+  '../data/wyndhamR*Results.ts',
+  { eager: true }
+);
+const wyndhamRoundsList = Object.entries(wyndhamResultModules)
+  .map(([path, mod]) => {
+    const m = path.match(/wyndhamR(\d+)Results\.ts$/);
+    if (!m) return null;
+    const round = Number(m[1]);
+    const bets = (mod as Record<string, unknown>)[`r${round}Results`] as BetRecord[] | undefined;
+    return Array.isArray(bets) ? { round, bets } : null;
+  })
+  .filter((x): x is { round: number; bets: BetRecord[] } => x !== null)
+  .sort((a, b) => a.round - b.round);
+
 // Masters 2026 — bets live in resultsData.betLog with a `dataSet` field
 // distinguishing "round-only" vs "cumulative". Each round can have both
 // variants. To avoid double-counting in the all-time roll-up, we include
@@ -91,6 +123,14 @@ interface EventBucket {
 // Vite globs above, so the auto-roll just needs to drop a new
 // <prefix>R<N>Results.ts file and it shows up here on the next deploy.
 const EVENTS: EventBucket[] = [
+  {
+    label: 'Wyndham Championship 2026',
+    rounds: wyndhamRoundsList.map((r) => ({ label: `R${r.round}`, bets: r.bets })),
+  },
+  {
+    label: 'U.S. Open 2026',
+    rounds: usOpenRoundsList.map((r) => ({ label: `R${r.round}`, bets: r.bets })),
+  },
   {
     label: 'RBC Canadian Open 2026',
     rounds: rbcRoundsList.map((r) => ({ label: `R${r.round}`, bets: r.bets })),

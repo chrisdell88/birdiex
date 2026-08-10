@@ -224,6 +224,37 @@ export const COURSES: Record<string, CourseProfile> = {
     source_date: '2026-08-08',
     is_major: false,
   },
+  // FedEx St. Jude Championship 2026 — TPC Southwind (Playoffs opener, NOT
+  // one of the 4 majors — is_major stays false; Layer-4 major adjustment
+  // does not apply). Staged 2026-08-10 by the daily health-check run ahead
+  // of the R1 tee-off (confirmed startsAt 2026-08-13 via DataGolf
+  // field-updates: event_name "FedEx St. Jude Championship", course_name
+  // "TPC Southwind", date_start "2026-08-13"). Field-method predictability
+  // could NOT be computed yet — DataGolf's player-decompositions /
+  // pre-tournament endpoints were still serving the PREVIOUS event
+  // (Wyndham/Sedgefield, event_name checked and confirmed stale) 3 days out;
+  // only field-updates (roster/schedule) had rolled over. Using the
+  // bar-chart PROXY instead (src/data/dataGolfPredictability.ts, TPC
+  // Southwind dgBarPct 29.57 × 0.001580 = 0.0467 → raw floor 3.05−14.62×
+  // 0.0467=2.367 → snaps to 2.45). RECOMPUTE via the canonical field method
+  // once decompositions actually populate the FedEx St. Jude field (retry
+  // closer to Aug 13) — see PREDICTABILITY SOURCE PRIORITY in memory.
+  'tpc-southwind': {
+    name: 'TPC Southwind',
+    predictability: 0.0467,
+    // coefficients: DataGolf Course Fit Tool radar for TPC Southwind, read
+    // 2026-08-10, Relative Importance OFF. Extracted from the radar SVG
+    // geometry exactly as for Sedgefield (gridline circle r = 166.32px =
+    // value 1.0; green "TPC Southwind" series vertex radius ÷ 166.32 =
+    // coefficient, confirmed by fill color rgb(61,153,112) vs the gray
+    // rgba(40,40,40,0.8) "Avg PGA TOUR Course" series):
+    //   Driving Distance 0.58, Driving Accuracy 0.51, Approach 0.70,
+    //   Around Green 0.36, Putting 0.48.
+    // ott = max(DD, DA) = 0.58 (distance-favouring, per locked OTT rule).
+    coefficients: { ott: 0.58, app: 0.70, arg: 0.36, putt: 0.48 },
+    source_date: '2026-08-10',
+    is_major: false,
+  },
 };
 
 /**

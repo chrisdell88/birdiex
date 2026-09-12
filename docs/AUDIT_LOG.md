@@ -358,3 +358,141 @@ interval:
 - [ ] **Lint** — clean the 12 errors and wire `npm run lint` into the build gate,
       or relax the CLAUDE.md rule. Want me to?
 - [ ] (optional) `npm audit fix`; delete stale `data/raw/*` dirs.
+
+## 2026-09-10 audit
+
+**Nine-week gap in this log.** The last entry is 2026-07-05. This scheduled
+Claude audit task didn't produce a logged run again until today — separately,
+the repo's own `.github/workflows/code-audit.yml` (lint + npm audit only, no
+code-smell pass) kept firing every Sunday the whole time and opened 14
+back-to-back "Weekly audit — N check(s) failing" issues (#3–#16, 2026-06-08
+through 2026-09-07), all still open, all flagging the same two checks. Two
+different automated audits, one silent for two months, the other crying wolf
+weekly with nobody triaging it.
+
+### Findings
+
+- **[P0] Site has been frozen on a completed tournament for 33+ days, and the
+  automation that's supposed to catch this has been a false-green no-op since
+  June.** `src/config/event.ts` shows Wyndham Championship, `isComplete: true`,
+  `headerBanner: 'TOURNAMENT COMPLETE'` — last real data `generatedAt`
+  2026-08-10, `ticker.ts` `tickerGeneratedAt` 2026-08-10T16:14Z. Today is
+  2026-09-10. `src/data/auto-roll-state.json.lastTransitionAt` is
+  **2026-06-21** — the automated pipeline hasn't recorded a transition in
+  ~11 weeks; every advance since (RBC → US Open → Wyndham) was a manual
+  "Emergency: switch event" commit, not `auto-roll.ts` running end-to-end.
+  Meanwhile `.github/workflows/datagolf-pull.yml` (every 2h) and
+  `ticker-refresh.yml` (every 30 min) still have `SLUG:
+  the-memorial-tournament-2026` / `SLUG_PREFIX: memorial` hardcoded in their
+  env blocks — unchanged since commit `6a950c0` on **2026-06-07**. Both
+  workflows report `success` on every run (`gh run list` — dozens of green
+  runs through 2026-09-10) because they're pulling a June event that's long
+  over: nothing ever changes, so there's nothing to commit, so they look
+  healthy while doing nothing. `eventSchedule.ts` stops at FedEx St. Jude
+  Championship, and even that entry is config-only — no `fedexPreData` /
+  `fedexR1Matchups` / etc. exist in `src/data/` — so even a working auto-roll
+  has nowhere to advance to. Real-world PGA Tour events since Wyndham
+  (FedEx St. Jude, BMW Championship, Tour Championship, and whatever has
+  since started) have all gone unstaged. **This is the exact same root cause
+  flagged as P1 in the 2026-07-04 and 2026-07-05 audits** ("first entry =
+  active event" premise in `verify-workflow-env.ts` is broken, see below) —
+  it was not fixed, and the blast radius has grown from "ticker is 13 days
+  stale between events" to "site has shown a dead tournament as current for
+  over a month, with zero live picks, while looking automated and fine."
+  Escalating from P1 to P0 because it's no longer a between-events lull, it's
+  an ongoing user-facing outage on the site's core value prop (current
+  picks) with no alarm firing anywhere.
+
+- **[P1, recurring since 2026-07-04, unfixed] `verify-workflow-env.ts`
+  validates against the wrong event.** It text-parses `EVENT_SCHEDULE[0]`
+  and calls that "the active event," but the array is append-only (Memorial,
+  RBC, US Open, Wyndham, FedEx St. Jude all still listed) and nothing ever
+  removes completed entries or advances a pointer. Today it printed
+  `Active event: the-memorial-tournament-2026` — same stale entry — and
+  passed, because the equally-stale workflow files match it. Two wrongs
+  cancelling out is why this has been invisible in the build/CI gate for two
+  months straight. Fix: key off `event.ts`'s real `EVENT_ID`/slug (or a
+  dedicated "current" pointer), not array position. `scripts/verify-workflow-env.ts`.
+
+- **[P1] 14 duplicate "Weekly audit — check(s) failing" GitHub issues open
+  back to back, 2026-06-08 → 2026-09-07 (#3–#16), none closed.** Every one
+  flags the same two checks (ESLint, `npm audit --audit-level=high`) — see
+  below. The opener works; nobody is triaging or closing. At 14 stale
+  duplicates, a genuinely new failure would be easy to miss in the noise.
+  Recommend: fix the two recurring checks once, then close #3–#16 as
+  resolved-by-that-fix, so the issue list is a real signal again.
+
+- **[P1] `npm run lint` fails — 12 errors, unchanged composition since at
+  least 2026-06-07.** `scripts/auto-roll.ts:418-427` 5× `no-regex-spaces`;
+  `scripts/build-event.ts:190` unused `runCount`; `scripts/build-outrights.ts:13,15,129`
+  unused `existsSync`/`pathToFileURL`/`outPath`;
+  `scripts/verify-rankings-data-completeness.ts:23` unused `readFileSync`;
+  `src/components/BacktestLab.tsx:439` empty `catch {}` (genuine silent
+  swallow, `no-empty`) + `:447` `setState` called synchronously inside a
+  `useEffect` (new eslint rule flag this run — cascading-render risk, reads
+  `sessionStorage.getItem('lab-auth')` then calls `setUnlocked` directly in
+  the effect body). Plus 1 warning: `RankingsTable.tsx:257` `useMemo` missing
+  `lastRoundField` dependency. CLAUDE.md's "Before Shipping" step 2 requires
+  lint to pass; it doesn't, and lint isn't wired into `npm run build`, so
+  Vercel never sees it. `npm run lint`.
+
+- **[P2] `npm audit --audit-level=high`: 7 high-severity advisories** —
+  `esbuild` (dev-server arbitrary file read on Windows), `js-yaml` (quadratic
+  DoS via merge keys), `nanoid`, `postcss` (XSS/path-traversal in
+  sourcemaps), `undici` (multiple, incl. TLS bypass + cache poisoning),
+  `vite`/`launch-editor`. All build/dev-toolchain transitive deps, not
+  runtime-shipped to the static site. `npm audit fix` is available per npm's
+  own output; not yet applied. Same core set flagged as P3 on 2026-07-05 —
+  bumped to P2 here only because it's part of the same never-triaged issue
+  backlog above, not because severity changed.
+
+- **[P2] MEMORY.md is now ~4 events and 3 months stale.** Header still says
+  `Last updated 2026-06-07`, `Current event: The Memorial Tournament … R3
+  picks live`, all-time `161-88-29 · +91.28u across 5 events`, `Next event:
+  RBC Canadian Open at Hamilton G&CC`. Reality: RBC, US Open, and Wyndham
+  have all since completed (Wyndham the current — frozen — state), and RBC's
+  actual venue was corrected to TPC Toronto at Osprey Valley weeks ago. A new
+  session following CLAUDE.md's own "read MEMORY.md first" protocol boots
+  with a 3-month-wrong mental model of what event is live. Open since
+  2026-06-07, flagged in every audit since. `MEMORY.md:3-9`.
+
+### Verified clean
+
+- `verify:auto-roll` — 7/7 patchEventConfig regexes match `event.ts` (Wyndham
+  R4 data / matchups / outrights, `picksRound: 4`, banner `TOURNAMENT COMPLETE`).
+- `tsc --noEmit` — clean, exit 0.
+- `verify:floor-refs` — 41 component files scanned, 0 hardcoded tier
+  comparisons.
+- `verify:workflow-env` — "passes," but see the P1 above: it's validating
+  against a stale reference that happens to match an equally stale target.
+- `verify:all-time` — 18 Results files, 7 registered prefixes, no inline
+  all-time math in components.
+- No new `any` types beyond the pre-existing 2 in the codebase; no other
+  empty catch blocks besides the one already flagged.
+- `data/raw/*` local dirs are all pre-Memorial (May–June), gitignored,
+  harmless local scratch — not evidence of anything server-side.
+- Live site `https://birdiex.co` returns HTTP 200. Full in-browser render
+  check could not be completed this run (headless browser tool timed out
+  repeatedly); the frozen-event finding above is based on the committed data
+  files' own timestamps, which is the more reliable signal anyway.
+
+### Action items for Chris
+
+- [ ] **The site is showing a month-old completed tournament as current, and
+      the automation meant to prevent that has been silently broken since
+      June.** This needs a decision, not just a fix: (a) what's the actual
+      next event to stage — full PreData/matchups/outrights build, not just
+      an `eventSchedule.ts` entry — and (b) do you want auto-roll trusted to
+      advance automatically again, or do you want manual staging going
+      forward given it's now missed two multi-week windows in a row (US
+      Open→Wyndham, and now Wyndham→whatever's current)?
+- [ ] **Fix `verify-workflow-env.ts`'s "first entry = active" assumption**
+      (carried 2 months, still open) so this class of drift can't go green
+      again. Want this implemented?
+- [ ] **Triage the 14 open weekly-audit issues (#3–#16)** — fix lint + run
+      `npm audit fix` once, then close the backlog so new issues are visible.
+- [ ] **Refresh MEMORY.md** — stale since 2026-06-07, now missing 3 completed
+      events.
+- [ ] RBC Canadian R4 grading gap (carried from prior audits) — still
+      unresolved; re-check whether it's still relevant given RBC is now two
+      events in the past.

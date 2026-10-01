@@ -496,3 +496,129 @@ weekly with nobody triaging it.
 - [ ] RBC Canadian R4 grading gap (carried from prior audits) — still
       unresolved; re-check whether it's still relevant given RBC is now two
       events in the past.
+
+## 2026-10-01 audit
+
+**Nothing has shipped since the last audit.** `git log --since="7 days ago"`
+is empty; the only commit since 2026-08-10 is the 2026-09-10 audit itself.
+Every finding from 2026-09-10 is still open. P0 issue #17 has had no response
+in 19 days.
+
+### Findings
+
+- **[P0, carried from 2026-09-10 — issue #17] The site has been stuck on the
+  finished Wyndham Championship for 51 days. This run found the exact cause.**
+  The live bundle (`/assets/index-CVsdNGBR.js`) still contains `Wyndham
+  Championship`, `TOURNAMENT COMPLETE` and ticker timestamp
+  `2026-08-10T16:14:31Z`, which matches `src/config/event.ts` and
+  `src/data/ticker.ts`. The latest auto-roll run (`gh run view 36668233281`,
+  2026-09-30 04:18Z) logs:
+  `Event switch blocked: src/data/fedexStJudePreData.ts missing. Pre-stage this event before its predecessor ends.`
+  then `Event already complete and no next event staged — no-op`, and the job
+  exits **success**. So auto-roll *is* now resolving the right event (the
+  `scripts/lib/currentEvent.ts` identity override correctly ignores the stale
+  Memorial YAML env). What blocks it is that the next event in
+  `src/data/eventSchedule.ts` (FedEx St. Jude, R1 2026-08-13) was only
+  partly set up on 2026-08-10 (`81393df`) and its PreData file was never
+  built. **Building it now would not help either.** That event ended in
+  mid-August, and `eventSchedule.ts` lists nothing after it. Getting the site
+  live again needs a person to choose the current or next real event and
+  set it up from scratch.
+  `src/data/eventSchedule.ts:109-114`, `scripts/auto-roll.ts` (event-switch block).
+
+- **[P1, NEW] The auto-roll "event switch blocked" path is a silent failure.**
+  It prints a ⚠️ line and exits 0. It has done that roughly 12×/day for about
+  7 weeks (~600 green runs), so nothing in CI, email or the issue tracker
+  ever showed the site was stuck. The same class of bug as the Supabase
+  pause and the regex break in CLAUDE.md's "Known silent-failure modes". Suggested
+  fix: when `isComplete: true` and the next scheduled event is missing data
+  or already started (`startDate < today`), exit non-zero or open or update a
+  GitHub issue, so a stuck site turns CI red instead of green. Not applied,
+  because this is review-only.
+
+- **[P1, carried since 2026-07-04] `verify-workflow-env.ts` still checks
+  against `EVENT_SCHEDULE[0]` (Memorial).** In the CI log it says "Active
+  event from eventSchedule.ts … ✅ in sync". The stale YAML env
+  (`datagolf-pull.yml:32-34`, `ticker-refresh.yml:22,28` =
+  `the-memorial-tournament-2026` / `memorial`) now matters less for
+  auto-roll because of the identity override above. The guard still gives
+  false confidence, though, and any script that doesn't use
+  `currentEvent.ts` would act on Memorial.
+
+- **[P1, carried] 18 open automated issues (#3–#20), none triaged.** Three
+  more weekly "2 check(s) failing" issues were added since the last audit
+  (#18 09-14, #19 09-21, #20 09-28). The real P0, #17, is lost among them.
+
+- **[P1, carried] `npm run lint` fails with the same 12 errors and 1 warning,
+  unchanged.** `scripts/auto-roll.ts:418-427` (5× `no-regex-spaces`), unused
+  vars in `build-event.ts:190`, `build-outrights.ts:13,15,129`, and
+  `verify-rankings-data-completeness.ts:23`. `BacktestLab.tsx:439` has an
+  empty `catch {}`, and `:447` calls `setState` inside an effect.
+  `RankingsTable.tsx:257` is missing a `useMemo` dependency. Lint still isn't
+  part of `npm run build`.
+
+- **[P2, carried] `npm audit`: 14 vulnerabilities (7 high, 5 moderate,
+  2 low).** All are in dev/build tools (vite, esbuild, postcss, undici,
+  js-yaml, nanoid). `npm audit fix` is available but hasn't been run.
+
+- **[P2, NEW — needs Chris's call] Wyndham has only R3 graded.** `src/data/`
+  has `wyndhamR3Results.ts` but no R2 or R4 results. Commit `81393df` says
+  R4 was skipped on purpose (the R4 picks were never shown to users, the
+  same policy as the open RBC R4 gap). It doesn't mention R2. There is no
+  `wyndhamR2Matchups.ts`, so either R2 picks were never published or that
+  file was never committed. Chris needs to confirm which, so the all-time
+  record is complete and correct.
+
+- **[P2, carried] MEMORY.md header is still `Last updated 2026-06-07`.**
+  It still names Memorial as the current event and RBC/Hamilton as next.
+  It's missing RBC, US Open and Wyndham, and how the site came to be stuck.
+
+- **[P3, NEW] GitHub Actions Node 20 deprecation.** Every run warns that
+  `actions/checkout@v4` and `actions/setup-node@v4` are being forced to run
+  on Node 24. Nothing is broken yet. Bump the action versions when it's
+  convenient.
+
+- **[P3, carried] The local `data/raw/*` folders are from May 20 to June 6
+  (pga-championship, cj-cup, csc, rbc-canadian, memorial).** They're
+  gitignored scratch files, so they're harmless. There's no folder for
+  US Open or Wyndham, which means those raw pulls happened only in CI.
+
+### Verified clean
+
+- `verify:auto-roll`: 7/7 regexes match `event.ts`.
+- `tsc --noEmit`: clean.
+- The full `npm run build` chain passes inside the auto-roll CI job
+  (floor-refs, workflow-env (false green, see above), all-time,
+  card-singleton, rankings-completeness, vitest banner-sync, tsc, vite).
+  That covers the "Results page totals add up" check, since
+  `banner-sync.test.tsx` asserts both banners match `allTimeStats`.
+- No `any` types in `src/` or `scripts/` beyond the 2 already known. The
+  only empty `catch` is `BacktestLab.tsx:439`.
+- `event.ts` course matches `scripts/lib/courses.ts`
+  (`sedgefield-country-club`). They don't disagree.
+- Wyndham data `generatedAt` stamps are all 2026-08-08 to 08-10, with no
+  half-finished round transitions.
+- Supabase keepalive is green daily (09-28 and 09-29 runs succeeded).
+- The live site at `https://birdiex.co` returns HTTP 200 in 0.49s. The
+  in-app browser timed out, so this run checked the live JS bundle's
+  content directly instead of a screenshot.
+- Ticker-refresh correctly skips while `isComplete=true`, and the ticker is
+  hidden in the UI.
+
+### Action items for Chris
+
+- [ ] **Pick the event BirdieX should cover next** (the current or next PGA
+      Tour event). FedEx St. Jude is still queued in the schedule, but it
+      ended in August. Once you choose, a session can build the full
+      PreData, matchups and outrights files and update the schedule,
+      workflow env and venues together.
+- [ ] **Approve making "event switch blocked" fail loudly** (P1 above), so a
+      stuck site turns CI red or opens an issue instead of passing quietly.
+- [ ] **Approve the `verify-workflow-env.ts` fix** (base it on `event.ts`,
+      not array position). This has been open since July.
+- [ ] **Approve one cleanup pass:** fix the 12 lint errors, run
+      `npm audit fix`, then close #3–#16 and #18–#20. Keep #17 open until
+      the site is live again.
+- [ ] **Wyndham R2:** were R2 picks ever shown to users? If yes, they need
+      grading. If no, note it next to the RBC R4 and Wyndham R4 gaps.
+- [ ] **Refresh MEMORY.md** (it's still dated 2026-06-07).

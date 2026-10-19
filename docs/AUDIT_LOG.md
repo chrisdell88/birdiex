@@ -691,3 +691,80 @@ site live again:
 - [ ] Approve one cleanup pass (lint, `npm audit fix`, close #3–#16 and #18–#21).
 - [ ] Confirm whether Wyndham R2 picks were ever shown to users.
 - [ ] Refresh MEMORY.md.
+
+## 2026-10-18 audit
+
+**No code changes since the 2026-10-05 audit.** The only commit in the last
+14 days is that audit (`f951999`). Every finding from 2026-10-01 is still
+open and behaves exactly as described. There was no Claude audit section for
+2026-10-12. That week only the automated CI audit ran (issue #22). This
+section records what was re-checked and what changed.
+
+### Findings
+
+- **[P0, carried — issue #17] The site has been stuck on the finished
+  Wyndham Championship for 69 days.** The live bundle is still
+  `/assets/index-CVsdNGBR.js`. It still contains `Wyndham Championship`, and
+  its newest timestamp is still `2026-08-10T16:14:31Z`. The latest auto-roll
+  run (`39196596328`, 2026-10-19 03:50Z) logs the same
+  `Event switch blocked: src/data/fedexStJudePreData.ts missing` and the same
+  no-op, then exits green. Issue #17 still has no comments. The fix has not
+  changed: a person has to choose the current or next real PGA Tour event and
+  set it up. FedEx St. Jude ended in August, so staging it now would not help.
+  I did not open a new issue, because #17 already tracks this.
+
+- **[P1, carried] Auto-roll's "event switch blocked" path still exits 0.**
+  All 20 of the most recent workflow runs are green, and none of them flagged
+  that the site is stuck.
+
+- **[P1, carried] `verify-workflow-env.ts` still checks against
+  `EVENT_SCHEDULE[0]` (Memorial).** Auto-roll still logs the identity-override
+  warning about the stale `the-memorial-tournament-2026` env in the workflow
+  YAML.
+
+- **[P1, carried] There are now 20 open automated issues (#3–#22).** #22
+  (2026-10-12) was added with the same two failing checks: ESLint and
+  npm audit.
+
+- **[P1, carried] `npm run lint` still reports 13 problems (12 errors,
+  1 warning).** Same files and lines as 2026-10-01.
+
+- **[P2, carried] `npm audit` still reports 15 vulnerabilities (8 high,
+  5 moderate, 2 low)**, all in dev dependencies. `npm audit fix` is
+  available.
+
+- **[P2, carried] Two items are still open: the Wyndham R2 grading question,
+  and the stale MEMORY.md header (`Last updated 2026-06-07`).**
+
+- **[P3, new] The 2026-10-12 Claude weekly audit did not produce a log
+  entry.** The scheduled task either did not fire or did not commit. This
+  matters little while nothing is changing, but it is the same "silent skip"
+  pattern, so it is worth a look if it happens again.
+
+- **[P3, carried] Node 20 deprecation warnings in Actions, and old local
+  `data/raw/*` folders (May 20 to June 6).** Unchanged.
+
+### Verified clean
+
+- `verify:auto-roll`: 7/7 regexes match.
+- `tsc --noEmit`: clean (exit 0).
+- The `npm run build` chain passes inside every auto-roll CI run.
+- Supabase keepalive is green (2026-10-18 14:15Z, 8s).
+- Ticker refresh and auto-roll runs are all green. They have nothing to do on
+  a finished event.
+- The live site `https://birdiex.co` returns HTTP 200 in 0.22s.
+- The working tree is clean.
+
+### Action items for Chris
+
+These are unchanged since 2026-10-01. Item 1 is the only one that gets the
+site live again.
+
+- [ ] **Pick the event BirdieX should cover next**, or decide to pause the
+      site and workflows until the 2027 season.
+- [ ] Approve making "event switch blocked" fail loudly.
+- [ ] Approve the `verify-workflow-env.ts` fix.
+- [ ] Approve one cleanup pass: lint, `npm audit fix`, and closing #3–#16
+      and #18–#22.
+- [ ] Confirm whether Wyndham R2 picks were ever shown to users.
+- [ ] Refresh MEMORY.md.

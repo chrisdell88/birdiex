@@ -860,3 +860,50 @@ These are unchanged. Item 1 is the only one that gets the site live again.
 - [ ] Approve one cleanup pass: lint, `npm audit fix` (including the vite upgrade), and closing #3–#16 and #18–#25.
 - [ ] Decide on the ungraded Wyndham R4 and RBC Canadian R4 picks.
 - [ ] Refresh MEMORY.md.
+
+## 2026-11-10 audit
+
+**No code changes since the 2026-11-03 audit.** The only commit in the 7-day window is that audit (`00263bd`). Every finding from 2026-11-03 is still open and behaves the same. This run was scheduled for Sunday 2026-11-08; the checks ran that night and the log was written on 2026-11-10.
+
+### Findings
+
+- **[P0, carried, issue #17] The site is still stuck on the finished Wyndham Championship, now for 92 days (complete 2026-08-10).** The live bundle is still `/assets/index-CVsdNGBR.js` and still contains `Wyndham Championship` and the `2026-08-10T16:14:31.069Z` timestamp. The header "Last Updated" comes from `tickerGeneratedAt` (`src/data/ticker.ts:17`), so visitors see an August date. The latest auto-roll run (`42564414509`, 2026-11-09 04:55Z) logs `Event switch blocked: src/data/fedexStJudePreData.ts missing` and exits green. No new issue was opened because #17 already tracks this, and it still has no comments. The fix is the same: a person has to pick the next event and set it up, or decide to pause until the 2027 season.
+
+- **[P1, carried] Auto-roll still exits 0 when an event switch is blocked.** All 20 recent workflow runs are green, so nothing in GitHub shows that the site is stuck.
+
+- **[P1, carried] Workflow env and `EVENT_SCHEDULE[0]` are still pinned to Memorial.** The auto-roll log still prints the identity-override warning (`env/argv says slug "the-memorial-tournament-2026" but the committed event config resolves to "wyndham-championship-2026"`). `verify-workflow-env.ts` checks against that same stale entry, so it passes.
+
+- **[P1, carried] There are still 23 open automated issues (#3–#25).** No new weekly CI issue was opened for 2026-11-09 yet. The last one, #25, reports the same two failing checks: ESLint and npm audit.
+
+- **[P1, carried] `npm run lint` still reports 13 problems (12 errors, 1 warning).** The files and lines are the same as on 2026-10-01.
+
+- **[P2, slightly better] `npm audit` now reports 23 vulnerabilities (9 high, 12 moderate, 2 low), down from 28 (9 high, 17 moderate, 2 low).** No dependencies changed, so the drop came from changes to the advisory database. The high-severity set is the same: `vite` is the only direct dependency, and the rest is build and dev tooling. Nothing vulnerable ships to users. `npm audit fix` still covers them, and the vite/vitest upgrade should be checked with `npm run build` first.
+
+- **[P2, carried] Still open: the Wyndham R4 / RBC Canadian R4 grading gaps noted in `event.ts`, and the stale MEMORY.md header, which still names Memorial as the current event.**
+
+- **[P3, carried] The Claude weekly audit still runs late.** This is the third run in a row that finished after its Sunday slot.
+
+- **[P3, carried] Node deprecation warnings in Actions, and old local `data/raw/*` folders from May–June.** Nothing has changed here.
+
+### Verified clean
+
+- `verify:auto-roll`: all 7 regexes match.
+- `tsc --noEmit`: clean (exit 0).
+- `verify:all-time`: clean.
+- `npm test -- --run`: 12/12 pass, including the banner-sync render test, so the Results and Methodology totals agree with `allTimeStats`.
+- Supabase keepalive is green (2026-11-07 and 2026-11-08).
+- Ticker refresh and auto-roll runs are all completing.
+- `https://birdiex.co` returns HTTP 200 in 0.45s.
+- The working tree was clean before this commit.
+- Not done this week: no live-site screenshot. The in-app browser timed out again, so I checked the site with an HTTP fetch and a bundle string check instead.
+
+### Action items for Chris
+
+These are unchanged. Item 1 is the only one that gets the site live again.
+
+- [ ] **Pick the event BirdieX should cover next**, or decide to pause the site and workflows until the 2027 season.
+- [ ] Approve making "event switch blocked" fail loudly.
+- [ ] Approve the workflow-env / `verify-workflow-env.ts` fix.
+- [ ] Approve one cleanup pass: lint, `npm audit fix` (including the vite upgrade), and closing #3–#16 and #18–#25.
+- [ ] Decide on the ungraded Wyndham R4 and RBC Canadian R4 picks.
+- [ ] Refresh MEMORY.md.
